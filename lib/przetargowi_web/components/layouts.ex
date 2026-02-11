@@ -22,12 +22,12 @@ defmodule PrzetargowiWeb.Layouts do
     <div class="min-h-screen flex flex-col bg-base-100">
       <header class="site-header sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between h-16">
-            <a href="/" class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+          <div class="flex items-center justify-between h-18">
+            <a href="/" class="flex items-center gap-3 group">
+              <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
                 <.icon name="hero-scale" class="size-5 text-primary-content" />
               </div>
-              <span class="text-lg font-semibold tracking-tight text-base-content">Przetargowi</span>
+              <span class="text-xl font-display font-semibold tracking-tight text-base-content">Przetargowi</span>
             </a>
 
             <%= unless @hide_nav do %>
@@ -49,14 +49,14 @@ defmodule PrzetargowiWeb.Layouts do
                 <a href="/ustawienia" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
                   Ustawienia
                 </a>
-                <.link href="/wyloguj" method="delete" class="btn-primary-solid px-4 py-2 text-sm font-medium rounded-lg">
+                <.link href="/wyloguj" method="delete" class="btn-primary-solid px-5 py-2.5 text-sm font-medium rounded-xl">
                   Wyloguj
                 </.link>
               <% else %>
                 <a href="/logowanie" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
                   Zaloguj się
                 </a>
-                <a href="/rejestracja" class="btn-primary-solid px-4 py-2 text-sm font-medium rounded-lg">
+                <a href="/rejestracja" class="btn-primary-solid px-5 py-2.5 text-sm font-medium rounded-xl">
                   Rozpocznij
                 </a>
               <% end %>
@@ -72,47 +72,47 @@ defmodule PrzetargowiWeb.Layouts do
         {render_slot(@inner_block)}
       </main>
 
-      <footer class="bg-base-200 border-t border-base-300">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+      <footer class="footer-dark">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             <div class="col-span-2 md:col-span-1">
-              <a href="/" class="flex items-center gap-2 mb-4">
-                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <.icon name="hero-scale" class="size-4 text-primary-content" />
+              <a href="/" class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center">
+                  <.icon name="hero-scale" class="size-4 text-secondary-content" />
                 </div>
-                <span class="font-semibold text-base-content">Przetargowi</span>
+                <span class="font-display font-semibold text-lg text-primary-content">Przetargowi</span>
               </a>
-              <p class="text-sm text-base-content/50 leading-relaxed">
+              <p class="text-sm text-primary-content/60 leading-relaxed">
                 Wyszukiwarka orzeczeń zamówień publicznych wspierana przez AI.
               </p>
             </div>
             <div>
-              <h4 class="font-medium text-base-content mb-4 text-sm">Produkt</h4>
+              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Produkt</h4>
               <ul class="space-y-3">
-                <li><a href="/szukaj" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Wyszukiwarka</a></li>
-                <li><a href="/#cennik" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Cennik</a></li>
+                <li><a href="/szukaj">Wyszukiwarka</a></li>
+                <li><a href="/#cennik">Cennik</a></li>
               </ul>
             </div>
             <div>
-              <h4 class="font-medium text-base-content mb-4 text-sm">Firma</h4>
+              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Firma</h4>
               <ul class="space-y-3">
-                <li><a href="/o-nas" class="text-sm text-base-content/50 hover:text-base-content transition-colors">O nas</a></li>
-                <li><a href="/kontakt" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Kontakt</a></li>
+                <li><a href="/o-nas">O nas</a></li>
+                <li><a href="/kontakt">Kontakt</a></li>
               </ul>
             </div>
             <div>
-              <h4 class="font-medium text-base-content mb-4 text-sm">Prawne</h4>
+              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Prawne</h4>
               <ul class="space-y-3">
-                <li><a href="/regulamin" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Regulamin</a></li>
-                <li><a href="/polityka-prywatnosci" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Polityka prywatności</a></li>
+                <li><a href="/regulamin">Regulamin</a></li>
+                <li><a href="/polityka-prywatnosci">Polityka prywatności</a></li>
               </ul>
             </div>
           </div>
-          <div class="pt-8 border-t border-base-300 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p class="text-sm text-base-content/40">
-              © {Date.utc_today().year} Przetargowi
+          <div class="pt-8 border-t border-primary-content/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-primary-content/50">
+              © {Date.utc_today().year} Przetargowi. Wszelkie prawa zastrzeżone.
             </p>
-            <p class="text-xs text-base-content/40">
+            <p class="text-xs text-primary-content/40">
               Źródło danych: orzeczenia.uzp.gov.pl
             </p>
           </div>

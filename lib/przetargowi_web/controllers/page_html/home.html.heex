@@ -1,137 +1,148 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <!-- Hero -->
-  <section class="py-20 lg:py-28 hero-gradient">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+  <section class="py-24 lg:py-32 hero-gradient relative overflow-hidden">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="max-w-3xl mx-auto text-center">
-        <h1 class="text-4xl sm:text-5xl font-bold leading-tight mb-6 text-gradient">
+<h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-gradient">
           Znajdź orzeczenie,<br />którego szukasz
         </h1>
-        <p class="text-lg text-base-content/60 mb-10 leading-relaxed">
+        <p class="text-lg sm:text-xl text-base-content/70 mb-12 leading-relaxed max-w-2xl mx-auto">
           Przeszukuj orzeczenia KIO, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
           Opisz problem — znajdziemy odpowiednie precedensy.
         </p>
 
         <!-- Search -->
         <form action="/szukaj" method="get" class="max-w-2xl mx-auto">
-          <div class="flex gap-3">
+          <div class="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               name="q"
-              class="search-input flex-1 px-4 py-3 rounded-lg text-base"
+              class="search-input flex-1 px-5 py-4 rounded-xl text-base"
               placeholder="np. wykluczenie wykonawcy, rażąco niska cena..."
             />
-            <button type="submit" class="btn-primary-solid px-6 py-3 rounded-lg font-medium">
+            <button type="submit" class="btn-gold px-8 py-4 rounded-xl font-semibold whitespace-nowrap">
               Szukaj
             </button>
           </div>
 
           <!-- Source filters -->
-          <div class="flex flex-wrap justify-center gap-2 mt-4">
+          <div class="flex flex-wrap justify-center gap-3 mt-6">
             <label class="cursor-pointer">
               <input type="checkbox" name="sources[]" value="KIO" checked class="peer sr-only" />
-              <span class="inline-block px-3 py-1.5 text-sm font-medium rounded border border-base-300 text-base-content/60 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-colors">
+              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary transition-all hover:border-primary/50">
                 KIO
               </span>
             </label>
             <label class="cursor-pointer">
               <input type="checkbox" name="sources[]" value="SO" checked class="peer sr-only" />
-              <span class="inline-block px-3 py-1.5 text-sm font-medium rounded border border-base-300 text-base-content/60 peer-checked:border-accent peer-checked:bg-accent/5 peer-checked:text-accent transition-colors">
+              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-accent transition-all hover:border-accent/50">
                 Sąd Okręgowy
               </span>
             </label>
             <label class="cursor-pointer">
               <input type="checkbox" name="sources[]" value="SA" checked class="peer sr-only" />
-              <span class="inline-block px-3 py-1.5 text-sm font-medium rounded border border-base-300 text-base-content/60 peer-checked:border-secondary peer-checked:bg-secondary/5 peer-checked:text-secondary transition-colors">
+              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-secondary peer-checked:bg-secondary/10 peer-checked:text-secondary transition-all hover:border-secondary/50">
                 Sąd Apelacyjny
               </span>
             </label>
             <label class="cursor-pointer">
               <input type="checkbox" name="sources[]" value="SN" checked class="peer sr-only" />
-              <span class="inline-block px-3 py-1.5 text-sm font-medium rounded border border-base-300 text-base-content/60 peer-checked:border-info peer-checked:bg-info/5 peer-checked:text-info transition-colors">
+              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-info peer-checked:bg-info/10 peer-checked:text-info transition-all hover:border-info/50">
                 Sąd Najwyższy
               </span>
             </label>
           </div>
         </form>
 
-<%= unless @current_scope do %>
-          <p class="text-sm text-base-content/40 mt-6">
+        <%= unless @current_scope do %>
+          <p class="text-sm text-base-content/50 mt-8">
             3 wyszukiwania za darmo · Bez rejestracji
           </p>
         <% end %>
       </div>
     </div>
+
   </section>
 
   <!-- Pricing -->
-  <section class="py-16" id="cennik">
+  <section class="py-20 lg:py-24" id="cennik">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-xl font-semibold text-base-content mb-10 text-center">
-        Cennik
-      </h2>
+      <div class="text-center mb-12">
+        <div class="flex justify-center mb-4">
+          <div class="decorative-line"></div>
+        </div>
+        <h2 class="text-3xl lg:text-4xl font-bold text-base-content mb-4">
+          Cennik
+        </h2>
+        <p class="text-base-content/60 max-w-xl mx-auto">
+          Wybierz plan dopasowany do Twoich potrzeb
+        </p>
+      </div>
 
-      <div class="grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
+      <div class="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto">
         <!-- Free -->
-        <div class="bg-base-100 rounded-lg p-6 border border-base-300">
-          <h3 class="font-medium text-base-content">Darmowy</h3>
-          <div class="mt-4 mb-6">
-            <span class="text-3xl font-bold text-base-content">0 zł</span>
+        <div class="pricing-card p-8">
+          <h3 class="text-xl font-semibold text-base-content mb-2">Darmowy</h3>
+          <p class="text-sm text-base-content/60 mb-6">Idealne na początek</p>
+          <div class="mb-8">
+            <span class="text-4xl font-bold text-base-content">0 zł</span>
           </div>
-          <ul class="space-y-3 mb-6">
-            <li class="flex items-center gap-2 text-sm text-base-content/60">
-              <.icon name="hero-check" class="size-4 text-success" />
-              3 wyszukiwania
+          <ul class="space-y-4 mb-8">
+            <li class="flex items-center gap-3 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+              <span>3 wyszukiwania</span>
             </li>
-            <li class="flex items-center gap-2 text-sm text-base-content/60">
-              <.icon name="hero-check" class="size-4 text-success" />
-              Wszystkie źródła
+            <li class="flex items-center gap-3 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+              <span>Wszystkie źródła</span>
             </li>
-            <li class="flex items-center gap-2 text-sm text-base-content/60">
-              <.icon name="hero-check" class="size-4 text-success" />
-              Podgląd meritum
+            <li class="flex items-center gap-3 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+              <span>Podgląd meritum</span>
             </li>
           </ul>
-          <a href="/szukaj" class="block w-full py-2.5 text-center text-sm font-medium border border-base-300 rounded-lg hover:bg-base-200 transition-colors">
+          <a href="/szukaj" class="btn-outline block w-full py-3 text-center rounded-xl">
             Wypróbuj
           </a>
         </div>
 
         <!-- Pro -->
-        <div class="bg-primary rounded-lg p-6 text-primary-content relative">
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-            <span class="px-3 py-1 bg-secondary text-secondary-content text-xs font-medium rounded-full">
+        <div class="pricing-card pricing-card-featured p-8 text-primary-content relative">
+          <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+            <span class="px-4 py-1.5 bg-secondary text-secondary-content text-sm font-semibold rounded-full shadow-lg">
               Polecany
             </span>
           </div>
-          <h3 class="font-medium">Profesjonalny</h3>
-          <div class="mt-4 mb-6">
-            <span class="text-3xl font-bold">99 zł</span>
+          <h3 class="text-xl font-semibold mb-2">Profesjonalny</h3>
+          <p class="text-sm text-primary-content/70 mb-6">Dla profesjonalistów</p>
+          <div class="mb-8">
+            <span class="text-4xl font-bold">99 zł</span>
             <span class="text-primary-content/70">/mies.</span>
           </div>
-          <ul class="space-y-3 mb-6">
-            <li class="flex items-center gap-2 text-sm text-primary-content/80">
-              <.icon name="hero-check" class="size-4" />
-              Nielimitowane wyszukiwania
+          <ul class="space-y-4 mb-8">
+            <li class="flex items-center gap-3 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+              <span>Nielimitowane wyszukiwania</span>
             </li>
-            <li class="flex items-center gap-2 text-sm text-primary-content/80">
-              <.icon name="hero-check" class="size-4" />
-              Pełna treść orzeczeń
+            <li class="flex items-center gap-3 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+              <span>Pełna treść orzeczeń</span>
             </li>
-            <li class="flex items-center gap-2 text-sm text-primary-content/80">
-              <.icon name="hero-check" class="size-4" />
-              Historia wyszukiwań
+            <li class="flex items-center gap-3 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+              <span>Historia wyszukiwań</span>
             </li>
-            <li class="flex items-center gap-2 text-sm text-primary-content/80">
-              <.icon name="hero-check" class="size-4" />
-              Wsparcie priorytetowe
+            <li class="flex items-center gap-3 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+              <span>Wsparcie priorytetowe</span>
             </li>
           </ul>
           <%= if @current_scope do %>
-            <a href="/ustawienia" class="block w-full py-2.5 text-center text-sm font-medium bg-primary-content text-primary rounded-lg hover:bg-primary-content/90 transition-colors">
+            <a href="/ustawienia" class="btn-gold block w-full py-3 text-center rounded-xl">
               Aktywuj Pro
             </a>
           <% else %>
-            <a href="/rejestracja?plan=pro" class="block w-full py-2.5 text-center text-sm font-medium bg-primary-content text-primary rounded-lg hover:bg-primary-content/90 transition-colors">
+            <a href="/rejestracja?plan=pro" class="btn-gold block w-full py-3 text-center rounded-xl">
               Rozpocznij
             </a>
           <% end %>

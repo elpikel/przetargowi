@@ -22,6 +22,7 @@ defmodule PrzetargowiWeb.Router do
 
     get "/", PageController, :home
     get "/szukaj", SearchController, :index
+    get "/orzeczenie/:id", JudgementController, :show
   end
 
   # Other scopes may use custom stacks.
