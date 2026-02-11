@@ -5,26 +5,8 @@ defmodule PrzetargowiWeb.Layouts do
   """
   use PrzetargowiWeb, :html
 
-  # Embed all files in layouts/* within this module.
-  # The default root.html.heex file contains the HTML
-  # skeleton of your application, namely HTML headers
-  # and other static content.
   embed_templates "layouts/*"
 
-  @doc """
-  Renders your app layout.
-
-  This function is typically invoked from every template,
-  and it often contains your application menu, sidebar,
-  or similar.
-
-  ## Examples
-
-      <Layouts.app flash={@flash}>
-        <h1>Content</h1>
-      </Layouts.app>
-
-  """
   attr :flash, :map, required: true, doc: "the map of flash messages"
 
   attr :current_scope, :map,
@@ -35,38 +17,92 @@ defmodule PrzetargowiWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
+    <div class="min-h-screen flex flex-col bg-base-100">
+      <header class="site-header sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between h-16">
+            <a href="/" class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+                <.icon name="hero-scale" class="size-5 text-primary-content" />
+              </div>
+              <span class="text-lg font-semibold tracking-tight text-base-content">Przetargowi</span>
             </a>
-          </li>
-        </ul>
-      </div>
-    </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+            <nav class="hidden md:flex items-center gap-8">
+              <a href="/szukaj" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                Wyszukiwarka
+              </a>
+              <a href="/#cennik" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                Cennik
+              </a>
+            </nav>
+
+            <div class="flex items-center gap-4">
+              <a href="/logowanie" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                Zaloguj się
+              </a>
+              <a href="/rejestracja" class="btn-primary-solid px-4 py-2 text-sm font-medium rounded-lg">
+                Rozpocznij
+              </a>
+              <button class="md:hidden p-2 text-base-content/60 hover:text-base-content transition-colors">
+                <.icon name="hero-bars-3" class="size-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1">
         {render_slot(@inner_block)}
-      </div>
-    </main>
+      </main>
+
+      <footer class="bg-base-200 border-t border-base-300">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+            <div class="col-span-2 md:col-span-1">
+              <a href="/" class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                  <.icon name="hero-scale" class="size-4 text-primary-content" />
+                </div>
+                <span class="font-semibold text-base-content">Przetargowi</span>
+              </a>
+              <p class="text-sm text-base-content/50 leading-relaxed">
+                Wyszukiwarka orzeczeń zamówień publicznych wspierana przez AI.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-medium text-base-content mb-4 text-sm">Produkt</h4>
+              <ul class="space-y-3">
+                <li><a href="/szukaj" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Wyszukiwarka</a></li>
+                <li><a href="/#cennik" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Cennik</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-medium text-base-content mb-4 text-sm">Firma</h4>
+              <ul class="space-y-3">
+                <li><a href="/o-nas" class="text-sm text-base-content/50 hover:text-base-content transition-colors">O nas</a></li>
+                <li><a href="/kontakt" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Kontakt</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-medium text-base-content mb-4 text-sm">Prawne</h4>
+              <ul class="space-y-3">
+                <li><a href="/regulamin" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Regulamin</a></li>
+                <li><a href="/polityka-prywatnosci" class="text-sm text-base-content/50 hover:text-base-content transition-colors">Polityka prywatności</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="pt-8 border-t border-base-300 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-base-content/40">
+              © {Date.utc_today().year} Przetargowi
+            </p>
+            <p class="text-xs text-base-content/40">
+              Źródło danych: orzeczenia.uzp.gov.pl
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
 
     <.flash_group flash={@flash} />
     """
@@ -74,10 +110,6 @@ defmodule PrzetargowiWeb.Layouts do
 
   @doc """
   Shows the flash group with standard titles and content.
-
-  ## Examples
-
-      <.flash_group flash={@flash} />
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
   attr :id, :string, default: "flash-group", doc: "the optional id of flash container"
@@ -111,43 +143,6 @@ defmodule PrzetargowiWeb.Layouts do
         {gettext("Attempting to reconnect")}
         <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
-    </div>
-    """
-  end
-
-  @doc """
-  Provides dark vs light theme toggle based on themes defined in app.css.
-
-  See <head> in root.html.heex which applies the theme before page load.
-  """
-  def theme_toggle(assigns) do
-    ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 transition-[left]" />
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="system"
-      >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="light"
-      >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="dark"
-      >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
     </div>
     """
   end

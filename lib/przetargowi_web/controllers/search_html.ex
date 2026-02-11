@@ -1,12 +1,12 @@
-defmodule PrzetargowiWeb.PageHTML do
+defmodule PrzetargowiWeb.SearchHTML do
   @moduledoc """
-  This module contains pages rendered by PageController.
+  This module contains pages rendered by SearchController.
 
-  See the `page_html` directory for all templates available.
+  See the `search_html` directory for all templates available.
   """
   use PrzetargowiWeb, :html
 
-  embed_templates "page_html/*"
+  embed_templates "search_html/*"
 
   @doc """
   Returns the badge CSS class for a given court source.
@@ -34,4 +34,13 @@ defmodule PrzetargowiWeb.PageHTML do
   def court_badge_class("SA"), do: "badge-sa"
   def court_badge_class("SN"), do: "badge-sn"
   def court_badge_class(_), do: "bg-base-300 text-base-content"
+
+  @doc """
+  Formats relevance score as percentage.
+  """
+  def format_relevance(score) when is_float(score) do
+    "#{round(score * 100)}%"
+  end
+
+  def format_relevance(_), do: "-"
 end
