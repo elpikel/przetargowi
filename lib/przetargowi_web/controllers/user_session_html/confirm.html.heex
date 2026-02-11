@@ -1,0 +1,61 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-sm py-16">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gradient mb-2">Witaj {@user.email}</h1>
+    </div>
+
+    <.form
+      :if={!@user.confirmed_at}
+      for={@form}
+      id="confirmation_form"
+      action={~p"/logowanie?_action=confirmed"}
+      phx-mounted={JS.focus_first()}
+      class="space-y-3"
+    >
+      <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
+      <button
+        type="submit"
+        name={@form[:remember_me].name}
+        value="true"
+        class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium"
+      >
+        Potwierdź i pozostań zalogowany
+      </button>
+      <button type="submit" class="w-full px-6 py-3 rounded-lg font-medium border border-base-300 text-base-content hover:bg-base-200 transition-colors">
+        Potwierdź i zaloguj tylko teraz
+      </button>
+    </.form>
+
+    <.form
+      :if={@user.confirmed_at}
+      for={@form}
+      id="login_form"
+      action={~p"/logowanie"}
+      phx-mounted={JS.focus_first()}
+      class="space-y-3"
+    >
+      <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
+      <%= if @current_scope do %>
+        <button type="submit" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
+          Zaloguj się
+        </button>
+      <% else %>
+        <button
+          type="submit"
+          name={@form[:remember_me].name}
+          value="true"
+          class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium"
+        >
+          Pozostań zalogowany na tym urządzeniu
+        </button>
+        <button type="submit" class="w-full px-6 py-3 rounded-lg font-medium border border-base-300 text-base-content hover:bg-base-200 transition-colors">
+          Zaloguj tylko teraz
+        </button>
+      <% end %>
+    </.form>
+
+    <p :if={!@user.confirmed_at} class="bg-info/10 border border-info/20 rounded-lg p-4 mt-8 text-sm text-base-content/70">
+      Wskazówka: Jeśli wolisz hasła, możesz je włączyć w ustawieniach konta.
+    </p>
+  </div>
+</Layouts.app>

@@ -1,0 +1,84 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-lg py-16">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gradient mb-2">Ustawienia konta</h1>
+      <p class="text-base-content/60">Zarządzaj swoim adresem email i hasłem</p>
+    </div>
+
+    <div class="bg-base-100 rounded-xl border border-base-300 p-6 mb-6">
+      <h2 class="font-semibold text-base-content mb-4">Zmień email</h2>
+      <.form :let={f} for={@email_changeset} action={~p"/ustawienia"} id="update_email" class="space-y-4">
+        <input type="hidden" name="action" value="update_email" />
+
+        <div>
+          <label for={f[:email].id} class="block text-sm font-medium text-base-content mb-2">
+            Nowy email
+          </label>
+          <input
+            type="email"
+            id={f[:email].id}
+            name={f[:email].name}
+            value={Phoenix.HTML.Form.normalize_value("email", f[:email].value)}
+            autocomplete="email"
+            required
+            class="search-input w-full px-4 py-3 rounded-lg text-base"
+          />
+          <%= for msg <- Enum.map(f[:email].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-error">{msg}</p>
+          <% end %>
+        </div>
+
+        <button type="submit" class="btn-primary-solid px-6 py-2.5 rounded-lg font-medium">
+          Zmień email
+        </button>
+      </.form>
+    </div>
+
+    <div class="bg-base-100 rounded-xl border border-base-300 p-6">
+      <h2 class="font-semibold text-base-content mb-4">Zmień hasło</h2>
+      <.form :let={f} for={@password_changeset} action={~p"/ustawienia"} id="update_password" class="space-y-4">
+        <input type="hidden" name="action" value="update_password" />
+
+        <div>
+          <label for={f[:password].id} class="block text-sm font-medium text-base-content mb-2">
+            Nowe hasło
+          </label>
+          <input
+            type="password"
+            id={f[:password].id}
+            name={f[:password].name}
+            autocomplete="new-password"
+            required
+            class="search-input w-full px-4 py-3 rounded-lg text-base"
+            placeholder="••••••••"
+          />
+          <%= for msg <- Enum.map(f[:password].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-error">{msg}</p>
+          <% end %>
+        </div>
+
+        <div>
+          <label for={f[:password_confirmation].id} class="block text-sm font-medium text-base-content mb-2">
+            Potwierdź nowe hasło
+          </label>
+          <input
+            type="password"
+            id={f[:password_confirmation].id}
+            name={f[:password_confirmation].name}
+            autocomplete="new-password"
+            required
+            class="search-input w-full px-4 py-3 rounded-lg text-base"
+            placeholder="••••••••"
+          />
+          <%= for msg <- Enum.map(f[:password_confirmation].errors, &translate_error/1) do %>
+            <p class="mt-1 text-sm text-error">{msg}</p>
+          <% end %>
+        </div>
+
+        <button type="submit" class="btn-primary-solid px-6 py-2.5 rounded-lg font-medium">
+          Zapisz hasło
+        </button>
+      </.form>
+    </div>
+  </div>
+</Layouts.app>

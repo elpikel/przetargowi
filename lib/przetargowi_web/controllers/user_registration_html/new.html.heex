@@ -1,0 +1,39 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-sm py-16">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gradient mb-2">Utwórz konto</h1>
+      <p class="text-base-content/60">
+        Masz już konto?
+        <.link navigate={~p"/logowanie"} class="font-semibold text-primary hover:underline">
+          Zaloguj się
+        </.link>
+      </p>
+    </div>
+
+    <.form :let={f} for={@changeset} action={~p"/rejestracja"} class="space-y-4">
+      <div>
+        <label for={f[:email].id} class="block text-sm font-medium text-base-content mb-2">
+          Email
+        </label>
+        <input
+          type="email"
+          id={f[:email].id}
+          name={f[:email].name}
+          value={Phoenix.HTML.Form.normalize_value("email", f[:email].value)}
+          autocomplete="email"
+          required
+          phx-mounted={JS.focus()}
+          class="search-input w-full px-4 py-3 rounded-lg text-base"
+          placeholder="twoj@email.pl"
+        />
+        <%= for msg <- Enum.map(f[:email].errors, &translate_error/1) do %>
+          <p class="mt-1 text-sm text-error">{msg}</p>
+        <% end %>
+      </div>
+
+      <button type="submit" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
+        Utwórz konto
+      </button>
+    </.form>
+  </div>
+</Layouts.app>

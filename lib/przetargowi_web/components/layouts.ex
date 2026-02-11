@@ -13,6 +13,8 @@ defmodule PrzetargowiWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
+  attr :hide_nav, :boolean, default: false, doc: "hide the main navigation links"
+
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -28,22 +30,36 @@ defmodule PrzetargowiWeb.Layouts do
               <span class="text-lg font-semibold tracking-tight text-base-content">Przetargowi</span>
             </a>
 
-            <nav class="hidden md:flex items-center gap-8">
-              <a href="/szukaj" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
-                Wyszukiwarka
-              </a>
-              <a href="/#cennik" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
-                Cennik
-              </a>
-            </nav>
+            <%= unless @hide_nav do %>
+              <nav class="hidden md:flex items-center gap-8">
+                <a href="/szukaj" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                  Wyszukiwarka
+                </a>
+                <a href="/#cennik" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                  Cennik
+                </a>
+              </nav>
+            <% end %>
 
             <div class="flex items-center gap-4">
-              <a href="/logowanie" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
-                Zaloguj się
-              </a>
-              <a href="/rejestracja" class="btn-primary-solid px-4 py-2 text-sm font-medium rounded-lg">
-                Rozpocznij
-              </a>
+              <%= if @current_scope do %>
+                <span class="hidden sm:block text-sm text-base-content/60">
+                  {@current_scope.user.email}
+                </span>
+                <a href="/ustawienia" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                  Ustawienia
+                </a>
+                <.link href="/wyloguj" method="delete" class="btn-primary-solid px-4 py-2 text-sm font-medium rounded-lg">
+                  Wyloguj
+                </.link>
+              <% else %>
+                <a href="/logowanie" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                  Zaloguj się
+                </a>
+                <a href="/rejestracja" class="btn-primary-solid px-4 py-2 text-sm font-medium rounded-lg">
+                  Rozpocznij
+                </a>
+              <% end %>
               <button class="md:hidden p-2 text-base-content/60 hover:text-base-content transition-colors">
                 <.icon name="hero-bars-3" class="size-5" />
               </button>

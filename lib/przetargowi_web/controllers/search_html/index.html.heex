@@ -1,4 +1,4 @@
-<Layouts.app flash={@flash}>
+<Layouts.app flash={@flash} current_scope={@current_scope} hide_nav={true}>
   <div class="min-h-[calc(100vh-4rem)]">
     <!-- Search Bar -->
     <div class="border-b border-base-300 bg-base-100 sticky top-16 z-40">
@@ -152,16 +152,29 @@
       <% end %>
 
       <!-- Free searches notice -->
-      <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div class="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg bg-base-100 border border-base-300 elevation-2 text-sm">
-          <span class="text-base-content/60">
-            Pozostało <strong class="text-base-content">3</strong> darmowe wyszukiwania
-          </span>
-          <a href="/rejestracja" class="font-medium text-primary hover:underline">
-            Uzyskaj więcej
-          </a>
+      <%= if @current_scope do %>
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div class="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg bg-base-100 border border-base-300 elevation-2 text-sm">
+            <span class="text-base-content/60">
+              Plan darmowy · Pozostało <strong class="text-base-content">3</strong> wyszukiwania
+            </span>
+            <a href="/ustawienia" class="font-medium text-primary hover:underline">
+              Aktywuj Pro
+            </a>
+          </div>
         </div>
-      </div>
+      <% else %>
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div class="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg bg-base-100 border border-base-300 elevation-2 text-sm">
+            <span class="text-base-content/60">
+              Pozostało <strong class="text-base-content">3</strong> darmowe wyszukiwania
+            </span>
+            <a href="/rejestracja" class="font-medium text-primary hover:underline">
+              Uzyskaj więcej
+            </a>
+          </div>
+        </div>
+      <% end %>
     </div>
   </div>
 </Layouts.app>

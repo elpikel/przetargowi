@@ -1,4 +1,4 @@
-<Layouts.app flash={@flash}>
+<Layouts.app flash={@flash} current_scope={@current_scope}>
   <!-- Hero -->
   <section class="py-20 lg:py-28 hero-gradient">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,9 +54,11 @@
           </div>
         </form>
 
-        <p class="text-sm text-base-content/40 mt-6">
-          3 wyszukiwania za darmo · Bez rejestracji
-        </p>
+<%= unless @current_scope do %>
+          <p class="text-sm text-base-content/40 mt-6">
+            3 wyszukiwania za darmo · Bez rejestracji
+          </p>
+        <% end %>
       </div>
     </div>
   </section>
@@ -124,9 +126,15 @@
               Wsparcie priorytetowe
             </li>
           </ul>
-          <a href="/rejestracja?plan=pro" class="block w-full py-2.5 text-center text-sm font-medium bg-primary-content text-primary rounded-lg hover:bg-primary-content/90 transition-colors">
-            Rozpocznij
-          </a>
+          <%= if @current_scope do %>
+            <a href="/ustawienia" class="block w-full py-2.5 text-center text-sm font-medium bg-primary-content text-primary rounded-lg hover:bg-primary-content/90 transition-colors">
+              Aktywuj Pro
+            </a>
+          <% else %>
+            <a href="/rejestracja?plan=pro" class="block w-full py-2.5 text-center text-sm font-medium bg-primary-content text-primary rounded-lg hover:bg-primary-content/90 transition-colors">
+              Rozpocznij
+            </a>
+          <% end %>
         </div>
       </div>
     </div>
