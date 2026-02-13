@@ -73,6 +73,21 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Configure Oban
+config :przetargowi, Oban,
+  repo: Przetargowi.Repo,
+  queues: [default: 10, uzp_sync: 2],
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}}
+     ]}
+  ]
+
+# Configure HTTP client for UZP scraper
+config :przetargowi, :uzp_http_client, Przetargowi.UZP.HTTPClient
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

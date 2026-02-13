@@ -38,3 +38,9 @@ config :phoenix, :plug_init_mode, :runtime
 # Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
+
+# Disable Oban in tests - use manual testing
+config :przetargowi, Oban, testing: :manual
+
+# Use mock HTTP client in tests
+config :przetargowi, :uzp_http_client, Przetargowi.UZP.HTTPClientMock

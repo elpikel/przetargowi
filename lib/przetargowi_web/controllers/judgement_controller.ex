@@ -1,85 +1,65 @@
 defmodule PrzetargowiWeb.JudgementController do
   use PrzetargowiWeb, :controller
 
-  def show(conn, %{"id" => id}) do
-    # Mock judgement data - in production this would come from database
-    judgement = get_mock_judgement(id)
+  alias Przetargowi.Judgements
 
-    conn
-    |> assign(:page_title, judgement.signature)
-    |> assign(:judgement, judgement)
-    |> render(:show)
+  def show(conn, %{"id" => id}) do
+    case Judgements.get_judgement(id) do
+      nil ->
+        conn
+        |> put_flash(:error, "Orzeczenie nie zostało znalezione")
+        |> redirect(to: "/szukaj")
+
+      judgement ->
+        # Transform for view - extract plain text content from HTML
+        view_judgement = %{
+          id: judgement.id,
+          signature: judgement.signature || "Brak sygnatury",
+          decision_date: judgement.decision_date,
+          issuing_authority: judgement.issuing_authority || "Nieznany organ",
+          document_type: judgement.document_type || "Dokument",
+          chairman: judgement.chairman || "Nieznany",
+          contracting_authority: judgement.contracting_authority || "Nieznany zamawiający",
+          location: judgement.location || "Nieznana lokalizacja",
+          procedure_type: judgement.procedure_type || "Nieznany tryb",
+          order_type: judgement.order_type || "Nieznany rodzaj",
+          resolution_method: judgement.resolution_method || "Nieznany sposób rozstrzygnięcia",
+          key_provisions: judgement.key_provisions || [],
+          thematic_issues: judgement.thematic_issues || [],
+          meritum: extract_meritum(judgement.content_html),
+          content: extract_plain_text(judgement.content_html),
+          pdf_url: judgement.pdf_url || "#"
+        }
+
+        conn
+        |> assign(:page_title, view_judgement.signature)
+        |> assign(:judgement, view_judgement)
+        |> render(:show)
+    end
   end
 
-  defp get_mock_judgement(id) do
-    %{
-      id: id,
-      signature: "KIO 1234/24",
-      source: "KIO",
-      decision_date: "2024-12-15",
-      issuing_authority: "Krajowa Izba Odwoławcza",
-      document_type: "Wyrok",
-      chairman: "Jan Kowalski",
-      contracting_authority: "Gmina Warszawa - Urząd Miasta Stołecznego Warszawy",
-      location: "Warszawa",
-      procedure_type: "Przetarg nieograniczony",
-      order_type: "Usługi",
-      resolution_method: "Oddalenie odwołania",
-      key_provisions: [
-        "Art. 226 ust. 1 pkt 2 lit. a",
-        "Art. 226 ust. 1 pkt 5",
-        "Art. 109 ust. 1 pkt 7"
-      ],
-      thematic_issues: [
-        "Odrzucenie oferty",
-        "Wykluczenie wykonawcy",
-        "Zasada przejrzystości"
-      ],
-      meritum: """
-      Izba uznała, że zamawiający prawidłowo wykluczył wykonawcę z postępowania na podstawie
-      art. 109 ust. 1 pkt 7 ustawy Pzp, z uwagi na niewykonanie lub nienależyte wykonanie
-      wcześniejszej umowy w sprawie zamówienia publicznego, co skutkowało wypowiedzeniem tej umowy.
-      """,
-      content: """
-      Krajowa Izba Odwoławcza w składzie:
+  # Extract plain text from HTML content
+  defp extract_plain_text(nil), do: "Brak treści dokumentu"
+  defp extract_plain_text(html) do
+    case Floki.parse_document(html) do
+      {:ok, document} -> Floki.text(document)
+      _ -> html
+    end
+  end
 
-      Przewodniczący: Jan Kowalski
-      Protokolant: Anna Nowak
+  # Extract meritum (summary) - first paragraph or first 500 chars
+  defp extract_meritum(nil), do: "Brak streszczenia"
+  defp extract_meritum(html) do
+    text = extract_plain_text(html)
 
-      po rozpoznaniu na rozprawie w dniu 15 grudnia 2024 r. w Warszawie odwołania wniesionego
-      do Prezesa Krajowej Izby Odwoławczej w dniu 5 grudnia 2024 r. przez wykonawcę ABC Sp. z o.o.
-      z siedzibą w Krakowie w postępowaniu prowadzonym przez Gminę Warszawa - Urząd Miasta
-      Stołecznego Warszawy
-
-      orzeka:
-
-      1. Oddala odwołanie.
-      2. Kosztami postępowania obciąża odwołującego.
-
-      UZASADNIENIE
-
-      Zamawiający - Gmina Warszawa prowadzi postępowanie o udzielenie zamówienia publicznego
-      na "Świadczenie usług utrzymania czystości w obiektach użyteczności publicznej".
-
-      Odwołujący wniósł odwołanie wobec czynności wykluczenia go z postępowania na podstawie
-      art. 109 ust. 1 pkt 7 ustawy z dnia 11 września 2019 r. - Prawo zamówień publicznych.
-
-      Izba ustaliła następujący stan faktyczny:
-
-      Zamawiający w dniu 28 listopada 2024 r. wykluczył odwołującego z postępowania, wskazując
-      na niewykonanie wcześniejszej umowy zawartej z innym zamawiającym publicznym, która została
-      rozwiązana z winy wykonawcy.
-
-      Izba zważyła, co następuje:
-
-      Odwołanie nie zasługuje na uwzględnienie. Zamawiający prawidłowo zastosował przesłankę
-      wykluczenia z art. 109 ust. 1 pkt 7 ustawy Pzp. Z dokumentacji postępowania wynika,
-      że odwołujący w sposób zawiniony nie wykonał wcześniejszej umowy w sprawie zamówienia
-      publicznego, co doprowadziło do jej rozwiązania.
-
-      Biorąc powyższe pod uwagę, Izba orzekła jak w sentencji.
-      """,
-      pdf_url: "#"
-    }
+    text
+    |> String.split(~r/\n\n+/)
+    |> Enum.find(fn p -> String.length(String.trim(p)) > 100 end)
+    |> case do
+      nil ->
+        text |> String.slice(0, 500) |> String.trim()
+      paragraph ->
+        paragraph |> String.slice(0, 500) |> String.trim()
+    end
   end
 end

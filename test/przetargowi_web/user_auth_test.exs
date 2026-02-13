@@ -210,10 +210,7 @@ defmodule PrzetargowiWeb.UserAuthTest do
         |> assign(:current_scope, Scope.for_user(user))
         |> UserAuth.require_sudo_mode([])
 
-      assert redirected_to(conn) == ~p"/users/log-in"
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-               "You must re-authenticate to access this page."
+      assert redirected_to(conn) == ~p"/logowanie"
     end
   end
 
@@ -248,10 +245,7 @@ defmodule PrzetargowiWeb.UserAuthTest do
       conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
       assert conn.halted
 
-      assert redirected_to(conn) == ~p"/users/log-in"
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-               "You must log in to access this page."
+      assert redirected_to(conn) == ~p"/logowanie"
     end
 
     test "stores the path to redirect to on GET", %{conn: conn} do

@@ -12,8 +12,7 @@ defmodule Przetargowi.Application do
       Przetargowi.Repo,
       {DNSCluster, query: Application.get_env(:przetargowi, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Przetargowi.PubSub},
-      # Start a worker by calling: Przetargowi.Worker.start_link(arg)
-      # {Przetargowi.Worker, arg},
+      {Oban, Application.fetch_env!(:przetargowi, Oban)},
       # Start to serve requests, typically the last entry
       PrzetargowiWeb.Endpoint
     ]

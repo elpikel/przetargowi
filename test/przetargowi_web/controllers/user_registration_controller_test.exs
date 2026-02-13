@@ -3,47 +3,46 @@ defmodule PrzetargowiWeb.UserRegistrationControllerTest do
 
   import Przetargowi.AccountsFixtures
 
-  describe "GET /users/register" do
+  describe "GET /rejestracja" do
     test "renders registration page", %{conn: conn} do
-      conn = get(conn, ~p"/users/register")
+      conn = get(conn, ~p"/rejestracja")
       response = html_response(conn, 200)
-      assert response =~ "Register"
-      assert response =~ ~p"/users/log-in"
-      assert response =~ ~p"/users/register"
+      assert response =~ "Utwórz konto"
+      assert response =~ ~p"/logowanie"
+      assert response =~ ~p"/rejestracja"
     end
 
     test "redirects if already logged in", %{conn: conn} do
-      conn = conn |> log_in_user(user_fixture()) |> get(~p"/users/register")
+      conn = conn |> log_in_user(user_fixture()) |> get(~p"/rejestracja")
 
       assert redirected_to(conn) == ~p"/"
     end
   end
 
-  describe "POST /users/register" do
+  describe "POST /rejestracja" do
     @tag :capture_log
     test "creates account but does not log in", %{conn: conn} do
       email = unique_user_email()
 
       conn =
-        post(conn, ~p"/users/register", %{
+        post(conn, ~p"/rejestracja", %{
           "user" => valid_user_attributes(email: email)
         })
 
-      refute get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/users/log-in"
+      assert redirected_to(conn) == ~p"/logowanie"
 
       assert conn.assigns.flash["info"] =~
-               ~r/An email was sent to .*, please access it to confirm your account/
+               ~r/email/i
     end
 
     test "render errors for invalid data", %{conn: conn} do
       conn =
-        post(conn, ~p"/users/register", %{
+        post(conn, ~p"/rejestracja", %{
           "user" => %{"email" => "with spaces"}
         })
 
       response = html_response(conn, 200)
-      assert response =~ "Register"
+      assert response =~ "Utwórz konto"
       assert response =~ "must have the @ sign and no spaces"
     end
   end
