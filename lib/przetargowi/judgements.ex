@@ -24,7 +24,33 @@ defmodule Przetargowi.Judgements do
   @doc """
   Gets a single judgement by ID.
   """
-  def get_judgement(id), do: Repo.get(Judgement, id)
+  def get_judgement(id) when is_integer(id), do: Repo.get(Judgement, id)
+
+  def get_judgement(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {int_id, ""} -> Repo.get(Judgement, int_id)
+      _ -> get_judgement_by_signature(id)
+    end
+  end
+
+  @doc """
+  Gets a single judgement by signature (case-insensitive).
+  """
+  def get_judgement_by_signature(signature) do
+    # Normalize signature: "kio-1234-24" -> "KIO 1234/24"
+    normalized = normalize_signature(signature)
+
+    Judgement
+    |> where([j], fragment("LOWER(?)", j.signature) == ^String.downcase(normalized))
+    |> Repo.one()
+  end
+
+  defp normalize_signature(sig) do
+    sig
+    |> String.upcase()
+    |> String.replace("-", " ", global: false)
+    |> String.replace("-", "/")
+  end
 
   @doc """
   Gets a single judgement by UZP ID.

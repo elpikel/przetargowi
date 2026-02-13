@@ -105,7 +105,6 @@ defmodule Przetargowi.JudgementsTest do
         location: "Warszawa",
         resolution_method: "Oddalenie odwołania",
         procedure_type: "Przetarg nieograniczony",
-        order_type: "Usługi",
         key_provisions: ["Art. 226", "Art. 109"],
         thematic_issues: ["Wykluczenie"],
         content_html: "<p>Content</p>",

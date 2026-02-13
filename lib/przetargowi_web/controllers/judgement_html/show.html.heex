@@ -10,10 +10,12 @@
             </a>
             <h1 class="text-xl sm:text-2xl font-bold text-base-content truncate">{@judgement.signature}</h1>
           </div>
-          <a href={@judgement.pdf_url} class="btn-outline px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl inline-flex items-center gap-2 flex-shrink-0">
-            <.icon name="hero-document-arrow-down" class="size-5" />
-            <span class="hidden sm:inline">Pobierz PDF</span>
-          </a>
+          <%= if @judgement.pdf_url && @judgement.pdf_url != "#" do %>
+            <a href={@judgement.pdf_url} target="_blank" class="btn-outline px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl inline-flex items-center gap-2 flex-shrink-0">
+              <.icon name="hero-document-arrow-down" class="size-5" />
+              <span class="hidden sm:inline">Pobierz PDF</span>
+            </a>
+          <% end %>
         </div>
       </div>
     </div>
@@ -39,98 +41,118 @@
               </div>
               <div>
                 <dt class="text-sm text-base-content/50 mb-1">Data wydania</dt>
-                <dd class="text-base-content font-medium">{@judgement.decision_date}</dd>
+                <dd class="text-base-content font-medium">
+                  <%= if @judgement.decision_date do %>
+                    {Calendar.strftime(@judgement.decision_date, "%d.%m.%Y")}
+                  <% else %>
+                    Brak daty
+                  <% end %>
+                </dd>
               </div>
-              <div>
-                <dt class="text-sm text-base-content/50 mb-1">Przewodniczący</dt>
-                <dd class="text-base-content font-medium">{@judgement.chairman}</dd>
-              </div>
-              <div>
-                <dt class="text-sm text-base-content/50 mb-1">Sposób rozstrzygnięcia</dt>
-                <dd class="text-base-content font-medium">{@judgement.resolution_method}</dd>
-              </div>
+              <%= if @judgement.chairman && @judgement.chairman != "Nieznany" do %>
+                <div>
+                  <dt class="text-sm text-base-content/50 mb-1">Przewodniczący</dt>
+                  <dd class="text-base-content font-medium">{@judgement.chairman}</dd>
+                </div>
+              <% end %>
+              <%= if @judgement.resolution_method && @judgement.resolution_method != "Nieznany sposób rozstrzygnięcia" do %>
+                <div>
+                  <dt class="text-sm text-base-content/50 mb-1">Sposób rozstrzygnięcia</dt>
+                  <dd class="text-base-content font-medium">{@judgement.resolution_method}</dd>
+                </div>
+              <% end %>
             </dl>
           </div>
 
           <!-- Contracting Authority Card -->
-          <div class="pricing-card p-6">
-            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
-              <.icon name="hero-building-office-2" class="size-5 text-secondary" />
-              Zamawiający
-            </h2>
-            <dl class="space-y-4">
-              <div>
-                <dt class="text-sm text-base-content/50 mb-1">Nazwa</dt>
-                <dd class="text-base-content font-medium">{@judgement.contracting_authority}</dd>
-              </div>
-              <div>
-                <dt class="text-sm text-base-content/50 mb-1">Miejscowość</dt>
-                <dd class="text-base-content font-medium">{@judgement.location}</dd>
-              </div>
-            </dl>
-          </div>
+          <%= if (@judgement.contracting_authority && @judgement.contracting_authority != "Nieznany zamawiający") || (@judgement.location && @judgement.location != "Nieznana lokalizacja") do %>
+            <div class="pricing-card p-6">
+              <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+                <.icon name="hero-building-office-2" class="size-5 text-secondary" />
+                Zamawiający
+              </h2>
+              <dl class="space-y-4">
+                <%= if @judgement.contracting_authority && @judgement.contracting_authority != "Nieznany zamawiający" do %>
+                  <div>
+                    <dt class="text-sm text-base-content/50 mb-1">Nazwa</dt>
+                    <dd class="text-base-content font-medium">{@judgement.contracting_authority}</dd>
+                  </div>
+                <% end %>
+                <%= if @judgement.location && @judgement.location != "Nieznana lokalizacja" do %>
+                  <div>
+                    <dt class="text-sm text-base-content/50 mb-1">Miejscowość</dt>
+                    <dd class="text-base-content font-medium">{@judgement.location}</dd>
+                  </div>
+                <% end %>
+              </dl>
+            </div>
+          <% end %>
 
           <!-- Procedure Card -->
-          <div class="pricing-card p-6">
-            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
-              <.icon name="hero-clipboard-document-list" class="size-5 text-secondary" />
-              Postępowanie
-            </h2>
-            <dl class="space-y-4">
-              <div>
-                <dt class="text-sm text-base-content/50 mb-1">Tryb postępowania</dt>
-                <dd class="text-base-content font-medium">{@judgement.procedure_type}</dd>
-              </div>
-              <div>
-                <dt class="text-sm text-base-content/50 mb-1">Rodzaj zamówienia</dt>
-                <dd class="text-base-content font-medium">{@judgement.order_type}</dd>
-              </div>
-            </dl>
-          </div>
+          <%= if @judgement.procedure_type && @judgement.procedure_type != "Nieznany tryb" do %>
+            <div class="pricing-card p-6">
+              <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+                <.icon name="hero-clipboard-document-list" class="size-5 text-secondary" />
+                Postępowanie
+              </h2>
+              <dl class="space-y-4">
+                <div>
+                  <dt class="text-sm text-base-content/50 mb-1">Tryb postępowania</dt>
+                  <dd class="text-base-content font-medium">{@judgement.procedure_type}</dd>
+                </div>
+              </dl>
+            </div>
+          <% end %>
 
           <!-- Key Provisions Card -->
-          <div class="pricing-card p-6">
-            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
-              <.icon name="hero-scale" class="size-5 text-secondary" />
-              Kluczowe przepisy ustawy Pzp
-            </h2>
-            <div class="flex flex-wrap gap-2">
-              <%= for provision <- @judgement.key_provisions do %>
-                <span class="px-3 py-1.5 text-sm bg-primary/10 text-primary rounded-lg font-medium">
-                  {provision}
-                </span>
-              <% end %>
+          <%= if @judgement.key_provisions && length(@judgement.key_provisions) > 0 do %>
+            <div class="pricing-card p-6">
+              <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+                <.icon name="hero-scale" class="size-5 text-secondary" />
+                Kluczowe przepisy ustawy Pzp
+              </h2>
+              <div class="flex flex-wrap gap-2">
+                <%= for provision <- @judgement.key_provisions do %>
+                  <span class="px-3 py-1.5 text-sm bg-primary/10 text-primary rounded-lg font-medium">
+                    {provision}
+                  </span>
+                <% end %>
+              </div>
             </div>
-          </div>
+          <% end %>
 
           <!-- Thematic Issues Card -->
-          <div class="pricing-card p-6">
-            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
-              <.icon name="hero-tag" class="size-5 text-secondary" />
-              Zagadnienia merytoryczne
-            </h2>
-            <div class="flex flex-wrap gap-2">
-              <%= for issue <- @judgement.thematic_issues do %>
-                <span class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium">
-                  {issue}
-                </span>
-              <% end %>
+          <%= if @judgement.thematic_issues && length(@judgement.thematic_issues) > 0 do %>
+            <div class="pricing-card p-6">
+              <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+                <.icon name="hero-tag" class="size-5 text-secondary" />
+                Zagadnienia merytoryczne
+              </h2>
+              <div class="flex flex-wrap gap-2">
+                <%= for issue <- @judgement.thematic_issues do %>
+                  <span class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium">
+                    {issue}
+                  </span>
+                <% end %>
+              </div>
             </div>
-          </div>
+          <% end %>
         </div>
 
         <!-- Main content -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Meritum Section -->
-          <div class="meritum-box rounded-2xl p-6">
-            <h2 class="text-lg font-semibold text-secondary mb-3 flex items-center gap-2">
-              <.icon name="hero-light-bulb-solid" class="size-5" />
-              Meritum
-            </h2>
-            <p class="text-base-content/80 leading-relaxed">
-              {@judgement.meritum}
-            </p>
-          </div>
+          <%= if @judgement.meritum && @judgement.meritum != "Brak streszczenia" do %>
+            <div class="meritum-box rounded-2xl p-6">
+              <h2 class="text-lg font-semibold text-secondary mb-3 flex items-center gap-2">
+                <.icon name="hero-light-bulb-solid" class="size-5" />
+                Meritum
+              </h2>
+              <p class="text-base-content/80 leading-relaxed">
+                {@judgement.meritum}
+              </p>
+            </div>
+          <% end %>
 
           <!-- Document Content -->
           <div class="pricing-card p-6">
@@ -139,13 +161,23 @@
                 <.icon name="hero-document-text" class="size-5 text-secondary" />
                 Treść dokumentu
               </h2>
-              <a href={@judgement.pdf_url} class="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-                <.icon name="hero-document-arrow-down" class="size-4" />
-                Pobierz PDF
-              </a>
+              <%= if @judgement.pdf_url && @judgement.pdf_url != "#" do %>
+                <a href={@judgement.pdf_url} target="_blank" class="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+                  <.icon name="hero-document-arrow-down" class="size-4" />
+                  Pobierz PDF
+                </a>
+              <% end %>
             </div>
             <div class="prose prose-sm max-w-none text-base-content/80">
-              <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed bg-base-200/50 rounded-xl p-6 border border-base-300">{@judgement.content}</pre>
+              <%= if @judgement.content && @judgement.content != "Brak treści dokumentu" do %>
+                <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed bg-base-200/50 rounded-xl p-6 border border-base-300">{@judgement.content}</pre>
+              <% else %>
+                <div class="bg-base-200/50 rounded-xl p-6 border border-base-300 text-center">
+                  <.icon name="hero-document" class="size-12 text-base-content/30 mx-auto mb-3" />
+                  <p class="text-base-content/50">Treść dokumentu nie została jeszcze pobrana.</p>
+                  <p class="text-sm text-base-content/40 mt-1">Spróbuj ponownie później lub pobierz PDF.</p>
+                </div>
+              <% end %>
             </div>
           </div>
         </div>

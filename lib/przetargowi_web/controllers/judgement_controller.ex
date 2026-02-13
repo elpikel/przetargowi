@@ -22,7 +22,6 @@ defmodule PrzetargowiWeb.JudgementController do
           contracting_authority: judgement.contracting_authority || "Nieznany zamawiający",
           location: judgement.location || "Nieznana lokalizacja",
           procedure_type: judgement.procedure_type || "Nieznany tryb",
-          order_type: judgement.order_type || "Nieznany rodzaj",
           resolution_method: judgement.resolution_method || "Nieznany sposób rozstrzygnięcia",
           key_provisions: judgement.key_provisions || [],
           thematic_issues: judgement.thematic_issues || [],
