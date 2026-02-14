@@ -142,4 +142,20 @@ defmodule Przetargowi.Judgements do
     |> offset(^offset)
     |> Repo.all()
   end
+
+  @doc """
+  Count search results.
+  """
+  def count_search_results(query) do
+    search_term = "%#{query}%"
+
+    Judgement
+    |> where(
+      [j],
+      ilike(j.signature, ^search_term) or
+        ilike(j.contracting_authority, ^search_term) or
+        ilike(j.content_html, ^search_term)
+    )
+    |> Repo.aggregate(:count, :id)
+  end
 end

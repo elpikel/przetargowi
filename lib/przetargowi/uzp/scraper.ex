@@ -8,6 +8,8 @@ defmodule Przetargowi.UZP.Scraper do
 
   require Logger
 
+  alias Przetargowi.Judgements.TextExtractor
+
   @base_url "https://orzeczenia.uzp.gov.pl"
   @results_path "/Home/GetResults"
   @details_path "/Home/Details"
@@ -45,9 +47,15 @@ defmodule Przetargowi.UZP.Scraper do
           # Fetch the actual document content HTML from iframe URL
           content_html = fetch_content_html(details.content_url)
 
+          # Extract deliberation section and generate meritum summary
+          deliberation = TextExtractor.extract_deliberation(content_html)
+          meritum = TextExtractor.extract_deliberation_summary(deliberation)
+
           {:ok,
            details
            |> Map.put(:content_html, content_html)
+           |> Map.put(:deliberation, deliberation)
+           |> Map.put(:meritum, meritum)
            |> Map.delete(:content_url)}
         end
 

@@ -25,6 +25,8 @@ defmodule Przetargowi.Judgements.Judgement do
 
     # Full document content
     field :content_html, :string
+    field :deliberation, :string
+    field :meritum, :string
     field :pdf_url, :string
 
     # Sync metadata
@@ -38,7 +40,7 @@ defmodule Przetargowi.Judgements.Judgement do
   @optional_fields ~w(
     issuing_authority document_type decision_date chairman
     contracting_authority location resolution_method procedure_type
-    key_provisions thematic_issues content_html pdf_url
+    key_provisions thematic_issues content_html deliberation meritum pdf_url
     synced_at details_synced_at
   )a
 
@@ -61,7 +63,7 @@ defmodule Przetargowi.Judgements.Judgement do
     |> cast(attrs, [
       :chairman, :contracting_authority, :location, :resolution_method,
       :procedure_type, :key_provisions, :thematic_issues,
-      :content_html, :pdf_url, :details_synced_at
+      :content_html, :deliberation, :meritum, :pdf_url, :details_synced_at
     ])
   end
 end
