@@ -10,6 +10,7 @@ defmodule Przetargowi.UZP.SyncWorker do
     unique: [period: :infinity, states: [:available, :scheduled, :executing]]
 
   alias Przetargowi.Judgements
+  alias Przetargowi.Judgements.TextExtractor
   alias Przetargowi.UZP.Scraper
 
   require Logger
@@ -24,6 +25,7 @@ defmodule Przetargowi.UZP.SyncWorker do
     case mode do
       "list" -> sync_list_pages(args)
       "details" -> sync_details()
+      "reextract" -> reextract_deliberations()
       "full" -> sync_full()
     end
   end
@@ -131,6 +133,42 @@ defmodule Przetargowi.UZP.SyncWorker do
       {:error, reason} ->
         Logger.warning("Failed to fetch details for #{judgement.uzp_id}: #{inspect(reason)}")
         {:error, reason}
+    end
+  end
+
+  defp reextract_deliberations do
+    Logger.info("Starting deliberation re-extraction")
+
+    judgements = Judgements.judgements_with_content()
+    Logger.info("Found #{length(judgements)} judgements with content_html")
+
+    results =
+      Enum.map(judgements, fn judgement ->
+        reextract_judgement_deliberation(judgement)
+      end)
+
+    success_count = Enum.count(results, &(&1 == :ok))
+    error_count = Enum.count(results, &(&1 != :ok))
+
+    Logger.info("Re-extraction completed, success: #{success_count}, errors: #{error_count}")
+    :ok
+  end
+
+  defp reextract_judgement_deliberation(judgement) do
+    deliberation = TextExtractor.extract_deliberation(judgement.content_html)
+    meritum = TextExtractor.extract_deliberation_summary(deliberation)
+
+    case Judgements.update_deliberation(judgement, %{
+           deliberation: deliberation,
+           meritum: meritum
+         }) do
+      {:ok, _updated} ->
+        Logger.debug("Re-extracted deliberation for #{judgement.id}")
+        :ok
+
+      {:error, changeset} ->
+        Logger.warning("Failed to update deliberation for #{judgement.id}: #{inspect(changeset.errors)}")
+        {:error, changeset}
     end
   end
 end

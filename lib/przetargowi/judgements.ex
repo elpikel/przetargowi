@@ -122,21 +122,25 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
-  Search judgements by query string.
+  Search judgements by query string and filters.
   """
   def search_judgements(query, opts \\ []) do
     limit = Keyword.get(opts, :limit, 20)
     offset = Keyword.get(opts, :offset, 0)
+    filters = Keyword.get(opts, :filters, %{})
 
-    search_term = "%#{query}%"
+    base_query = Judgement
 
-    Judgement
-    |> where(
-      [j],
-      ilike(j.signature, ^search_term) or
-        ilike(j.contracting_authority, ^search_term) or
-        ilike(j.content_html, ^search_term)
-    )
+    base_query =
+      if query != "" do
+        search_term = "%#{query}%"
+        base_query |> where([j], ^build_search_conditions(search_term))
+      else
+        base_query
+      end
+
+    base_query
+    |> apply_filters(filters)
     |> order_by(desc: :decision_date)
     |> limit(^limit)
     |> offset(^offset)
@@ -144,18 +148,105 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
-  Count search results.
+  Count search results with filters.
   """
-  def count_search_results(query) do
-    search_term = "%#{query}%"
+  def count_search_results(query, filters \\ %{}) do
+    base_query = Judgement
 
-    Judgement
-    |> where(
+    base_query =
+      if query != "" do
+        search_term = "%#{query}%"
+        base_query |> where([j], ^build_search_conditions(search_term))
+      else
+        base_query
+      end
+
+    base_query
+    |> apply_filters(filters)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  defp build_search_conditions(search_term) do
+    dynamic(
       [j],
       ilike(j.signature, ^search_term) or
         ilike(j.contracting_authority, ^search_term) or
+        ilike(j.document_type, ^search_term) or
+        ilike(j.issuing_authority, ^search_term) or
+        ilike(j.resolution_method, ^search_term) or
+        ilike(j.procedure_type, ^search_term) or
+        fragment("EXISTS (SELECT 1 FROM unnest(?) AS t WHERE t ILIKE ?)", j.thematic_issues, ^search_term) or
         ilike(j.content_html, ^search_term)
     )
-    |> Repo.aggregate(:count, :id)
+  end
+
+  defp apply_filters(query, filters) do
+    Enum.reduce(filters, query, fn
+      {:document_type, value}, q when value != "" ->
+        where(q, [j], j.document_type == ^value)
+
+      {:issuing_authority, value}, q when value != "" ->
+        where(q, [j], j.issuing_authority == ^value)
+
+      {:resolution_method, value}, q when value != "" ->
+        where(q, [j], j.resolution_method == ^value)
+
+      {:procedure_type, value}, q when value != "" ->
+        where(q, [j], j.procedure_type == ^value)
+
+      {:date_from, value}, q when value != "" ->
+        case Date.from_iso8601(value) do
+          {:ok, date} -> where(q, [j], j.decision_date >= ^date)
+          _ -> q
+        end
+
+      {:date_to, value}, q when value != "" ->
+        case Date.from_iso8601(value) do
+          {:ok, date} -> where(q, [j], j.decision_date <= ^date)
+          _ -> q
+        end
+
+      _, q ->
+        q
+    end)
+  end
+
+  @doc """
+  Get distinct values for filter dropdowns.
+  """
+  def get_filter_options do
+    %{
+      document_types: get_distinct_values(:document_type),
+      issuing_authorities: get_distinct_values(:issuing_authority),
+      resolution_methods: get_distinct_values(:resolution_method),
+      procedure_types: get_distinct_values(:procedure_type)
+    }
+  end
+
+  defp get_distinct_values(field) do
+    Judgement
+    |> select([j], field(j, ^field))
+    |> where([j], not is_nil(field(j, ^field)))
+    |> distinct(true)
+    |> order_by([j], field(j, ^field))
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns judgements that have content_html (for re-extraction).
+  """
+  def judgements_with_content do
+    Judgement
+    |> where([j], not is_nil(j.content_html))
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates only deliberation and meritum fields.
+  """
+  def update_deliberation(%Judgement{} = judgement, attrs) do
+    judgement
+    |> Ecto.Changeset.cast(attrs, [:deliberation, :meritum])
+    |> Repo.update()
   end
 end

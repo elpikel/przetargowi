@@ -4,19 +4,88 @@
     <div class="border-b border-base-300 bg-base-100/95 backdrop-blur-sm sticky top-[4.5rem] z-40">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         <form action="/szukaj" method="get">
-          <div class="flex flex-col md:flex-row gap-4">
-            <div class="flex-1 relative">
+          <div class="flex flex-col gap-4">
+            <!-- Main search input -->
+            <div class="flex flex-col md:flex-row gap-4">
+              <div class="flex-1 relative">
+                <input
+                  type="text"
+                  name="q"
+                  value={@query}
+                  class="search-input w-full pl-5 pr-5 py-3.5 rounded-xl text-base"
+                  placeholder="Opisz czego szukasz..."
+                />
+              </div>
+              <button type="submit" class="btn-gold px-6 py-2.5 rounded-xl font-semibold">
+                Szukaj
+              </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <select
+                name="document_type"
+                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
+              >
+                <option value="">Rodzaj dokumentu</option>
+                <%= for type <- @filter_options.document_types do %>
+                  <option value={type} selected={@filters[:document_type] == type}>{type}</option>
+                <% end %>
+              </select>
+
+              <select
+                name="issuing_authority"
+                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
+              >
+                <option value="">Organ wydający</option>
+                <%= for authority <- @filter_options.issuing_authorities do %>
+                  <option value={authority} selected={@filters[:issuing_authority] == authority}>{authority}</option>
+                <% end %>
+              </select>
+
+              <select
+                name="resolution_method"
+                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
+              >
+                <option value="">Sposób rozstrzygnięcia</option>
+                <%= for method <- @filter_options.resolution_methods do %>
+                  <option value={method} selected={@filters[:resolution_method] == method}>{method}</option>
+                <% end %>
+              </select>
+
+              <select
+                name="procedure_type"
+                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
+              >
+                <option value="">Tryb postępowania</option>
+                <%= for proc_type <- @filter_options.procedure_types do %>
+                  <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>{proc_type}</option>
+                <% end %>
+              </select>
+
               <input
-                type="text"
-                name="q"
-                value={@query}
-                class="search-input w-full pl-5 pr-5 py-3.5 rounded-xl text-base"
-                placeholder="Opisz czego szukasz..."
+                type="date"
+                name="date_from"
+                value={@filters[:date_from]}
+                class="input input-bordered input-sm w-full bg-base-200 border-base-300 text-sm"
+                placeholder="Data od"
+              />
+
+              <input
+                type="date"
+                name="date_to"
+                value={@filters[:date_to]}
+                class="input input-bordered input-sm w-full bg-base-200 border-base-300 text-sm"
+                placeholder="Data do"
               />
             </div>
-            <button type="submit" class="btn-gold px-6 py-2.5 rounded-xl font-semibold">
-              Szukaj
-            </button>
+
+            <%= if has_active_filters?(@filters) do %>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-base-content/60">Aktywne filtry:</span>
+                <a href="/szukaj" class="text-sm text-primary hover:underline">Wyczyść filtry</a>
+              </div>
+            <% end %>
           </div>
         </form>
       </div>
@@ -114,7 +183,7 @@
           <nav class="flex items-center justify-center gap-2 mt-10">
             <%= if @current_page > 1 do %>
               <a
-                href={"/szukaj?#{pagination_params(@query, @current_page - 1)}"}
+                href={"/szukaj?#{pagination_params(@query, @filters, @current_page - 1)}"}
                 class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
               >
                 <.icon name="hero-chevron-left" class="size-4" />
@@ -130,7 +199,7 @@
                 <span class="px-3 py-2 text-base-content/50">...</span>
               <% else %>
                 <a
-                  href={"/szukaj?#{pagination_params(@query, page_num)}"}
+                  href={"/szukaj?#{pagination_params(@query, @filters, page_num)}"}
                   class={"px-4 py-2 rounded-lg font-medium transition-colors " <> if(page_num == @current_page, do: "bg-primary text-primary-content", else: "bg-base-200 hover:bg-base-300 text-base-content")}
                 >
                   {page_num}
@@ -140,7 +209,7 @@
 
             <%= if @current_page < @total_pages do %>
               <a
-                href={"/szukaj?#{pagination_params(@query, @current_page + 1)}"}
+                href={"/szukaj?#{pagination_params(@query, @filters, @current_page + 1)}"}
                 class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
               >
                 <.icon name="hero-chevron-right" class="size-4" />

@@ -61,14 +61,15 @@ defmodule Przetargowi.Judgements.TextExtractor do
 
   # Marker patterns for deliberation section
   # Using flexible patterns to handle encoding variations
+  # Include optional colon/period at the end that often follows the marker
   @deliberation_markers [
     # Full formal marker
-    ~r/krajowa\s+izba\s+odwo[łl]awcza\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje/iu,
+    ~r/krajowa\s+izba\s+odwo[łl]awcza\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
     # Shorter variants
-    ~r/izba\s+ustali[łl]a\s+i\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje/iu,
-    ~r/izba\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje/iu,
+    ~r/izba\s+ustali[łl]a\s+i\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    ~r/izba\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
     # Even shorter
-    ~r/zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje/iu
+    ~r/zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu
   ]
 
   defp find_deliberation_start(text) do

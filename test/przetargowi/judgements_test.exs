@@ -183,6 +183,146 @@ defmodule Przetargowi.JudgementsTest do
       assert length(result) == 1
       assert hd(result).id == j1.id
     end
+
+    test "filters by document_type" do
+      {:ok, j1} = create_judgement(%{document_type: "Wyrok"})
+      {:ok, _j2} = create_judgement(%{document_type: "Postanowienie"})
+
+      result = Judgements.search_judgements("", filters: %{document_type: "Wyrok"})
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by issuing_authority" do
+      {:ok, j1} = create_judgement(%{issuing_authority: "KIO"})
+      {:ok, _j2} = create_judgement(%{issuing_authority: "SO"})
+
+      result = Judgements.search_judgements("", filters: %{issuing_authority: "KIO"})
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by resolution_method" do
+      {:ok, j1} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j1, %{resolution_method: "Oddalenie odwołania"})
+
+      {:ok, j2} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j2, %{resolution_method: "Uwzględnienie odwołania"})
+
+      result = Judgements.search_judgements("", filters: %{resolution_method: "Oddalenie odwołania"})
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by procedure_type" do
+      {:ok, j1} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j1, %{procedure_type: "Przetarg nieograniczony"})
+
+      {:ok, j2} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j2, %{procedure_type: "Zamówienie z wolnej ręki"})
+
+      result = Judgements.search_judgements("", filters: %{procedure_type: "Przetarg nieograniczony"})
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by date_from" do
+      {:ok, j1} = create_judgement(%{decision_date: ~D[2024-12-10]})
+      {:ok, _j2} = create_judgement(%{decision_date: ~D[2024-12-01]})
+
+      result = Judgements.search_judgements("", filters: %{date_from: "2024-12-05"})
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by date_to" do
+      {:ok, _j1} = create_judgement(%{decision_date: ~D[2024-12-10]})
+      {:ok, j2} = create_judgement(%{decision_date: ~D[2024-12-01]})
+
+      result = Judgements.search_judgements("", filters: %{date_to: "2024-12-05"})
+      assert length(result) == 1
+      assert hd(result).id == j2.id
+    end
+
+    test "filters by date range" do
+      {:ok, _j1} = create_judgement(%{decision_date: ~D[2024-12-01]})
+      {:ok, j2} = create_judgement(%{decision_date: ~D[2024-12-10]})
+      {:ok, _j3} = create_judgement(%{decision_date: ~D[2024-12-20]})
+
+      result = Judgements.search_judgements("", filters: %{date_from: "2024-12-05", date_to: "2024-12-15"})
+      assert length(result) == 1
+      assert hd(result).id == j2.id
+    end
+
+    test "combines search query with filters" do
+      {:ok, j1} = create_judgement(%{signature: "KIO 1234/24", document_type: "Wyrok"})
+      {:ok, _j2} = create_judgement(%{signature: "KIO 1234/25", document_type: "Postanowienie"})
+      {:ok, _j3} = create_judgement(%{signature: "KIO 5678/24", document_type: "Wyrok"})
+
+      result = Judgements.search_judgements("1234", filters: %{document_type: "Wyrok"})
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "ignores empty filter values" do
+      {:ok, j1} = create_judgement(%{document_type: "Wyrok"})
+      {:ok, j2} = create_judgement(%{document_type: "Postanowienie"})
+
+      result = Judgements.search_judgements("", filters: %{document_type: "", issuing_authority: ""})
+      assert length(result) == 2
+      ids = Enum.map(result, & &1.id)
+      assert j1.id in ids
+      assert j2.id in ids
+    end
+  end
+
+  describe "count_search_results/2" do
+    test "counts results with filters" do
+      {:ok, _j1} = create_judgement(%{document_type: "Wyrok"})
+      {:ok, _j2} = create_judgement(%{document_type: "Wyrok"})
+      {:ok, _j3} = create_judgement(%{document_type: "Postanowienie"})
+
+      assert Judgements.count_search_results("", %{document_type: "Wyrok"}) == 2
+      assert Judgements.count_search_results("", %{document_type: "Postanowienie"}) == 1
+    end
+
+    test "counts results with query and filters" do
+      {:ok, _j1} = create_judgement(%{signature: "KIO 1234/24", document_type: "Wyrok"})
+      {:ok, _j2} = create_judgement(%{signature: "KIO 1234/25", document_type: "Postanowienie"})
+
+      assert Judgements.count_search_results("1234", %{document_type: "Wyrok"}) == 1
+    end
+  end
+
+  describe "get_filter_options/0" do
+    test "returns distinct values for filter fields" do
+      {:ok, _j1} = create_judgement(%{document_type: "Wyrok", issuing_authority: "KIO"})
+      {:ok, _j2} = create_judgement(%{document_type: "Postanowienie", issuing_authority: "KIO"})
+      {:ok, j3} = create_judgement(%{document_type: "Wyrok", issuing_authority: "SO"})
+      {:ok, _} = Judgements.update_with_details(j3, %{resolution_method: "Oddalenie", procedure_type: "Przetarg"})
+
+      options = Judgements.get_filter_options()
+
+      assert "Wyrok" in options.document_types
+      assert "Postanowienie" in options.document_types
+      assert length(options.document_types) == 2
+
+      assert "KIO" in options.issuing_authorities
+      assert "SO" in options.issuing_authorities
+
+      assert "Oddalenie" in options.resolution_methods
+      assert "Przetarg" in options.procedure_types
+    end
+
+    test "excludes nil values" do
+      {:ok, _j1} = create_judgement(%{document_type: "Wyrok"})
+      {:ok, _j2} = create_judgement(%{document_type: nil})
+
+      options = Judgements.get_filter_options()
+
+      assert "Wyrok" in options.document_types
+      refute nil in options.document_types
+    end
   end
 
   # Helper function to create test judgements
