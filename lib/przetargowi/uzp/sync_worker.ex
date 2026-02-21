@@ -15,7 +15,6 @@ defmodule Przetargowi.UZP.SyncWorker do
 
   require Logger
 
-  @max_pages 100
   @delay_between_requests 1_000
 
   @impl Oban.Worker
@@ -37,24 +36,26 @@ defmodule Przetargowi.UZP.SyncWorker do
     end
   end
 
-  defp sync_list_pages(args) do
-    max_pages = Map.get(args, "max_pages", @max_pages)
-
-    Logger.info("Starting UZP list sync, max_pages: #{max_pages}")
+  defp sync_list_pages(_args) do
+    Logger.info("Starting UZP list sync")
 
     result =
-      1..max_pages
+      Stream.iterate(1, &(&1 + 1))
       |> Enum.reduce_while({:ok, 0}, fn page, {:ok, count} ->
         Process.sleep(@delay_between_requests)
 
         case sync_page(page) do
-          {:ok, 0} ->
-            Logger.info("No more results on page #{page}, stopping")
+          {:ok, 0, 0} ->
+            Logger.info("No results on page #{page}, stopping")
             {:halt, {:ok, count}}
 
-          {:ok, page_count} ->
-            Logger.info("Synced page #{page}, #{page_count} judgements")
-            {:cont, {:ok, count + page_count}}
+          {:ok, _total, 0} ->
+            Logger.info("Page #{page}: all judgements already in DB, stopping")
+            {:halt, {:ok, count}}
+
+          {:ok, total, new_count} ->
+            Logger.info("Synced page #{page}: #{new_count} new of #{total} judgements")
+            {:cont, {:ok, count + new_count}}
 
           {:error, reason} ->
             Logger.error("Failed to sync page #{page}: #{inspect(reason)}")
@@ -75,18 +76,26 @@ defmodule Przetargowi.UZP.SyncWorker do
   defp sync_page(page) do
     case Scraper.fetch_list_page(page) do
       {:ok, %{judgements: []}} ->
-        {:ok, 0}
+        {:ok, 0, 0}
 
       {:ok, %{judgements: judgements}} ->
-        Enum.each(judgements, fn attrs ->
-          case Judgements.upsert_from_list(attrs) do
-            {:ok, _judgement} -> :ok
-            {:error, changeset} ->
-              Logger.warning("Failed to upsert judgement #{attrs.uzp_id}: #{inspect(changeset.errors)}")
-          end
-        end)
+        results =
+          Enum.map(judgements, fn attrs ->
+            # Check if judgement already exists
+            exists = Judgements.exists_by_uzp_id?(attrs.uzp_id)
 
-        {:ok, length(judgements)}
+            case Judgements.upsert_from_list(attrs) do
+              {:ok, _judgement} ->
+                if exists, do: :existing, else: :new
+
+              {:error, changeset} ->
+                Logger.warning("Failed to upsert judgement #{attrs.uzp_id}: #{inspect(changeset.errors)}")
+                :error
+            end
+          end)
+
+        new_count = Enum.count(results, &(&1 == :new))
+        {:ok, length(judgements), new_count}
 
       {:error, reason} ->
         {:error, reason}
@@ -96,24 +105,36 @@ defmodule Przetargowi.UZP.SyncWorker do
   defp sync_details do
     Logger.info("Starting UZP details sync")
 
+    # Process in batches of 100 until all are done
+    sync_details_batch()
+  end
+
+  defp sync_details_batch do
     judgements = Judgements.judgements_needing_details(100)
-    Logger.info("Found #{length(judgements)} judgements needing details")
 
-    results =
-      Enum.map(judgements, fn judgement ->
-        Process.sleep(@delay_between_requests)
-        sync_judgement_details(judgement)
-      end)
-
-    success_count = Enum.count(results, &(&1 == :ok))
-    error_count = Enum.count(results, &(&1 != :ok))
-
-    Logger.info("UZP details sync completed, success: #{success_count}, errors: #{error_count}")
-
-    if error_count > length(judgements) / 2 do
-      {:error, "Too many errors during details sync"}
-    else
+    if length(judgements) == 0 do
+      Logger.info("All judgements have details synced")
       :ok
+    else
+      Logger.info("Processing batch of #{length(judgements)} judgements needing details")
+
+      results =
+        Enum.map(judgements, fn judgement ->
+          Process.sleep(@delay_between_requests)
+          sync_judgement_details(judgement)
+        end)
+
+      success_count = Enum.count(results, &(&1 == :ok))
+      error_count = Enum.count(results, &(&1 != :ok))
+
+      Logger.info("Batch completed: #{success_count} success, #{error_count} errors")
+
+      if error_count > length(judgements) / 2 do
+        {:error, "Too many errors during details sync"}
+      else
+        # Continue with next batch
+        sync_details_batch()
+      end
     end
   end
 

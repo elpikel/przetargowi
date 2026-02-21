@@ -60,6 +60,15 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
+  Checks if a judgement with the given UZP ID exists.
+  """
+  def exists_by_uzp_id?(uzp_id) do
+    Judgement
+    |> where([j], j.uzp_id == ^uzp_id)
+    |> Repo.exists?()
+  end
+
+  @doc """
   Creates a judgement.
   """
   def create_judgement(attrs \\ %{}) do

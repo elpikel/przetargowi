@@ -5,6 +5,7 @@ defmodule Przetargowi.Judgements.TextExtractor do
   The most important section in KIO judgements is the deliberation
   (uzasadnienie), which starts with phrases like:
   - "Krajowa Izba Odwoławcza zważyła, co następuje"
+  - "Krajowa Izba Odwoławcza ustaliła i zważyła"
   - "Izba ustaliła i zważyła, co następuje"
   - "Izba zważyła, co następuje"
   """
@@ -18,23 +19,29 @@ defmodule Przetargowi.Judgements.TextExtractor do
   def extract_deliberation(nil), do: nil
 
   def extract_deliberation(content_html) when is_binary(content_html) do
-    # Parse HTML to plain text
-    text =
-      case Floki.parse_document(content_html) do
-        {:ok, document} -> Floki.text(document)
-        _ -> content_html
-      end
+    # Parse HTML to plain text, preserving spacing between elements
+    text = html_to_text(content_html)
 
-    # Find deliberation marker
-    case find_deliberation_start(text) do
+    # Find deliberation marker and extract everything after it
+    case find_and_split_at_marker(text) do
       nil -> nil
-      {start_pos, marker_length} ->
-        # Extract from marker to end
-        text
-        |> String.slice((start_pos + marker_length)..-1//1)
+      deliberation ->
+        deliberation
         |> String.trim()
         |> clean_deliberation_text()
     end
+  end
+
+  defp html_to_text(html) do
+    # Replace br tags with spaces
+    html
+    |> String.replace(~r/<br\s*\/?>/i, " ")
+    |> then(fn h ->
+      case Floki.parse_document(h) do
+        {:ok, document} -> Floki.text(document, sep: " ")
+        _ -> html
+      end
+    end)
   end
 
   @doc """
@@ -59,28 +66,78 @@ defmodule Przetargowi.Judgements.TextExtractor do
     end)
   end
 
-  # Marker patterns for deliberation section
-  # Using flexible patterns to handle encoding variations
-  # Include optional colon/period at the end that often follows the marker
-  @deliberation_markers [
-    # Full formal marker
+  # Primary marker patterns for deliberation section (specific KIO phrases)
+  @primary_markers [
+    # Full formal markers with "co następuje"
     ~r/krajowa\s+izba\s+odwo[łl]awcza\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
-    # Shorter variants
     ~r/izba\s+ustali[łl]a\s+i\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
     ~r/izba\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
-    # Even shorter
-    ~r/zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu
+    # Variants with optional "co następuje" (feminine form: ustaliła/zważyła)
+    ~r/krajowa\s+izba\s+odwo[łl]awcza\s+ustali[łl]a\s+i\s+zwa[żz]y[łl]a,?\s*(co\s+nast[ęe]puje)?[:\.]?\s*/iu,
+    ~r/izba\s+ustali[łl]a\s+i\s+zwa[żz]y[łl]a,?\s*(co\s+nast[ęe]puje)?[:\.]?\s*/iu,
+    # "ustaliła, co następuje" without "i zważyła"
+    ~r/krajowa\s+izba\s+odwo[łl]awcza\s+ustali[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    ~r/izba\s+odwo[łl]awcza\s+ustali[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    # Masculine form: ustalił/zważył (e.g. "skład orzekający Izby ustalił i zważył")
+    ~r/ustali[łl]\s+i\s+zwa[żz]y[łl],?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    # Standalone "ustaliła i zważyła" (without Izba prefix)
+    ~r/ustali[łl]a\s+i\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    # "Odwoławcza zważyła" (without "Izba" prefix)
+    ~r/odwo[łl]awcza\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    # Standalone "zważyła, co następuje" (when preceded by long preamble)
+    ~r/zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    # "Rozważania" variant
+    ~r/rozwa[żz]ania\s+krajowej\s+izby\s+odwo[łl]awczej\s*\(?\s*KIO\s*\)?[:\.]?\s*/iu,
+    # "Stanowisko Izby" header
+    ~r/stanowisko\s+izby[:\.]?\s*/iu
   ]
 
-  defp find_deliberation_start(text) do
-    text_lower = String.downcase(text)
+  # Fallback pattern - only used if primary markers not found
+  # Must appear after first 20% of document to avoid matching headers
+  @fallback_marker ~r/uzasadnienie[:\.]?\s*/iu
 
-    Enum.find_value(@deliberation_markers, fn pattern ->
-      case Regex.run(pattern, text_lower, return: :index) do
-        [{start, length}] -> {start, length}
-        _ -> nil
-      end
-    end)
+  defp find_and_split_at_marker(text) do
+    # First try primary markers
+    case find_earliest_match(text, @primary_markers) do
+      nil ->
+        # Fallback to "Uzasadnienie" but only if it appears after first 20% of text
+        try_fallback_marker(text)
+
+      result ->
+        result
+    end
+  end
+
+  defp find_earliest_match(text, patterns) do
+    results =
+      patterns
+      |> Enum.flat_map(fn pattern ->
+        case Regex.split(pattern, text, parts: 2) do
+          [before, rest] -> [{String.length(before), rest}]
+          _ -> []
+        end
+      end)
+
+    case Enum.min_by(results, fn {pos, _} -> pos end, fn -> nil end) do
+      nil -> nil
+      {_pos, rest} -> rest
+    end
+  end
+
+  defp try_fallback_marker(text) do
+    min_position = div(String.length(text), 10)  # Must be after first 10%
+
+    case Regex.split(@fallback_marker, text, parts: 2) do
+      [before, rest] when byte_size(before) > 0 ->
+        if String.length(before) >= min_position do
+          rest
+        else
+          nil
+        end
+
+      _ ->
+        nil
+    end
   end
 
   defp clean_deliberation_text(text) do
