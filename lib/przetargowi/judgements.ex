@@ -267,6 +267,42 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
+  Returns judgements that have deliberation but are missing meritum.
+  """
+  def judgements_needing_meritum(limit \\ 100) do
+    Judgement
+    |> where([j], not is_nil(j.deliberation) and j.deliberation != "" and (is_nil(j.meritum) or j.meritum == ""))
+    |> select([j], %{id: j.id, deliberation: j.deliberation})
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns count of judgements needing meritum generation.
+  """
+  def count_judgements_needing_meritum do
+    Judgement
+    |> where([j], not is_nil(j.deliberation) and j.deliberation != "" and (is_nil(j.meritum) or j.meritum == ""))
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Updates only the meritum field by judgement ID.
+  """
+  def update_meritum_by_id(id, meritum) do
+    Judgement
+    |> where([j], j.id == ^id)
+    |> Repo.update_all(set: [
+      meritum: meritum,
+      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    ])
+    |> case do
+      {1, _} -> {:ok, id}
+      {0, _} -> {:error, :not_found}
+    end
+  end
+
+  @doc """
   Updates only deliberation and meritum fields.
   """
   def update_deliberation(%Judgement{} = judgement, attrs) do

@@ -25,6 +25,7 @@ defmodule Przetargowi.UZP.SyncWorker do
       "list" -> sync_list_pages(args)
       "details" -> sync_details()
       "reextract" -> reextract_deliberations()
+      "fix_meritum" -> fix_missing_meritum()
       "full" -> sync_full()
     end
   end
@@ -218,6 +219,48 @@ defmodule Przetargowi.UZP.SyncWorker do
       {:error, reason} ->
         Logger.warning("Failed to update deliberation for #{id}: #{inspect(reason)}")
         {:error, reason}
+    end
+  end
+
+  defp fix_missing_meritum do
+    Logger.info("Starting meritum fix")
+    total = Judgements.count_judgements_needing_meritum()
+    Logger.info("Found #{total} judgements needing meritum")
+
+    fix_meritum_batch(1, 0)
+  end
+
+  defp fix_meritum_batch(batch_num, total_fixed) do
+    judgements = Judgements.judgements_needing_meritum(100)
+
+    if length(judgements) == 0 do
+      Logger.info("Meritum fix completed, total fixed: #{total_fixed}")
+      :ok
+    else
+      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
+
+      results =
+        Enum.map(judgements, fn %{id: id, deliberation: deliberation} ->
+          meritum = TextExtractor.extract_deliberation_summary(deliberation)
+          meritum = meritum || ""
+
+          case Judgements.update_meritum_by_id(id, meritum) do
+            {:ok, _} ->
+              print_progress(".")
+              :ok
+
+            {:error, reason} ->
+              print_progress("x")
+              Logger.warning("Failed to update meritum for #{id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+
+      IO.puts("")
+      success_count = Enum.count(results, &(&1 == :ok))
+      Logger.info("Batch completed: #{success_count} fixed")
+
+      fix_meritum_batch(batch_num + 1, total_fixed + success_count)
     end
   end
 
