@@ -2,6 +2,8 @@ defmodule Przetargowi.Judgements.Judgement do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Przetargowi.Embeddings.Chunk
+
   schema "judgements" do
     # External ID from UZP website
     field :uzp_id, :string
@@ -32,6 +34,9 @@ defmodule Przetargowi.Judgements.Judgement do
     # Sync metadata
     field :synced_at, :utc_datetime
     field :details_synced_at, :utc_datetime
+
+    # Associations
+    has_many :chunks, Chunk
 
     timestamps(type: :utc_datetime)
   end

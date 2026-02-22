@@ -23,6 +23,11 @@ end
 config :przetargowi, PrzetargowiWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# OpenAI API key for embeddings
+if api_key = System.get_env("OPENAI_API_KEY") do
+  config :przetargowi, :openai_api_key, api_key
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

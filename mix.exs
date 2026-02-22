@@ -69,6 +69,7 @@ defmodule Przetargowi.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
       {:oban, "~> 2.18"},
       {:floki, "~> 0.36"},
+      {:pgvector, "~> 0.3"},
       {:mox, "~> 1.1", only: :test}
     ]
   end

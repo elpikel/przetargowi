@@ -76,7 +76,7 @@ config :phoenix, :json_library, Jason
 # Configure Oban
 config :przetargowi, Oban,
   repo: Przetargowi.Repo,
-  queues: [default: 10, uzp_sync: 2],
+  queues: [default: 10, uzp_sync: 2, embeddings: 1],
   plugins: [
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
