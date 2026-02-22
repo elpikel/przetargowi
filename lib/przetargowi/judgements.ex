@@ -142,8 +142,7 @@ defmodule Przetargowi.Judgements do
 
     base_query =
       if query != "" do
-        search_term = "%#{query}%"
-        base_query |> where([j], ^build_search_conditions(search_term))
+        base_query |> where([j], ^build_search_conditions(query))
       else
         base_query
       end
@@ -151,6 +150,15 @@ defmodule Przetargowi.Judgements do
     base_query
     |> apply_filters(filters)
     |> order_by(desc: :decision_date)
+    |> select([j], %{
+      id: j.id,
+      signature: j.signature,
+      decision_date: j.decision_date,
+      document_type: j.document_type,
+      resolution_method: j.resolution_method,
+      contracting_authority: j.contracting_authority,
+      meritum: j.meritum
+    })
     |> limit(^limit)
     |> offset(^offset)
     |> Repo.all()
@@ -164,8 +172,7 @@ defmodule Przetargowi.Judgements do
 
     base_query =
       if query != "" do
-        search_term = "%#{query}%"
-        base_query |> where([j], ^build_search_conditions(search_term))
+        base_query |> where([j], ^build_search_conditions(query))
       else
         base_query
       end
@@ -175,17 +182,15 @@ defmodule Przetargowi.Judgements do
     |> Repo.aggregate(:count, :id)
   end
 
-  defp build_search_conditions(search_term) do
+  defp build_search_conditions(query) do
+    # Use full-text search on the search_vector column (GIN indexed)
+    # Falls back to ILIKE for signature pattern match
+    search_pattern = "%#{query}%"
+
     dynamic(
       [j],
-      ilike(j.signature, ^search_term) or
-        ilike(j.contracting_authority, ^search_term) or
-        ilike(j.document_type, ^search_term) or
-        ilike(j.issuing_authority, ^search_term) or
-        ilike(j.resolution_method, ^search_term) or
-        ilike(j.procedure_type, ^search_term) or
-        fragment("EXISTS (SELECT 1 FROM unnest(?) AS t WHERE t ILIKE ?)", j.thematic_issues, ^search_term) or
-        ilike(j.content_html, ^search_term)
+      fragment("? @@ plainto_tsquery('simple', ?)", j.search_vector, ^query) or
+        ilike(j.signature, ^search_pattern)
     )
   end
 
