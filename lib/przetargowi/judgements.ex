@@ -327,4 +327,73 @@ defmodule Przetargowi.Judgements do
       {0, _} -> {:error, :not_found}
     end
   end
+
+  @doc """
+  Normalizes document type to standard lowercase form.
+  """
+  def normalize_document_type(nil), do: nil
+  def normalize_document_type("-"), do: nil
+
+  def normalize_document_type(type) when is_binary(type) do
+    type
+    |> String.downcase()
+    |> String.trim()
+    |> fix_document_type_typos()
+  end
+
+  defp fix_document_type_typos("wyok"), do: "wyrok"
+  defp fix_document_type_typos(type), do: type
+
+  @doc """
+  Returns judgements with non-normalized document types.
+  """
+  def judgements_needing_document_type_fix(limit \\ 100) do
+    # Find documents with uppercase letters, typos, "-", or NULL
+    Judgement
+    |> where([j], is_nil(j.document_type) or j.document_type == "-" or j.document_type == "wyok" or
+                  j.document_type == "Wyrok" or j.document_type == "Postanowienie")
+    |> select([j], %{id: j.id, document_type: j.document_type, content_html: j.content_html})
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns count of judgements needing document type fix.
+  """
+  def count_judgements_needing_document_type_fix do
+    Judgement
+    |> where([j], is_nil(j.document_type) or j.document_type == "-" or j.document_type == "wyok" or
+                  j.document_type == "Wyrok" or j.document_type == "Postanowienie")
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Detects document type from HTML content.
+  """
+  def detect_document_type_from_content(nil), do: nil
+
+  def detect_document_type_from_content(content_html) when is_binary(content_html) do
+    cond do
+      String.contains?(content_html, "WYROK") -> "wyrok"
+      String.contains?(content_html, "POSTANOWIENIE") -> "postanowienie"
+      String.contains?(content_html, "UCHWAŁA") -> "uchwała"
+      true -> nil
+    end
+  end
+
+  @doc """
+  Updates document type by judgement ID.
+  """
+  def update_document_type_by_id(id, document_type) do
+    Judgement
+    |> where([j], j.id == ^id)
+    |> Repo.update_all(set: [
+      document_type: document_type,
+      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    ])
+    |> case do
+      {1, _} -> {:ok, id}
+      {0, _} -> {:error, :not_found}
+    end
+  end
 end

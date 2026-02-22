@@ -26,6 +26,7 @@ defmodule Przetargowi.UZP.SyncWorker do
       "details" -> sync_details()
       "reextract" -> reextract_deliberations()
       "fix_meritum" -> fix_missing_meritum()
+      "fix_document_type" -> fix_document_types()
       "full" -> sync_full()
     end
   end
@@ -261,6 +262,49 @@ defmodule Przetargowi.UZP.SyncWorker do
       Logger.info("Batch completed: #{success_count} fixed")
 
       fix_meritum_batch(batch_num + 1, total_fixed + success_count)
+    end
+  end
+
+  defp fix_document_types do
+    Logger.info("Starting document type fix")
+    total = Judgements.count_judgements_needing_document_type_fix()
+    Logger.info("Found #{total} judgements needing document type fix")
+
+    fix_document_type_batch(1, 0)
+  end
+
+  defp fix_document_type_batch(batch_num, total_fixed) do
+    judgements = Judgements.judgements_needing_document_type_fix(100)
+
+    if length(judgements) == 0 do
+      Logger.info("Document type fix completed, total fixed: #{total_fixed}")
+      :ok
+    else
+      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
+
+      results =
+        Enum.map(judgements, fn %{id: id, document_type: document_type, content_html: content_html} ->
+          normalized = Judgements.normalize_document_type(document_type)
+          # If still nil, try to detect from content
+          normalized = normalized || Judgements.detect_document_type_from_content(content_html)
+
+          case Judgements.update_document_type_by_id(id, normalized) do
+            {:ok, _} ->
+              print_progress(".")
+              :ok
+
+            {:error, reason} ->
+              print_progress("x")
+              Logger.warning("Failed to update document type for #{id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+
+      IO.puts("")
+      success_count = Enum.count(results, &(&1 == :ok))
+      Logger.info("Batch completed: #{success_count} fixed")
+
+      fix_document_type_batch(batch_num + 1, total_fixed + success_count)
     end
   end
 
