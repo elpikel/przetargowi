@@ -167,46 +167,57 @@ defmodule Przetargowi.UZP.SyncWorker do
 
   defp reextract_deliberations do
     Logger.info("Starting deliberation re-extraction")
+    total = Judgements.count_judgements_needing_extraction()
+    Logger.info("Found #{total} judgements needing extraction")
 
-    judgements = Judgements.judgements_with_content()
-    Logger.info("Found #{length(judgements)} judgements with content_html")
-
-    results =
-      judgements
-      |> Enum.with_index(1)
-      |> Enum.map(fn {judgement, idx} ->
-        result = reextract_judgement_deliberation(judgement)
-        print_progress(if result == :ok, do: ".", else: "x")
-        if rem(idx, 100) == 0, do: IO.puts(" #{idx}")
-        result
-      end)
-
-    IO.puts("")
-    success_count = Enum.count(results, &(&1 == :ok))
-    error_count = Enum.count(results, &(&1 != :ok))
-
-    Logger.info("Re-extraction completed, success: #{success_count}, errors: #{error_count}")
-    :ok
+    reextract_batch(1, 0, 0)
   end
 
-  defp reextract_judgement_deliberation(judgement) do
-    deliberation = TextExtractor.extract_deliberation(judgement.content_html)
+  defp reextract_batch(batch_num, total_success, total_errors) do
+    judgements = Judgements.judgements_needing_extraction(100)
+
+    if length(judgements) == 0 do
+      Logger.info("Re-extraction completed, total success: #{total_success}, total errors: #{total_errors}")
+      :ok
+    else
+      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
+
+      results =
+        Enum.map(judgements, fn judgement ->
+          result = reextract_judgement_deliberation(judgement)
+          print_progress(if result == :ok, do: ".", else: "x")
+          result
+        end)
+
+      IO.puts("")
+      success_count = Enum.count(results, &(&1 == :ok))
+      error_count = Enum.count(results, &(&1 != :ok))
+
+      Logger.info("Batch completed: #{success_count} success, #{error_count} errors")
+
+      reextract_batch(batch_num + 1, total_success + success_count, total_errors + error_count)
+    end
+  end
+
+  defp reextract_judgement_deliberation(%{id: id, content_html: content_html}) do
+    deliberation = TextExtractor.extract_deliberation(content_html)
     meritum = TextExtractor.extract_deliberation_summary(deliberation)
 
-    case Judgements.update_deliberation(judgement, %{
+    # Use empty string if extraction failed, to avoid infinite loop
+    deliberation = deliberation || ""
+    meritum = meritum || ""
+
+    case Judgements.update_deliberation_by_id(id, %{
            deliberation: deliberation,
            meritum: meritum
          }) do
-      {:ok, _updated} ->
-        Logger.debug("Re-extracted deliberation for #{judgement.id}")
+      {:ok, _} ->
+        Logger.debug("Re-extracted deliberation for #{id}")
         :ok
 
-      {:error, changeset} ->
-        Logger.warning(
-          "Failed to update deliberation for #{judgement.id}: #{inspect(changeset.errors)}"
-        )
-
-        {:error, changeset}
+      {:error, reason} ->
+        Logger.warning("Failed to update deliberation for #{id}: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 

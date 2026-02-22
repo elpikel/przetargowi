@@ -100,9 +100,13 @@ defmodule Przetargowi.Judgements.TextExtractor do
     ~r/izba\s+uzna[łl]a[:\.,]?\s+[żz]e\s*/iu
   ]
 
-  # Fallback pattern - only used if primary/secondary markers not found
+  # Fallback patterns - only used if primary/secondary markers not found
   # Must appear after first 10% of document to avoid matching headers
-  @fallback_marker ~r/uzasadnienie[:\.]?\s*/iu
+  @fallback_markers [
+    ~r/uzasadnienie[:\.]?\s*/iu,
+    # Spaced version: "U z a s a d n i e n i e"
+    ~r/u\s+z\s+a\s+s\s+a\s+d\s+n\s+i\s+e\s+n\s+i\s+e[:\.]?\s*/iu
+  ]
 
   defp find_and_split_at_marker(text) do
     # First try primary markers
@@ -169,16 +173,25 @@ defmodule Przetargowi.Judgements.TextExtractor do
     # after a short ruling section (e.g., discontinuing proceedings)
     min_position = div(String.length(text), 67)  # Must be after first ~1.5%
 
-    case Regex.split(@fallback_marker, text, parts: 2) do
-      [before, rest] when byte_size(before) > 0 ->
-        if String.length(before) >= min_position do
-          rest
-        else
-          nil
-        end
+    results =
+      @fallback_markers
+      |> Enum.flat_map(fn pattern ->
+        case Regex.split(pattern, text, parts: 2) do
+          [before, rest] when byte_size(before) > 0 ->
+            if String.length(before) >= min_position do
+              [{String.length(before), rest}]
+            else
+              []
+            end
 
-      _ ->
-        nil
+          _ ->
+            []
+        end
+      end)
+
+    case Enum.min_by(results, fn {pos, _} -> pos end, fn -> nil end) do
+      nil -> nil
+      {_pos, rest} -> rest
     end
   end
 

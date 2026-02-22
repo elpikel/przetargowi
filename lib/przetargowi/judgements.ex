@@ -242,12 +242,23 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
-  Returns judgements that have content_html (for re-extraction).
+  Returns judgements that need deliberation extraction (have content but no deliberation).
   """
-  def judgements_with_content do
+  def judgements_needing_extraction(limit \\ 100) do
     Judgement
-    |> where([j], not is_nil(j.content_html))
+    |> where([j], not is_nil(j.content_html) and is_nil(j.deliberation))
+    |> select([j], %{id: j.id, content_html: j.content_html})
+    |> limit(^limit)
     |> Repo.all()
+  end
+
+  @doc """
+  Returns count of judgements needing extraction.
+  """
+  def count_judgements_needing_extraction do
+    Judgement
+    |> where([j], not is_nil(j.content_html) and is_nil(j.deliberation))
+    |> Repo.aggregate(:count)
   end
 
   @doc """
@@ -257,5 +268,22 @@ defmodule Przetargowi.Judgements do
     judgement
     |> Ecto.Changeset.cast(attrs, [:deliberation, :meritum])
     |> Repo.update()
+  end
+
+  @doc """
+  Updates deliberation and meritum by judgement ID.
+  """
+  def update_deliberation_by_id(id, attrs) do
+    Judgement
+    |> where([j], j.id == ^id)
+    |> Repo.update_all(set: [
+      deliberation: attrs.deliberation,
+      meritum: attrs.meritum,
+      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    ])
+    |> case do
+      {1, _} -> {:ok, id}
+      {0, _} -> {:error, :not_found}
+    end
   end
 end
