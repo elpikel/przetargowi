@@ -189,7 +189,11 @@ defmodule Przetargowi.UZP.Scraper do
         # Try YYYY-MM-DD format
         case Regex.run(~r/(\d{4})-(\d{2})-(\d{2})/, text) do
           [_, year, month, day] ->
-            case Date.new(String.to_integer(year), String.to_integer(month), String.to_integer(day)) do
+            case Date.new(
+                   String.to_integer(year),
+                   String.to_integer(month),
+                   String.to_integer(day)
+                 ) do
               {:ok, date} -> date
               _ -> nil
             end
@@ -223,7 +227,9 @@ defmodule Przetargowi.UZP.Scraper do
       counts_str ->
         # Format is "total,kio,so,sa,sn"
         case String.split(counts_str, ",") |> List.first() do
-          nil -> 1
+          nil ->
+            1
+
           total_str ->
             total = String.to_integer(total_str)
             # 10 results per page, round up, minimum 1 page

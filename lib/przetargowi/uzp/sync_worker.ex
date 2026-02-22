@@ -15,7 +15,7 @@ defmodule Przetargowi.UZP.SyncWorker do
 
   require Logger
 
-  @delay_between_requests 1_000
+  @delay_between_requests 100
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
@@ -89,7 +89,10 @@ defmodule Przetargowi.UZP.SyncWorker do
                 if exists, do: :existing, else: :new
 
               {:error, changeset} ->
-                Logger.warning("Failed to upsert judgement #{attrs.uzp_id}: #{inspect(changeset.errors)}")
+                Logger.warning(
+                  "Failed to upsert judgement #{attrs.uzp_id}: #{inspect(changeset.errors)}"
+                )
+
                 :error
             end
           end)
@@ -106,24 +109,26 @@ defmodule Przetargowi.UZP.SyncWorker do
     Logger.info("Starting UZP details sync")
 
     # Process in batches of 100 until all are done
-    sync_details_batch()
+    sync_details_batch(1)
   end
 
-  defp sync_details_batch do
+  defp sync_details_batch(batch_num) do
     judgements = Judgements.judgements_needing_details(100)
 
     if length(judgements) == 0 do
       Logger.info("All judgements have details synced")
       :ok
     else
-      Logger.info("Processing batch of #{length(judgements)} judgements needing details")
+      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
 
       results =
         Enum.map(judgements, fn judgement ->
-          Process.sleep(@delay_between_requests)
-          sync_judgement_details(judgement)
+          result = sync_judgement_details(judgement)
+          print_progress(if result == :ok, do: ".", else: "x")
+          result
         end)
 
+      IO.puts("")
       success_count = Enum.count(results, &(&1 == :ok))
       error_count = Enum.count(results, &(&1 != :ok))
 
@@ -133,7 +138,7 @@ defmodule Przetargowi.UZP.SyncWorker do
         {:error, "Too many errors during details sync"}
       else
         # Continue with next batch
-        sync_details_batch()
+        sync_details_batch(batch_num + 1)
       end
     end
   end
@@ -147,7 +152,10 @@ defmodule Przetargowi.UZP.SyncWorker do
             :ok
 
           {:error, changeset} ->
-            Logger.warning("Failed to update details for #{judgement.uzp_id}: #{inspect(changeset.errors)}")
+            Logger.error(
+              "Failed to update details for #{judgement.uzp_id}: #{inspect(changeset)}"
+            )
+
             {:error, changeset}
         end
 
@@ -164,10 +172,16 @@ defmodule Przetargowi.UZP.SyncWorker do
     Logger.info("Found #{length(judgements)} judgements with content_html")
 
     results =
-      Enum.map(judgements, fn judgement ->
-        reextract_judgement_deliberation(judgement)
+      judgements
+      |> Enum.with_index(1)
+      |> Enum.map(fn {judgement, idx} ->
+        result = reextract_judgement_deliberation(judgement)
+        print_progress(if result == :ok, do: ".", else: "x")
+        if rem(idx, 100) == 0, do: IO.puts(" #{idx}")
+        result
       end)
 
+    IO.puts("")
     success_count = Enum.count(results, &(&1 == :ok))
     error_count = Enum.count(results, &(&1 != :ok))
 
@@ -188,8 +202,15 @@ defmodule Przetargowi.UZP.SyncWorker do
         :ok
 
       {:error, changeset} ->
-        Logger.warning("Failed to update deliberation for #{judgement.id}: #{inspect(changeset.errors)}")
+        Logger.warning(
+          "Failed to update deliberation for #{judgement.id}: #{inspect(changeset.errors)}"
+        )
+
         {:error, changeset}
     end
+  end
+
+  defp print_progress(char) do
+    :io.format("~s", [char])
   end
 end

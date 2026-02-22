@@ -15,11 +15,12 @@ defmodule Przetargowi.UZP.HTTPClient do
   ]
 
   @default_options [
-    receive_timeout: 30_000,
+    receive_timeout: 15_000,
     retry: :transient,
-    max_retries: 3,
+    max_retries: 2,
     # UZP government site has certificate with key_usage_mismatch, disable verification
     connect_options: [
+      timeout: 10_000,
       transport_opts: [
         verify: :verify_none
       ]
