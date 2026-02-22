@@ -86,25 +86,65 @@ defmodule Przetargowi.Judgements.TextExtractor do
     ~r/odwo[łl]awcza\s+zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
     # Standalone "zważyła, co następuje" (when preceded by long preamble)
     ~r/zwa[żz]y[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
+    # Standalone "ustaliła, co następuje" (without "Izba" prefix or "i zważyła")
+    ~r/ustali[łl]a,?\s+co\s+nast[ęe]puje[:\.]?\s*/iu,
     # "Rozważania" variant
     ~r/rozwa[żz]ania\s+krajowej\s+izby\s+odwo[łl]awczej\s*\(?\s*KIO\s*\)?[:\.]?\s*/iu,
     # "Stanowisko Izby" header
     ~r/stanowisko\s+izby[:\.]?\s*/iu
   ]
 
-  # Fallback pattern - only used if primary markers not found
-  # Must appear after first 20% of document to avoid matching headers
+  # Secondary markers - require minimum position (5% of text)
+  @secondary_markers [
+    ~r/w\s+ocenie\s+izby[:\.,]?\s*/iu,
+    ~r/izba\s+uzna[łl]a[:\.,]?\s+[żz]e\s*/iu
+  ]
+
+  # Fallback pattern - only used if primary/secondary markers not found
+  # Must appear after first 10% of document to avoid matching headers
   @fallback_marker ~r/uzasadnienie[:\.]?\s*/iu
 
   defp find_and_split_at_marker(text) do
     # First try primary markers
     case find_earliest_match(text, @primary_markers) do
       nil ->
-        # Fallback to "Uzasadnienie" but only if it appears after first 20% of text
-        try_fallback_marker(text)
+        # Try secondary markers with minimum position
+        case try_secondary_markers(text) do
+          nil ->
+            # Final fallback to "Uzasadnienie"
+            try_fallback_marker(text)
+
+          result ->
+            result
+        end
 
       result ->
         result
+    end
+  end
+
+  defp try_secondary_markers(text) do
+    min_position = div(String.length(text), 20)  # Must be after first 5%
+
+    results =
+      @secondary_markers
+      |> Enum.flat_map(fn pattern ->
+        case Regex.split(pattern, text, parts: 2) do
+          [before, rest] when byte_size(before) > 0 ->
+            if String.length(before) >= min_position do
+              [{String.length(before), rest}]
+            else
+              []
+            end
+
+          _ ->
+            []
+        end
+      end)
+
+    case Enum.min_by(results, fn {pos, _} -> pos end, fn -> nil end) do
+      nil -> nil
+      {_pos, rest} -> rest
     end
   end
 
@@ -125,7 +165,9 @@ defmodule Przetargowi.Judgements.TextExtractor do
   end
 
   defp try_fallback_marker(text) do
-    min_position = div(String.length(text), 10)  # Must be after first 10%
+    # Lower threshold to 1.5% - some postanowienia have "Uzasadnienie" very early
+    # after a short ruling section (e.g., discontinuing proceedings)
+    min_position = div(String.length(text), 67)  # Must be after first ~1.5%
 
     case Regex.split(@fallback_marker, text, parts: 2) do
       [before, rest] when byte_size(before) > 0 ->
