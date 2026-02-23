@@ -348,9 +348,9 @@ defmodule Przetargowi.Judgements do
   Returns judgements with non-normalized document types.
   """
   def judgements_needing_document_type_fix(limit \\ 100) do
-    # Find documents with uppercase letters, typos, "-", or NULL
+    # Find documents with uppercase letters, typos, or "-"
     Judgement
-    |> where([j], is_nil(j.document_type) or j.document_type == "-" or j.document_type == "wyok" or
+    |> where([j], j.document_type == "-" or j.document_type == "wyok" or
                   j.document_type == "Wyrok" or j.document_type == "Postanowienie")
     |> select([j], %{id: j.id, document_type: j.document_type, content_html: j.content_html})
     |> limit(^limit)
@@ -362,7 +362,7 @@ defmodule Przetargowi.Judgements do
   """
   def count_judgements_needing_document_type_fix do
     Judgement
-    |> where([j], is_nil(j.document_type) or j.document_type == "-" or j.document_type == "wyok" or
+    |> where([j], j.document_type == "-" or j.document_type == "wyok" or
                   j.document_type == "Wyrok" or j.document_type == "Postanowienie")
     |> Repo.aggregate(:count)
   end
@@ -373,12 +373,39 @@ defmodule Przetargowi.Judgements do
   def detect_document_type_from_content(nil), do: nil
 
   def detect_document_type_from_content(content_html) when is_binary(content_html) do
+    content_lower = String.downcase(content_html)
+
     cond do
+      # Check uppercase headers first
       String.contains?(content_html, "WYROK") -> "wyrok"
       String.contains?(content_html, "POSTANOWIENIE") -> "postanowienie"
       String.contains?(content_html, "UCHWAŁA") -> "uchwała"
+      # Check in title tag (lowercase)
+      String.contains?(content_lower, "<title>wyrok") -> "wyrok"
+      String.contains?(content_lower, "<title>postanowienie") -> "postanowienie"
+      String.contains?(content_lower, "<title>uchwała") -> "uchwała"
       true -> nil
     end
+  end
+
+  @doc """
+  Returns judgements with NULL document_type that have content for detection.
+  """
+  def judgements_with_null_document_type(limit \\ 100) do
+    Judgement
+    |> where([j], is_nil(j.document_type) and not is_nil(j.content_html))
+    |> select([j], %{id: j.id, content_html: j.content_html})
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns count of judgements with NULL document_type.
+  """
+  def count_judgements_with_null_document_type do
+    Judgement
+    |> where([j], is_nil(j.document_type) and not is_nil(j.content_html))
+    |> Repo.aggregate(:count)
   end
 
   @doc """
@@ -389,6 +416,123 @@ defmodule Przetargowi.Judgements do
     |> where([j], j.id == ^id)
     |> Repo.update_all(set: [
       document_type: document_type,
+      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    ])
+    |> case do
+      {1, _} -> {:ok, id}
+      {0, _} -> {:error, :not_found}
+    end
+  end
+
+  @doc """
+  Normalizes resolution method to standard form.
+  """
+  def normalize_resolution_method(nil), do: nil
+  def normalize_resolution_method("-"), do: nil
+
+  def normalize_resolution_method(method) when is_binary(method) do
+    method
+    |> String.downcase()
+    |> String.trim()
+    |> String.replace(~r/[.=*]+$/, "")
+    |> String.replace(~r/^[=*]+/, "")
+    |> String.replace(~r/^\d+:\s*\**\s*/, "")
+    |> String.replace(~r/^sposób rozstrzygnięcia:\s*/, "")
+    |> String.trim()
+    |> map_resolution_method()
+  end
+
+  defp map_resolution_method("oddalone"), do: "oddalone"
+  defp map_resolution_method("oddalne"), do: "oddalone"
+  defp map_resolution_method("oddala"), do: "oddalone"
+  defp map_resolution_method("oddala skargę"), do: "oddalone"
+  defp map_resolution_method("nie uwzględnia"), do: "oddalone"
+
+  defp map_resolution_method("uwzględnione"), do: "uwzględnione"
+  defp map_resolution_method("uwzglednione"), do: "uwzględnione"
+  defp map_resolution_method("uwzględnia"), do: "uwzględnione"
+  defp map_resolution_method("uwzględnienie"), do: "uwzględnione"
+  defp map_resolution_method("uznane"), do: "uwzględnione"
+  defp map_resolution_method("uwzględnia w części"), do: "uwzględnione w części"
+  defp map_resolution_method("częściowo uwzględnione"), do: "uwzględnione w części"
+
+  defp map_resolution_method("umorzenie postępowania"), do: "umorzone"
+  defp map_resolution_method("umorzone"), do: "umorzone"
+  defp map_resolution_method("umarza postępowanie"), do: "umorzone"
+  defp map_resolution_method("umarza postępowanie odwoławcze"), do: "umorzone"
+  defp map_resolution_method("umarzenie postępowania"), do: "umorzone"
+  defp map_resolution_method("umorzone (art. 568 ust. 2 ustawy pzp)"), do: "umorzone"
+  defp map_resolution_method("umorzone (568 pkt 2)"), do: "umorzone"
+  defp map_resolution_method("umorzenie postępowania wszczętego na skutek złożenia wniosku o uchylenie zakazu zawarcia umowy"), do: "umorzone"
+
+  defp map_resolution_method("umorzone (wycofanie)"), do: "umorzone (wycofanie)"
+  defp map_resolution_method("wycofanie"), do: "umorzone (wycofanie)"
+
+  defp map_resolution_method("umorzone (uwzględnienie zarzutów przez zamawiającego w całości)"), do: "umorzone (uwzględnienie zarzutów)"
+  defp map_resolution_method("umorzone (uwzględnienie zarzutów w całosci przez zamawiającego)"), do: "umorzone (uwzględnienie zarzutów)"
+  defp map_resolution_method("umorzone (uwzględnienie zarzutów przez zamawiającego)"), do: "umorzone (uwzględnienie zarzutów)"
+  defp map_resolution_method("uwzględnienie zarzutów przez zamawiającego w całości"), do: "umorzone (uwzględnienie zarzutów)"
+
+  defp map_resolution_method("odrzucone"), do: "odrzucone"
+  defp map_resolution_method("odrzucenie"), do: "odrzucone"
+  defp map_resolution_method("odrzucenie odwołania"), do: "odrzucone"
+  defp map_resolution_method("odrzuca skargę"), do: "odrzucone"
+
+  defp map_resolution_method("zwrócone"), do: "zwrócone"
+  defp map_resolution_method("zwrócenie"), do: "zwrócone"
+  defp map_resolution_method("zwrot"), do: "zwrócone"
+
+  defp map_resolution_method("postanowienie"), do: "postanowienie"
+
+  defp map_resolution_method("odmowa uchylenia zakazu zawarcia umowy"), do: "odmowa uchylenia zakazu"
+  defp map_resolution_method("uchylenie zakazu zawarcia umowy"), do: "uchylenie zakazu"
+
+  defp map_resolution_method("wyrok"), do: nil
+
+  defp map_resolution_method(other), do: other
+
+  @doc """
+  Returns judgements with non-normalized resolution methods.
+  """
+  def judgements_needing_resolution_method_fix(limit \\ 100) do
+    normalized_values = [
+      "oddalone", "uwzględnione", "uwzględnione w części",
+      "umorzone", "umorzone (wycofanie)", "umorzone (uwzględnienie zarzutów)",
+      "odrzucone", "zwrócone", "postanowienie",
+      "odmowa uchylenia zakazu", "uchylenie zakazu"
+    ]
+
+    Judgement
+    |> where([j], not is_nil(j.resolution_method) and j.resolution_method not in ^normalized_values)
+    |> select([j], %{id: j.id, resolution_method: j.resolution_method})
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns count of judgements needing resolution method fix.
+  """
+  def count_judgements_needing_resolution_method_fix do
+    normalized_values = [
+      "oddalone", "uwzględnione", "uwzględnione w części",
+      "umorzone", "umorzone (wycofanie)", "umorzone (uwzględnienie zarzutów)",
+      "odrzucone", "zwrócone", "postanowienie",
+      "odmowa uchylenia zakazu", "uchylenie zakazu"
+    ]
+
+    Judgement
+    |> where([j], not is_nil(j.resolution_method) and j.resolution_method not in ^normalized_values)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Updates resolution method by judgement ID.
+  """
+  def update_resolution_method_by_id(id, resolution_method) do
+    Judgement
+    |> where([j], j.id == ^id)
+    |> Repo.update_all(set: [
+      resolution_method: resolution_method,
       updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
     ])
     |> case do

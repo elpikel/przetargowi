@@ -27,6 +27,8 @@ defmodule Przetargowi.UZP.SyncWorker do
       "reextract" -> reextract_deliberations()
       "fix_meritum" -> fix_missing_meritum()
       "fix_document_type" -> fix_document_types()
+      "detect_document_type" -> detect_document_types()
+      "fix_resolution_method" -> fix_resolution_methods()
       "full" -> sync_full()
     end
   end
@@ -305,6 +307,89 @@ defmodule Przetargowi.UZP.SyncWorker do
       Logger.info("Batch completed: #{success_count} fixed")
 
       fix_document_type_batch(batch_num + 1, total_fixed + success_count)
+    end
+  end
+
+  defp detect_document_types do
+    Logger.info("Starting document type detection from content")
+    # Process all NULL documents in one pass (no looping)
+    judgements = Judgements.judgements_with_null_document_type(1000)
+    total = length(judgements)
+    Logger.info("Found #{total} judgements with NULL document type")
+
+    if total == 0 do
+      Logger.info("No judgements need document type detection")
+      :ok
+    else
+      IO.puts("\nProcessing #{total} judgements...")
+
+      results =
+        Enum.map(judgements, fn %{id: id, content_html: content_html} ->
+          case Judgements.detect_document_type_from_content(content_html) do
+            nil ->
+              print_progress("-")
+              :skipped
+
+            detected_type ->
+              case Judgements.update_document_type_by_id(id, detected_type) do
+                {:ok, _} ->
+                  print_progress(".")
+                  :ok
+
+                {:error, reason} ->
+                  print_progress("x")
+                  Logger.warning("Failed to update document type for #{id}: #{inspect(reason)}")
+                  {:error, reason}
+              end
+          end
+        end)
+
+      IO.puts("")
+      detected_count = Enum.count(results, &(&1 == :ok))
+      skipped_count = Enum.count(results, &(&1 == :skipped))
+      Logger.info("Detection completed: #{detected_count} detected, #{skipped_count} could not be detected")
+      :ok
+    end
+  end
+
+  defp fix_resolution_methods do
+    Logger.info("Starting resolution method fix")
+    total = Judgements.count_judgements_needing_resolution_method_fix()
+    Logger.info("Found #{total} judgements needing resolution method fix")
+
+    fix_resolution_method_batch(1, 0)
+  end
+
+  defp fix_resolution_method_batch(batch_num, total_fixed) do
+    judgements = Judgements.judgements_needing_resolution_method_fix(100)
+
+    if length(judgements) == 0 do
+      Logger.info("Resolution method fix completed, total fixed: #{total_fixed}")
+      :ok
+    else
+      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
+
+      results =
+        Enum.map(judgements, fn %{id: id, resolution_method: resolution_method} ->
+          normalized = Judgements.normalize_resolution_method(resolution_method)
+
+          case Judgements.update_resolution_method_by_id(id, normalized) do
+            {:ok, _} ->
+              print_progress(".")
+              :ok
+
+            {:error, reason} ->
+              print_progress("x")
+              Logger.warning("Failed to update resolution method for #{id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+
+      IO.puts("")
+      success_count = Enum.count(results, &(&1 == :ok))
+      Logger.info("Batch completed: #{success_count} fixed")
+
+      fix_resolution_method_batch(batch_num + 1, total_fixed + success_count)
     end
   end
 
