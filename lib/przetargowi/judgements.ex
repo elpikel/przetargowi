@@ -540,4 +540,93 @@ defmodule Przetargowi.Judgements do
       {0, _} -> {:error, :not_found}
     end
   end
+
+  @doc """
+  Normalizes procedure type to standard form.
+  """
+  def normalize_procedure_type(nil), do: nil
+  def normalize_procedure_type(""), do: nil
+
+  def normalize_procedure_type(type) when is_binary(type) do
+    type
+    |> String.downcase()
+    |> String.trim()
+    |> String.replace(~r/\.+$/, "")
+    |> String.replace(~r/^tryb postępowania:\s*/, "")
+    |> String.trim()
+    |> map_procedure_type()
+  end
+
+  defp map_procedure_type("nie wiem"), do: nil
+  defp map_procedure_type("brak danych"), do: nil
+
+  defp map_procedure_type("przetarg nieograniczony"), do: "przetarg nieograniczony"
+  defp map_procedure_type("przetarg nieogranoczony"), do: "przetarg nieograniczony"
+  defp map_procedure_type("przetarg nieograniczny"), do: "przetarg nieograniczony"
+  defp map_procedure_type("przetarg nieograniczonej"), do: "przetarg nieograniczony"
+  defp map_procedure_type("przetag nieograniczony"), do: "przetarg nieograniczony"
+
+  defp map_procedure_type("tryb podstawowy"), do: "tryb podstawowy"
+  defp map_procedure_type("przetarg podstawowy"), do: "tryb podstawowy"
+
+  defp map_procedure_type("przetarg ograniczony"), do: "przetarg ograniczony"
+  defp map_procedure_type("dialog konkurencyjny"), do: "dialog konkurencyjny"
+  defp map_procedure_type("negocjacje z ogłoszeniem"), do: "negocjacje z ogłoszeniem"
+  defp map_procedure_type("sektorowe negocjacje z ogłoszeniem"), do: "negocjacje z ogłoszeniem"
+  defp map_procedure_type("zamówienie z wolnej ręki"), do: "zamówienie z wolnej ręki"
+  defp map_procedure_type("negocjacje bez ogłoszenia"), do: "negocjacje bez ogłoszenia"
+  defp map_procedure_type("umowa ramowa"), do: "umowa ramowa"
+  defp map_procedure_type("konkurs"), do: "konkurs"
+  defp map_procedure_type("zapytanie o cenę"), do: "zapytanie o cenę"
+  defp map_procedure_type("licytacja elektroniczna"), do: "licytacja elektroniczna"
+  defp map_procedure_type("poza ustawą"), do: "poza ustawą"
+  defp map_procedure_type("partnerstwo innowacyjne"), do: "partnerstwo innowacyjne"
+  defp map_procedure_type("dynamiczny system zakupów"), do: "dynamiczny system zakupów"
+  defp map_procedure_type("usługi społeczne"), do: "usługi społeczne"
+
+  defp map_procedure_type(other), do: other
+
+  @normalized_procedure_types [
+    "przetarg nieograniczony", "przetarg ograniczony", "tryb podstawowy",
+    "dialog konkurencyjny", "negocjacje z ogłoszeniem", "zamówienie z wolnej ręki",
+    "negocjacje bez ogłoszenia", "umowa ramowa", "konkurs", "zapytanie o cenę",
+    "licytacja elektroniczna", "poza ustawą", "partnerstwo innowacyjne",
+    "dynamiczny system zakupów", "usługi społeczne"
+  ]
+
+  @doc """
+  Returns judgements with non-normalized procedure types.
+  """
+  def judgements_needing_procedure_type_fix(limit \\ 100) do
+    Judgement
+    |> where([j], not is_nil(j.procedure_type) and j.procedure_type not in ^@normalized_procedure_types)
+    |> select([j], %{id: j.id, procedure_type: j.procedure_type})
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns count of judgements needing procedure type fix.
+  """
+  def count_judgements_needing_procedure_type_fix do
+    Judgement
+    |> where([j], not is_nil(j.procedure_type) and j.procedure_type not in ^@normalized_procedure_types)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Updates procedure type by judgement ID.
+  """
+  def update_procedure_type_by_id(id, procedure_type) do
+    Judgement
+    |> where([j], j.id == ^id)
+    |> Repo.update_all(set: [
+      procedure_type: procedure_type,
+      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    ])
+    |> case do
+      {1, _} -> {:ok, id}
+      {0, _} -> {:error, :not_found}
+    end
+  end
 end

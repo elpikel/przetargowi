@@ -29,6 +29,7 @@ defmodule Przetargowi.UZP.SyncWorker do
       "fix_document_type" -> fix_document_types()
       "detect_document_type" -> detect_document_types()
       "fix_resolution_method" -> fix_resolution_methods()
+      "fix_procedure_type" -> fix_procedure_types()
       "full" -> sync_full()
     end
   end
@@ -390,6 +391,47 @@ defmodule Przetargowi.UZP.SyncWorker do
       Logger.info("Batch completed: #{success_count} fixed")
 
       fix_resolution_method_batch(batch_num + 1, total_fixed + success_count)
+    end
+  end
+
+  defp fix_procedure_types do
+    Logger.info("Starting procedure type fix")
+    total = Judgements.count_judgements_needing_procedure_type_fix()
+    Logger.info("Found #{total} judgements needing procedure type fix")
+
+    fix_procedure_type_batch(1, 0)
+  end
+
+  defp fix_procedure_type_batch(batch_num, total_fixed) do
+    judgements = Judgements.judgements_needing_procedure_type_fix(100)
+
+    if length(judgements) == 0 do
+      Logger.info("Procedure type fix completed, total fixed: #{total_fixed}")
+      :ok
+    else
+      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
+
+      results =
+        Enum.map(judgements, fn %{id: id, procedure_type: procedure_type} ->
+          normalized = Judgements.normalize_procedure_type(procedure_type)
+
+          case Judgements.update_procedure_type_by_id(id, normalized) do
+            {:ok, _} ->
+              print_progress(".")
+              :ok
+
+            {:error, reason} ->
+              print_progress("x")
+              Logger.warning("Failed to update procedure type for #{id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+
+      IO.puts("")
+      success_count = Enum.count(results, &(&1 == :ok))
+      Logger.info("Batch completed: #{success_count} fixed")
+
+      fix_procedure_type_batch(batch_num + 1, total_fixed + success_count)
     end
   end
 
