@@ -4,38 +4,140 @@ defmodule Przetargowi.Accounts.UserNotifier do
   alias Przetargowi.Mailer
   alias Przetargowi.Accounts.User
 
-  # Delivers the email using the application mailer.
-  defp deliver(recipient, subject, body) do
+  defp deliver(recipient, subject, text_body, html_body) do
     email =
       new()
       |> to(recipient)
-      |> from({"Przetargowi", "contact@example.com"})
+      |> from({"Przetargowi", "kontakt@przetargowi.pl"})
       |> subject(subject)
-      |> text_body(body)
+      |> text_body(text_body)
+      |> html_body(html_body)
 
     with {:ok, _metadata} <- Mailer.deliver(email) do
       {:ok, email}
     end
   end
 
+  defp email_layout(content, button_text, button_url) do
+    """
+    <!DOCTYPE html>
+    <html lang="pl">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Przetargowi</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5;">
+        <tr>
+          <td align="center" style="padding: 40px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px;">
+              <!-- Header -->
+              <tr>
+                <td align="center" style="padding-bottom: 32px;">
+                  <table role="presentation" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="background-color: #6366f1; width: 40px; height: 40px; border-radius: 12px; text-align: center; vertical-align: middle;">
+                        <span style="color: white; font-size: 18px;">&#9878;</span>
+                      </td>
+                      <td style="padding-left: 12px;">
+                        <span style="font-size: 20px; font-weight: 600; color: #18181b;">Przetargowi</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Content Card -->
+              <tr>
+                <td style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="padding: 40px 32px;">
+                        #{content}
+
+                        <!-- Button -->
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top: 32px;">
+                          <tr>
+                            <td align="center">
+                              <a href="#{button_url}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 14px 28px; border-radius: 12px;">
+                                #{button_text}
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Alternative Link -->
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
+                          <tr>
+                            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 8px;">
+                              <p style="margin: 0 0 8px 0; font-size: 12px; color: #71717a;">
+                                Możesz też skopiować i wkleić ten link do przeglądarki:
+                              </p>
+                              <p style="margin: 0; font-size: 12px; color: #6366f1; word-break: break-all;">
+                                #{button_url}
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td align="center" style="padding-top: 32px;">
+                  <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+                    &copy; #{Date.utc_today().year} Przetargowi. Wszelkie prawa zastrzeżone.
+                  </p>
+                  <p style="margin: 8px 0 0 0; font-size: 11px; color: #d4d4d8;">
+                    Jeśli nie oczekiwałeś tej wiadomości, zignoruj ją.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
+
   @doc """
   Deliver instructions to update a user email.
   """
   def deliver_update_email_instructions(user, url) do
-    deliver(user.email, "Update email instructions", """
+    text_body = """
+    Cześć,
 
-    ==============================
+    Otrzymaliśmy prośbę o zmianę adresu e-mail dla Twojego konta Przetargowi.
 
-    Hi #{user.email},
-
-    You can change your email by visiting the URL below:
-
+    Aby potwierdzić zmianę, kliknij w poniższy link:
     #{url}
 
-    If you didn't request this change, please ignore this.
+    Jeśli nie prosiłeś o zmianę adresu e-mail, zignoruj tę wiadomość.
 
-    ==============================
-    """)
+    Pozdrawiamy,
+    Zespół Przetargowi
+    """
+
+    html_content = """
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b;">
+      Zmiana adresu e-mail
+    </h1>
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+      Cześć,
+    </p>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+      Otrzymaliśmy prośbę o zmianę adresu e-mail dla Twojego konta. Kliknij przycisk poniżej, aby potwierdzić zmianę.
+    </p>
+    """
+
+    html_body = email_layout(html_content, "Potwierdź zmianę", url)
+    deliver(user.email, "Potwierdź zmianę adresu e-mail", text_body, html_body)
   end
 
   @doc """
@@ -49,36 +151,64 @@ defmodule Przetargowi.Accounts.UserNotifier do
   end
 
   defp deliver_magic_link_instructions(user, url) do
-    deliver(user.email, "Log in instructions", """
+    text_body = """
+    Cześć,
 
-    ==============================
-
-    Hi #{user.email},
-
-    You can log into your account by visiting the URL below:
-
+    Oto Twój link do logowania w serwisie Przetargowi:
     #{url}
 
-    If you didn't request this email, please ignore this.
+    Link jest ważny przez ograniczony czas.
 
-    ==============================
-    """)
+    Jeśli nie prosiłeś o ten link, zignoruj tę wiadomość.
+
+    Pozdrawiamy,
+    Zespół Przetargowi
+    """
+
+    html_content = """
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b;">
+      Zaloguj się do Przetargowi
+    </h1>
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+      Cześć,
+    </p>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+      Kliknij przycisk poniżej, aby zalogować się na swoje konto. Link jest ważny przez ograniczony czas.
+    </p>
+    """
+
+    html_body = email_layout(html_content, "Zaloguj się", url)
+    deliver(user.email, "Twój link do logowania", text_body, html_body)
   end
 
   defp deliver_confirmation_instructions(user, url) do
-    deliver(user.email, "Confirmation instructions", """
+    text_body = """
+    Cześć,
 
-    ==============================
+    Dziękujemy za rejestrację w Przetargowi!
 
-    Hi #{user.email},
-
-    You can confirm your account by visiting the URL below:
-
+    Aby aktywować swoje konto, kliknij w poniższy link:
     #{url}
 
-    If you didn't create an account with us, please ignore this.
+    Jeśli nie zakładałeś konta, zignoruj tę wiadomość.
 
-    ==============================
-    """)
+    Pozdrawiamy,
+    Zespół Przetargowi
+    """
+
+    html_content = """
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b;">
+      Witaj w Przetargowi!
+    </h1>
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+      Dziękujemy za rejestrację!
+    </p>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+      Kliknij przycisk poniżej, aby potwierdzić swój adres e-mail i aktywować konto.
+    </p>
+    """
+
+    html_body = email_layout(html_content, "Aktywuj konto", url)
+    deliver(user.email, "Potwierdź swoje konto w Przetargowi", text_body, html_body)
   end
 end
