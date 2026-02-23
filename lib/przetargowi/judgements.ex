@@ -629,4 +629,15 @@ defmodule Przetargowi.Judgements do
       {0, _} -> {:error, :not_found}
     end
   end
+
+  @doc """
+  Returns all judgement IDs and updated_at for sitemap generation.
+  Streams results to handle large datasets efficiently.
+  """
+  def stream_sitemap_entries do
+    Judgement
+    |> select([j], %{id: j.id, updated_at: j.updated_at})
+    |> order_by(desc: :updated_at)
+    |> Repo.stream()
+  end
 end

@@ -23,6 +23,14 @@ defmodule PrzetargowiWeb.Router do
     get "/", PageController, :home
     get "/szukaj", SearchController, :index
     get "/orzeczenie/:id", JudgementController, :show
+    get "/o-nas", StaticPageController, :about
+    get "/kontakt", StaticPageController, :contact
+    get "/regulamin", StaticPageController, :terms
+    get "/polityka-prywatnosci", StaticPageController, :privacy
+  end
+
+  scope "/", PrzetargowiWeb do
+    get "/sitemap.xml", SitemapController, :index
   end
 
   # Other scopes may use custom stacks.

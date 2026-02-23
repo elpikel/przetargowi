@@ -1,4 +1,18 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
+  <script type="application/ld+json">
+    <%= raw(Jason.encode!(%{
+      "@context" => "https://schema.org",
+      "@type" => "LegalCase",
+      "name" => @judgement.signature || "Orzeczenie",
+      "datePublished" => if(@judgement.decision_date, do: Calendar.strftime(@judgement.decision_date, "%Y-%m-%d"), else: nil),
+      "court" => %{
+        "@type" => "Organization",
+        "name" => @judgement.issuing_authority || "KIO"
+      },
+      "description" => @judgement.meritum || @judgement.deliberation,
+      "url" => "https://przetargowi.pl/orzeczenie/#{@judgement.id}"
+    })) %>
+  </script>
   <div class="bg-base-200 min-h-screen">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="grid lg:grid-cols-3 gap-8 items-start">

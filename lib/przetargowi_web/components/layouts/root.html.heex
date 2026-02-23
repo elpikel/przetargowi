@@ -11,6 +11,11 @@
     <meta property="og:description" content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."} />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="pl_PL" />
+    <meta property="og:url" content={assigns[:og_url] || assigns[:canonical_url] || "https://przetargowi.pl"} />
+    <meta property="og:site_name" content="Przetargowi" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={assigns[:page_title] || "Przetargowi"} />
+    <meta name="twitter:description" content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."} />
     <link rel="canonical" href={assigns[:canonical_url] || "https://przetargowi.pl"} />
     <title>{assigns[:page_title] || "Przetargowi"} — Wyszukiwarka Orzeczeń</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,6 +24,35 @@
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Przetargowi",
+        "url": "https://przetargowi.pl",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://przetargowi.pl/szukaj?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+    <%= if assigns[:breadcrumbs] do %>
+      <script type="application/ld+json">
+        <%= raw(Jason.encode!(%{
+          "@context" => "https://schema.org",
+          "@type" => "BreadcrumbList",
+          "itemListElement" => Enum.with_index(assigns[:breadcrumbs], 1) |> Enum.map(fn {crumb, pos} ->
+            %{
+              "@type" => "ListItem",
+              "position" => pos,
+              "name" => crumb.name,
+              "item" => crumb.url
+            }
+          end)
+        })) %>
+      </script>
+    <% end %>
   </head>
   <body class="bg-base-100 text-base-content">
     {@inner_content}

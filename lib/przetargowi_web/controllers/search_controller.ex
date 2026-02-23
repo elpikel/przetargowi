@@ -39,9 +39,14 @@ defmodule PrzetargowiWeb.SearchController do
       # Transform to view format
       view_results = Enum.map(results, &transform_judgement/1)
 
+      # Canonical URL without page param to avoid duplicate content
+      canonical_url = build_canonical_url(query, filters)
+
       conn
       |> assign(:page_title, if(query != "", do: "Wyniki: #{query}", else: "Wyszukiwarka"))
-      |> assign(:meta_description, "Wyszukaj orzeczenia KIO dotyczące zamówień publicznych.")
+      |> assign(:meta_description, build_search_meta_description(query, filters))
+      |> assign(:canonical_url, canonical_url)
+      |> assign(:og_url, canonical_url)
       |> assign(:query, query)
       |> assign(:filters, filters)
       |> assign(:filter_options, filter_options)
@@ -55,7 +60,7 @@ defmodule PrzetargowiWeb.SearchController do
   end
 
   defp logged_in?(conn) do
-    conn.assigns[:current_scope] && conn.assigns.current_scope.user != nil
+    conn.assigns[:current_scope] != nil and conn.assigns.current_scope.user != nil
   end
 
   defp has_filters?(filters) do
@@ -107,5 +112,43 @@ defmodule PrzetargowiWeb.SearchController do
       contracting_authority: judgement.contracting_authority,
       meritum: judgement.meritum
     }
+  end
+
+  defp build_canonical_url(query, filters) do
+    base = "https://przetargowi.pl/szukaj"
+
+    params =
+      [{"q", query}]
+      |> add_filter_param(filters, :document_type, "document_type")
+      |> add_filter_param(filters, :issuing_authority, "issuing_authority")
+      |> add_filter_param(filters, :resolution_method, "resolution_method")
+      |> Enum.filter(fn {_, v} -> v != "" end)
+
+    if params == [] do
+      base
+    else
+      query_string = URI.encode_query(params)
+      "#{base}?#{query_string}"
+    end
+  end
+
+  defp add_filter_param(params, filters, key, param_name) do
+    value = Map.get(filters, key, "")
+    if value != "", do: params ++ [{param_name, value}], else: params
+  end
+
+  defp build_search_meta_description(query, filters) do
+    base = "Wyszukaj orzeczenia KIO dotyczące zamówień publicznych"
+
+    cond do
+      query != "" ->
+        "#{base}. Wyniki dla: #{query}"
+
+      filters[:document_type] != "" ->
+        "#{base}. Filtr: #{filters[:document_type]}"
+
+      true ->
+        "#{base}."
+    end
   end
 end
