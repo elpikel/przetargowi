@@ -4,6 +4,7 @@ defmodule PrzetargowiWeb.SearchController do
   alias Przetargowi.Judgements
 
   @per_page 10
+  @max_searches_for_guests 3
 
   def index(conn, params) do
     query = Map.get(params, "q", "")
@@ -11,27 +12,70 @@ defmodule PrzetargowiWeb.SearchController do
     offset = (page - 1) * @per_page
     filters = extract_filters(params)
 
-    # Fetch judgements and count from database
-    results = Judgements.search_judgements(query, limit: @per_page, offset: offset, filters: filters)
-    total_count = Judgements.count_search_results(query, filters)
-    total_pages = ceil(total_count / @per_page)
+    is_logged_in = logged_in?(conn)
+    is_search = query != "" or has_filters?(filters)
+    search_count = get_session(conn, :search_count) || 0
 
-    # Get filter options for dropdowns
+    # Check rate limit for non-logged-in users
+    if not is_logged_in and is_search and search_count >= @max_searches_for_guests do
+      render_rate_limited(conn, query, filters)
+    else
+      # Increment search count for non-logged-in users
+      conn =
+        if not is_logged_in and is_search do
+          put_session(conn, :search_count, search_count + 1)
+        else
+          conn
+        end
+
+      # Fetch judgements and count from database
+      results = Judgements.search_judgements(query, limit: @per_page, offset: offset, filters: filters)
+      total_count = Judgements.count_search_results(query, filters)
+      total_pages = ceil(total_count / @per_page)
+
+      # Get filter options for dropdowns
+      filter_options = Judgements.get_filter_options()
+
+      # Transform to view format
+      view_results = Enum.map(results, &transform_judgement/1)
+
+      conn
+      |> assign(:page_title, if(query != "", do: "Wyniki: #{query}", else: "Wyszukiwarka"))
+      |> assign(:meta_description, "Wyszukaj orzeczenia KIO dotyczące zamówień publicznych.")
+      |> assign(:query, query)
+      |> assign(:filters, filters)
+      |> assign(:filter_options, filter_options)
+      |> assign(:results, view_results)
+      |> assign(:total_count, total_count)
+      |> assign(:current_page, page)
+      |> assign(:total_pages, total_pages)
+      |> assign(:rate_limited, false)
+      |> render(:index)
+    end
+  end
+
+  defp logged_in?(conn) do
+    conn.assigns[:current_scope] && conn.assigns.current_scope.user != nil
+  end
+
+  defp has_filters?(filters) do
+    Enum.any?(filters, fn {_k, v} -> v != "" end)
+  end
+
+  defp render_rate_limited(conn, query, filters) do
     filter_options = Judgements.get_filter_options()
 
-    # Transform to view format
-    view_results = Enum.map(results, &transform_judgement/1)
-
     conn
-    |> assign(:page_title, if(query != "", do: "Wyniki: #{query}", else: "Wyszukiwarka"))
+    |> assign(:page_title, "Wyszukiwarka")
     |> assign(:meta_description, "Wyszukaj orzeczenia KIO dotyczące zamówień publicznych.")
     |> assign(:query, query)
     |> assign(:filters, filters)
     |> assign(:filter_options, filter_options)
-    |> assign(:results, view_results)
-    |> assign(:total_count, total_count)
-    |> assign(:current_page, page)
-    |> assign(:total_pages, total_pages)
+    |> assign(:results, [])
+    |> assign(:total_count, 0)
+    |> assign(:current_page, 1)
+    |> assign(:total_pages, 0)
+    |> assign(:rate_limited, true)
     |> render(:index)
   end
 

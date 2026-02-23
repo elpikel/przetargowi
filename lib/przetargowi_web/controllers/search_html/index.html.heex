@@ -112,14 +112,29 @@
         </div>
       </div>
 
-      <%= if @results == [] do %>
+      <%= if @rate_limited do %>
         <div class="text-center py-20">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
-            <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/20 flex items-center justify-center">
+            <.icon name="hero-lock-closed" class="size-8 text-warning" />
           </div>
-          <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
-          <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
+          <p class="text-lg text-base-content mb-2">Wykorzystałeś limit wyszukiwań</p>
+          <p class="text-base-content/60 mb-6">
+            Zaloguj się, aby korzystać z wyszukiwarki bez ograniczeń.
+          </p>
+          <a href="/logowanie" class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
+            <.icon name="hero-arrow-right-on-rectangle" class="size-5" />
+            Zaloguj się
+          </a>
         </div>
+      <% else %>
+        <%= if @results == [] do %>
+          <div class="text-center py-20">
+            <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
+              <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
+            </div>
+            <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
+            <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
+          </div>
       <% else %>
         <div class="space-y-5">
           <%= for result <- @results do %>
@@ -221,6 +236,7 @@
             <% end %>
           </nav>
         <% end %>
+      <% end %>
       <% end %>
     </div>
   </div>
