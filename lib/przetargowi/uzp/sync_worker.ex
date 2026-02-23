@@ -46,21 +46,26 @@ defmodule Przetargowi.UZP.SyncWorker do
 
     result =
       Stream.iterate(1, &(&1 + 1))
-      |> Enum.reduce_while({:ok, 0}, fn page, {:ok, count} ->
+      |> Enum.reduce_while({:ok, 0, nil}, fn page, {:ok, count, prev_uzp_ids} ->
         Process.sleep(@delay_between_requests)
 
         case sync_page(page) do
-          {:ok, 0, 0} ->
+          {:ok, 0, 0, _uzp_ids} ->
             Logger.info("No results on page #{page}, stopping")
             {:halt, {:ok, count}}
 
-          {:ok, _total, 0} ->
+          {:ok, _total, 0, _uzp_ids} ->
             Logger.info("Page #{page}: all judgements already in DB, stopping")
             {:halt, {:ok, count}}
 
-          {:ok, total, new_count} ->
-            Logger.info("Synced page #{page}: #{new_count} new of #{total} judgements")
-            {:cont, {:ok, count + new_count}}
+          {:ok, total, new_count, uzp_ids} ->
+            if prev_uzp_ids != nil and MapSet.equal?(prev_uzp_ids, uzp_ids) do
+              Logger.info("Page #{page} same as previous page, stopping")
+              {:halt, {:ok, count}}
+            else
+              Logger.info("Synced page #{page}: #{new_count} new of #{total} judgements")
+              {:cont, {:ok, count + new_count, uzp_ids}}
+            end
 
           {:error, reason} ->
             Logger.error("Failed to sync page #{page}: #{inspect(reason)}")
@@ -81,9 +86,11 @@ defmodule Przetargowi.UZP.SyncWorker do
   defp sync_page(page) do
     case Scraper.fetch_list_page(page) do
       {:ok, %{judgements: []}} ->
-        {:ok, 0, 0}
+        {:ok, 0, 0, MapSet.new()}
 
       {:ok, %{judgements: judgements}} ->
+        uzp_ids = judgements |> Enum.map(& &1.uzp_id) |> MapSet.new()
+
         results =
           Enum.map(judgements, fn attrs ->
             # Check if judgement already exists
@@ -103,7 +110,7 @@ defmodule Przetargowi.UZP.SyncWorker do
           end)
 
         new_count = Enum.count(results, &(&1 == :new))
-        {:ok, length(judgements), new_count}
+        {:ok, length(judgements), new_count, uzp_ids}
 
       {:error, reason} ->
         {:error, reason}
@@ -182,7 +189,10 @@ defmodule Przetargowi.UZP.SyncWorker do
     judgements = Judgements.judgements_needing_extraction(100)
 
     if length(judgements) == 0 do
-      Logger.info("Re-extraction completed, total success: #{total_success}, total errors: #{total_errors}")
+      Logger.info(
+        "Re-extraction completed, total success: #{total_success}, total errors: #{total_errors}"
+      )
+
       :ok
     else
       IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
@@ -286,7 +296,11 @@ defmodule Przetargowi.UZP.SyncWorker do
       IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
 
       results =
-        Enum.map(judgements, fn %{id: id, document_type: document_type, content_html: content_html} ->
+        Enum.map(judgements, fn %{
+                                  id: id,
+                                  document_type: document_type,
+                                  content_html: content_html
+                                } ->
           normalized = Judgements.normalize_document_type(document_type)
           # If still nil, try to detect from content
           normalized = normalized || Judgements.detect_document_type_from_content(content_html)
@@ -348,7 +362,11 @@ defmodule Przetargowi.UZP.SyncWorker do
       IO.puts("")
       detected_count = Enum.count(results, &(&1 == :ok))
       skipped_count = Enum.count(results, &(&1 == :skipped))
-      Logger.info("Detection completed: #{detected_count} detected, #{skipped_count} could not be detected")
+
+      Logger.info(
+        "Detection completed: #{detected_count} detected, #{skipped_count} could not be detected"
+      )
+
       :ok
     end
   end
