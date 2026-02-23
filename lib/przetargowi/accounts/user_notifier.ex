@@ -27,8 +27,8 @@ defmodule Przetargowi.Accounts.UserNotifier do
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Przetargowi</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5;">
+    <body style="margin: 0; padding: 0; background-color: #f8f6f1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f6f1;">
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px;">
@@ -37,11 +37,11 @@ defmodule Przetargowi.Accounts.UserNotifier do
                 <td align="center" style="padding-bottom: 32px;">
                   <table role="presentation" cellspacing="0" cellpadding="0">
                     <tr>
-                      <td style="background-color: #6366f1; width: 40px; height: 40px; border-radius: 12px; text-align: center; vertical-align: middle;">
-                        <span style="color: white; font-size: 18px;">&#9878;</span>
+                      <td style="background-color: #12233d; width: 40px; height: 40px; border-radius: 12px; text-align: center; vertical-align: middle;">
+                        <span style="color: #fefcf8; font-size: 18px;">&#9878;</span>
                       </td>
                       <td style="padding-left: 12px;">
-                        <span style="font-size: 20px; font-weight: 600; color: #18181b;">Przetargowi</span>
+                        <span style="font-size: 20px; font-weight: 600; color: #0a1628;">Przetargowi</span>
                       </td>
                     </tr>
                   </table>
@@ -50,7 +50,7 @@ defmodule Przetargowi.Accounts.UserNotifier do
 
               <!-- Content Card -->
               <tr>
-                <td style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <td style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 1px 3px rgba(10,22,40,0.1);">
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                     <tr>
                       <td style="padding: 40px 32px;">
@@ -60,7 +60,7 @@ defmodule Przetargowi.Accounts.UserNotifier do
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top: 32px;">
                           <tr>
                             <td align="center">
-                              <a href="#{button_url}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 14px 28px; border-radius: 12px;">
+                              <a href="#{button_url}" style="display: inline-block; background-color: #12233d; color: #fefcf8; text-decoration: none; font-weight: 600; font-size: 14px; padding: 14px 28px; border-radius: 12px;">
                                 #{button_text}
                               </a>
                             </td>
@@ -70,11 +70,11 @@ defmodule Przetargowi.Accounts.UserNotifier do
                         <!-- Alternative Link -->
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
                           <tr>
-                            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 8px;">
-                              <p style="margin: 0 0 8px 0; font-size: 12px; color: #71717a;">
+                            <td style="padding: 16px; background-color: #f8f6f1; border-radius: 8px;">
+                              <p style="margin: 0 0 8px 0; font-size: 12px; color: #5a6a7a;">
                                 Możesz też skopiować i wkleić ten link do przeglądarki:
                               </p>
-                              <p style="margin: 0; font-size: 12px; color: #6366f1; word-break: break-all;">
+                              <p style="margin: 0; font-size: 12px; color: #c9a227; word-break: break-all;">
                                 #{button_url}
                               </p>
                             </td>
@@ -89,10 +89,10 @@ defmodule Przetargowi.Accounts.UserNotifier do
               <!-- Footer -->
               <tr>
                 <td align="center" style="padding-top: 32px;">
-                  <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+                  <p style="margin: 0; font-size: 12px; color: #5a6a7a;">
                     &copy; #{Date.utc_today().year} Przetargowi. Wszelkie prawa zastrzeżone.
                   </p>
-                  <p style="margin: 8px 0 0 0; font-size: 11px; color: #d4d4d8;">
+                  <p style="margin: 8px 0 0 0; font-size: 11px; color: #8a9aaa;">
                     Jeśli nie oczekiwałeś tej wiadomości, zignoruj ją.
                   </p>
                 </td>
@@ -125,13 +125,13 @@ defmodule Przetargowi.Accounts.UserNotifier do
     """
 
     html_content = """
-    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b;">
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #0a1628;">
       Zmiana adresu e-mail
     </h1>
-    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
       Cześć,
     </p>
-    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
       Otrzymaliśmy prośbę o zmianę adresu e-mail dla Twojego konta. Kliknij przycisk poniżej, aby potwierdzić zmianę.
     </p>
     """
@@ -166,13 +166,13 @@ defmodule Przetargowi.Accounts.UserNotifier do
     """
 
     html_content = """
-    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b;">
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #0a1628;">
       Zaloguj się do Przetargowi
     </h1>
-    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
       Cześć,
     </p>
-    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
       Kliknij przycisk poniżej, aby zalogować się na swoje konto. Link jest ważny przez ograniczony czas.
     </p>
     """
@@ -197,13 +197,13 @@ defmodule Przetargowi.Accounts.UserNotifier do
     """
 
     html_content = """
-    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b;">
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #0a1628;">
       Witaj w Przetargowi!
     </h1>
-    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
       Dziękujemy za rejestrację!
     </p>
-    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
       Kliknij przycisk poniżej, aby potwierdzić swój adres e-mail i aktywować konto.
     </p>
     """
