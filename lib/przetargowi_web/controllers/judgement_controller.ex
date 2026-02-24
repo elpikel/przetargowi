@@ -23,8 +23,8 @@ defmodule PrzetargowiWeb.JudgementController do
     |> Kernel.<>("...")
   end
 
-  def show(conn, %{"id" => id}) do
-    case Judgements.get_judgement(id) do
+  def show(conn, %{"slug" => slug}) do
+    case Judgements.get_judgement(slug) do
       nil ->
         conn
         |> put_flash(:error, "Orzeczenie nie zostało znalezione")
@@ -33,6 +33,7 @@ defmodule PrzetargowiWeb.JudgementController do
       judgement ->
         view_judgement = %{
           id: judgement.id,
+          slug: judgement.slug,
           signature: judgement.signature,
           decision_date: judgement.decision_date,
           issuing_authority: judgement.issuing_authority,
@@ -51,7 +52,8 @@ defmodule PrzetargowiWeb.JudgementController do
         }
 
         meta_description = build_meta_description(judgement)
-        canonical_url = "https://przetargowi.pl/orzeczenie/#{judgement.id}"
+        url_identifier = judgement.slug || judgement.id
+        canonical_url = "https://przetargowi.pl/orzeczenie/#{url_identifier}"
 
         breadcrumbs = [
           %{name: "Strona główna", url: "https://przetargowi.pl"},

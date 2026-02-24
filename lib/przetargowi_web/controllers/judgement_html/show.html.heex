@@ -10,7 +10,7 @@
         "name" => @judgement.issuing_authority || "KIO"
       },
       "description" => @judgement.meritum || @judgement.deliberation,
-      "url" => "https://przetargowi.pl/orzeczenie/#{@judgement.id}"
+      "url" => "https://przetargowi.pl/orzeczenie/#{@judgement.slug || @judgement.id}"
     })) %>
   </script>
   <div class="bg-base-200 min-h-screen">

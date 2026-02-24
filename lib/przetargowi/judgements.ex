@@ -29,8 +29,15 @@ defmodule Przetargowi.Judgements do
   def get_judgement(id) when is_binary(id) do
     case Integer.parse(id) do
       {int_id, ""} -> Repo.get(Judgement, int_id)
-      _ -> get_judgement_by_signature(id)
+      _ -> get_judgement_by_slug(id)
     end
+  end
+
+  @doc """
+  Gets a single judgement by slug.
+  """
+  def get_judgement_by_slug(slug) do
+    Repo.get_by(Judgement, slug: slug)
   end
 
   @doc """
@@ -152,6 +159,7 @@ defmodule Przetargowi.Judgements do
     |> order_by(desc: :decision_date)
     |> select([j], %{
       id: j.id,
+      slug: j.slug,
       signature: j.signature,
       decision_date: j.decision_date,
       document_type: j.document_type,
@@ -636,7 +644,8 @@ defmodule Przetargowi.Judgements do
   """
   def stream_sitemap_entries do
     Judgement
-    |> select([j], %{id: j.id, updated_at: j.updated_at})
+    |> select([j], %{id: j.id, slug: j.slug, updated_at: j.updated_at})
+    |> where([j], not is_nil(j.slug))
     |> order_by(desc: :updated_at)
     |> Repo.stream()
   end

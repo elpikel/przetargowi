@@ -22,7 +22,7 @@ defmodule PrzetargowiWeb.Router do
 
     get "/", PageController, :home
     get "/szukaj", SearchController, :index
-    get "/orzeczenie/:id", JudgementController, :show
+    get "/orzeczenie/:slug", JudgementController, :show
     get "/o-nas", StaticPageController, :about
     get "/kontakt", StaticPageController, :contact
     get "/regulamin", StaticPageController, :terms

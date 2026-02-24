@@ -27,7 +27,7 @@ defmodule PrzetargowiWeb.SitemapController do
         Judgements.stream_sitemap_entries()
         |> Enum.map(fn entry ->
           %{
-            loc: "#{@base_url}/orzeczenie/#{entry.id}",
+            loc: "#{@base_url}/orzeczenie/#{entry.slug}",
             lastmod: format_date(entry.updated_at),
             priority: "0.8",
             changefreq: "monthly"

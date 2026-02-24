@@ -10,6 +10,7 @@ defmodule Przetargowi.Judgements.Judgement do
 
     # Basic info from list page
     field :signature, :string
+    field :slug, :string
     field :issuing_authority, :string
     field :document_type, :string
     field :decision_date, :date
@@ -46,21 +47,44 @@ defmodule Przetargowi.Judgements.Judgement do
     issuing_authority document_type decision_date chairman
     contracting_authority location resolution_method procedure_type
     key_provisions thematic_issues content_html deliberation meritum pdf_url
-    synced_at details_synced_at
+    synced_at details_synced_at slug
   )a
 
   def changeset(judgement, attrs) do
     judgement
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> maybe_generate_slug()
     |> unique_constraint(:uzp_id)
+    |> unique_constraint(:slug)
   end
+
+  defp maybe_generate_slug(changeset) do
+    case get_change(changeset, :signature) do
+      nil -> changeset
+      signature -> put_change(changeset, :slug, generate_slug(signature))
+    end
+  end
+
+  def generate_slug(signature) when is_binary(signature) do
+    signature
+    |> String.downcase()
+    |> String.replace(~r/[\/\\]/, "-")
+    |> String.replace(~r/\s+/, "-")
+    |> String.replace(~r/[^a-z0-9\-]/, "")
+    |> String.replace(~r/-+/, "-")
+    |> String.trim("-")
+  end
+
+  def generate_slug(_), do: nil
 
   def list_changeset(judgement, attrs) do
     judgement
     |> cast(attrs, [:uzp_id, :signature, :issuing_authority, :document_type, :decision_date, :synced_at])
     |> validate_required([:uzp_id, :signature])
+    |> maybe_generate_slug()
     |> unique_constraint(:uzp_id)
+    |> unique_constraint(:slug)
   end
 
   def details_changeset(judgement, attrs) do

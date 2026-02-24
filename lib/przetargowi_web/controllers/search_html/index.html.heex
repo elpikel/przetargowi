@@ -184,7 +184,7 @@
               <% end %>
 
               <div class="flex items-center justify-end">
-                <a href={"/orzeczenie/#{result.id}"} class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+                <a href={"/orzeczenie/#{result.slug || result.id}"} class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
                   Zobacz pełne orzeczenie
                   <.icon name="hero-arrow-right" class="size-4" />
                 </a>
