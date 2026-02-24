@@ -36,7 +36,10 @@ defmodule Przetargowi.UZP.SyncWorker do
 
   defp sync_full do
     with :ok <- sync_list_pages(%{}),
-         :ok <- sync_details() do
+         :ok <- sync_details(),
+         :ok <- fix_document_types(),
+         :ok <- fix_resolution_methods(),
+         :ok <- fix_procedure_types() do
       :ok
     end
   end
