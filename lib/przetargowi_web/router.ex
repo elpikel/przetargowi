@@ -33,6 +33,12 @@ defmodule PrzetargowiWeb.Router do
     get "/sitemap.xml", SitemapController, :index
   end
 
+  # Analytics proxy to avoid ad blockers
+  scope "/", PrzetargowiWeb do
+    get "/js/stats.js", AnalyticsController, :script
+    post "/api/event", AnalyticsController, :event
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", PrzetargowiWeb do
   #   pipe_through :api
