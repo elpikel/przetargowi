@@ -38,7 +38,7 @@ defmodule PrzetargowiWeb.Layouts do
                   href="/szukaj"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
-                  Wyszukiwarka
+                  Orzeczenia
                 </a>
                 <a
                   href="/przetargi"
@@ -126,7 +126,7 @@ defmodule PrzetargowiWeb.Layouts do
                 Produkt
               </h4>
               <ul class="space-y-3">
-                <li><a href="/szukaj">Wyszukiwarka</a></li>
+                <li><a href="/szukaj">Orzeczenia</a></li>
                 <li><a href="/przetargi">Przetargi</a></li>
                 <li><a href="/raporty">Raporty</a></li>
                 <li><a href="/#cennik">Cennik</a></li>
