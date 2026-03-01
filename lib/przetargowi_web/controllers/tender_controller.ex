@@ -33,12 +33,12 @@ defmodule PrzetargowiWeb.TenderController do
     )
   end
 
-  def show(conn, %{"id" => id} = params) do
-    # Check if id is a valid region - if so, show regional tenders
-    if id in @valid_regions do
-      show_region(conn, id, params)
+  def show(conn, %{"slug" => slug} = params) do
+    # Check if slug is a valid region - if so, show regional tenders
+    if slug in @valid_regions do
+      show_region(conn, slug, params)
     else
-      show_tender(conn, id)
+      show_tender(conn, slug)
     end
   end
 
@@ -67,8 +67,8 @@ defmodule PrzetargowiWeb.TenderController do
     )
   end
 
-  defp show_tender(conn, id) do
-    case Tenders.get_tender_notice(id) do
+  defp show_tender(conn, slug) do
+    case Tenders.get_tender_by_slug(slug) do
       nil ->
         conn
         |> put_status(:not_found)

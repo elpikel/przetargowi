@@ -30,7 +30,7 @@ defmodule PrzetargowiWeb.Router do
 
     # Tenders (BZP)
     get "/przetargi", TenderController, :index
-    get "/przetargi/:id", TenderController, :show
+    get "/przetargi/:slug", TenderController, :show
 
     # Reports
     get "/raporty", ReportController, :index

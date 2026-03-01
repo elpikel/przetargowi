@@ -49,7 +49,7 @@
             </span>
             <%= if @related_contract_notice do %>
               <a
-                href={~p"/przetargi/#{@related_contract_notice.object_id}"}
+                href={~p"/przetargi/#{@related_contract_notice.slug}"}
                 class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors gap-1"
               >
                 <.icon name="hero-link" class="size-3" />

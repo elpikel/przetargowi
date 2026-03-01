@@ -30,6 +30,11 @@ defmodule Przetargowi.Tenders do
   def get_tender_notice(id), do: Repo.get_by(TenderNotice, object_id: id)
 
   @doc """
+  Gets a single tender notice by slug.
+  """
+  def get_tender_by_slug(slug), do: Repo.get_by(TenderNotice, slug: slug)
+
+  @doc """
   Gets a single tender notice by BZP number.
   """
   def get_tender_by_bzp_number(bzp_number), do: Repo.get_by(TenderNotice, bzp_number: bzp_number)

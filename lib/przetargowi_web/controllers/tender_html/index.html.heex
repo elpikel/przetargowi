@@ -155,7 +155,7 @@
           <div class="card-base p-6 hover:shadow-lg transition-shadow">
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               <div class="flex-1 min-w-0">
-                <a href={~p"/przetargi/#{notice.object_id}"} class="block group">
+                <a href={~p"/przetargi/#{notice.slug}"} class="block group">
                   <h2 class="text-lg font-semibold text-base-content group-hover:text-primary mb-2 transition-colors">
                     <%= truncate(notice.order_object, 200) %>
                   </h2>
@@ -209,7 +209,7 @@
                   <% end %>
                 </div>
                 <a
-                  href={~p"/przetargi/#{notice.object_id}"}
+                  href={~p"/przetargi/#{notice.slug}"}
                   class="inline-flex items-center gap-1 text-primary hover:underline text-sm mt-2"
                 >
                   Zobacz szczegóły

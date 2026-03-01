@@ -72,6 +72,7 @@ defmodule Przetargowi.Tenders.TenderNotice do
     field :organization_street, :string
     field :organization_postal_code, :string
     field :evaluation_criteria, :string
+    field :slug, :string
 
     embeds_many :contractors, Przetargowi.Tenders.Contractor
     embeds_many :contractors_contract_details, Przetargowi.Tenders.ContractDetails
@@ -127,7 +128,8 @@ defmodule Przetargowi.Tenders.TenderNotice do
       :organization_regon,
       :organization_street,
       :organization_postal_code,
-      :evaluation_criteria
+      :evaluation_criteria,
+      :slug
     ])
     |> cast_embed(:contractors)
     |> cast_embed(:contractors_contract_details)
@@ -146,7 +148,42 @@ defmodule Przetargowi.Tenders.TenderNotice do
       :organization_id,
       :html_body
     ])
+    |> maybe_generate_slug()
+    |> unique_constraint(:slug)
   end
+
+  defp maybe_generate_slug(changeset) do
+    case {get_field(changeset, :slug), get_field(changeset, :order_object), get_field(changeset, :object_id)} do
+      {nil, order_object, object_id} when is_binary(order_object) and is_binary(object_id) ->
+        put_change(changeset, :slug, generate_slug(order_object, object_id))
+
+      {nil, _, object_id} when is_binary(object_id) ->
+        put_change(changeset, :slug, object_id)
+
+      _ ->
+        changeset
+    end
+  end
+
+  @doc """
+  Generates a URL-friendly slug from the order_object (tender title) and object_id.
+  """
+  def generate_slug(order_object, object_id) when is_binary(order_object) and is_binary(object_id) do
+    base_slug =
+      order_object
+      |> String.downcase()
+      |> String.replace(~r/[\/\\]/, "-")
+      |> String.replace(~r/\s+/, "-")
+      |> String.replace(~r/[^a-z0-9\-]/, "")
+      |> String.replace(~r/-+/, "-")
+      |> String.trim("-")
+      |> String.slice(0, 100)
+
+    "#{base_slug}-#{object_id}"
+  end
+
+  def generate_slug(_, object_id) when is_binary(object_id), do: object_id
+  def generate_slug(_, _), do: nil
 
   def notice_types, do: @notice_types
 end

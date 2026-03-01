@@ -176,7 +176,7 @@ defmodule Przetargowi.Alerts.AlertEmail do
         do: ~s(<span class="notice-value">#{format_value(notice.estimated_value)} PLN</span>),
         else: ""
 
-    tender_link = "https://przetargowi.pl/przetargi/#{notice.object_id}"
+    tender_link = "https://przetargowi.pl/przetargi/#{notice.slug}"
 
     """
     <div class="notice">
@@ -215,7 +215,7 @@ defmodule Przetargowi.Alerts.AlertEmail do
   defp notice_text(notice) do
     deadline = format_date(notice.submitting_offers_date)
     value_text = if notice.estimated_value, do: "Wartość: #{format_value(notice.estimated_value)} PLN\n", else: ""
-    tender_link = "https://przetargowi.pl/przetargi/#{notice.object_id}"
+    tender_link = "https://przetargowi.pl/przetargi/#{notice.slug}"
 
     """
     #{truncate(notice.order_object, 200)}
