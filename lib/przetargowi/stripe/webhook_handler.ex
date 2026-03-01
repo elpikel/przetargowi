@@ -87,7 +87,9 @@ defmodule Przetargowi.Stripe.WebhookHandler do
   # Event Processing - Stripe.Event structs (from verified webhooks)
   # ============================================================================
 
-  defp process_event(%Stripe.Event{type: "checkout.session.completed", data: %{object: session}} = event) do
+  defp process_event(
+         %Stripe.Event{type: "checkout.session.completed", data: %{object: session}} = event
+       ) do
     Logger.info("Stripe webhook: Checkout session completed #{session.id}")
 
     subscription_id = session.subscription
@@ -111,7 +113,10 @@ defmodule Przetargowi.Stripe.WebhookHandler do
     end
   end
 
-  defp process_event(%Stripe.Event{type: "checkout.session.async_payment_succeeded", data: %{object: session}} = event) do
+  defp process_event(
+         %Stripe.Event{type: "checkout.session.async_payment_succeeded", data: %{object: session}} =
+           event
+       ) do
     Logger.info("Stripe webhook: Checkout session async payment succeeded #{session.id}")
 
     subscription_id = session.subscription
@@ -135,7 +140,9 @@ defmodule Przetargowi.Stripe.WebhookHandler do
     end
   end
 
-  defp process_event(%Stripe.Event{type: "invoice.payment_succeeded", data: %{object: invoice}} = event) do
+  defp process_event(
+         %Stripe.Event{type: "invoice.payment_succeeded", data: %{object: invoice}} = event
+       ) do
     Logger.info("Stripe webhook: Invoice payment succeeded #{invoice.id}")
 
     subscription_id = invoice.subscription
@@ -159,7 +166,9 @@ defmodule Przetargowi.Stripe.WebhookHandler do
     end
   end
 
-  defp process_event(%Stripe.Event{type: "invoice.payment_failed", data: %{object: invoice}} = event) do
+  defp process_event(
+         %Stripe.Event{type: "invoice.payment_failed", data: %{object: invoice}} = event
+       ) do
     Logger.info("Stripe webhook: Invoice payment failed #{invoice.id}")
 
     subscription_id = invoice.subscription
@@ -180,7 +189,10 @@ defmodule Przetargowi.Stripe.WebhookHandler do
     end
   end
 
-  defp process_event(%Stripe.Event{type: "customer.subscription.updated", data: %{object: subscription}} = event) do
+  defp process_event(
+         %Stripe.Event{type: "customer.subscription.updated", data: %{object: subscription}} =
+           event
+       ) do
     Logger.info("Stripe webhook: Subscription updated #{subscription.id}")
 
     result =
@@ -198,7 +210,10 @@ defmodule Przetargowi.Stripe.WebhookHandler do
     end
   end
 
-  defp process_event(%Stripe.Event{type: "customer.subscription.deleted", data: %{object: subscription}} = event) do
+  defp process_event(
+         %Stripe.Event{type: "customer.subscription.deleted", data: %{object: subscription}} =
+           event
+       ) do
     Logger.info("Stripe webhook: Subscription deleted #{subscription.id}")
 
     result =
@@ -251,7 +266,8 @@ defmodule Przetargowi.Stripe.WebhookHandler do
         session_id: session["id"],
         subscription_id: session["subscription"],
         customer_id: session["customer"],
-        amount: if(session["amount_total"], do: Decimal.div(Decimal.new(session["amount_total"]), 100)),
+        amount:
+          if(session["amount_total"], do: Decimal.div(Decimal.new(session["amount_total"]), 100)),
         metadata: session["metadata"] || %{},
         raw_event: event
       })
@@ -272,7 +288,8 @@ defmodule Przetargowi.Stripe.WebhookHandler do
         subscription_id: invoice["subscription"],
         customer_id: invoice["customer"],
         payment_intent_id: invoice["payment_intent"],
-        amount: if(invoice["amount_paid"], do: Decimal.div(Decimal.new(invoice["amount_paid"]), 100)),
+        amount:
+          if(invoice["amount_paid"], do: Decimal.div(Decimal.new(invoice["amount_paid"]), 100)),
         raw_event: event
       })
 
@@ -286,7 +303,8 @@ defmodule Przetargowi.Stripe.WebhookHandler do
     invoice = event["data"]["object"]
     Logger.info("Stripe webhook: Invoice payment failed #{invoice["id"]}")
 
-    error_message = get_in(event, ["data", "object", "last_finalization_error", "message"]) || "Payment failed"
+    error_message =
+      get_in(event, ["data", "object", "last_finalization_error", "message"]) || "Payment failed"
 
     result =
       Payments.handle_payment_failed(%{
@@ -346,7 +364,10 @@ defmodule Przetargowi.Stripe.WebhookHandler do
       Payments.handle_refund(%{
         charge_id: charge["id"],
         payment_intent_id: charge["payment_intent"],
-        amount: if(charge["amount_refunded"], do: Decimal.div(Decimal.new(charge["amount_refunded"]), 100)),
+        amount:
+          if(charge["amount_refunded"],
+            do: Decimal.div(Decimal.new(charge["amount_refunded"]), 100)
+          ),
         raw_event: event
       })
 

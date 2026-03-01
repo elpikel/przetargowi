@@ -141,7 +141,8 @@ defmodule Przetargowi.Payments.Subscription do
   @doc """
   Checks if a subscription is currently active.
   """
-  def active?(%__MODULE__{status: "active", current_period_end: end_date}) when not is_nil(end_date) do
+  def active?(%__MODULE__{status: "active", current_period_end: end_date})
+      when not is_nil(end_date) do
     DateTime.before?(DateTime.utc_now(), end_date)
   end
 
@@ -150,7 +151,11 @@ defmodule Przetargowi.Payments.Subscription do
   @doc """
   Checks if a subscription is due for renewal (expires within given hours).
   """
-  def due_for_renewal?(%__MODULE__{status: "active", current_period_end: end_date, cancel_at_period_end: false})
+  def due_for_renewal?(%__MODULE__{
+        status: "active",
+        current_period_end: end_date,
+        cancel_at_period_end: false
+      })
       when not is_nil(end_date) do
     hours_until_expiry = DateTime.diff(end_date, DateTime.utc_now(), :hour)
     hours_until_expiry <= 24 and hours_until_expiry > 0
@@ -182,12 +187,16 @@ defmodule Przetargowi.Payments.Subscription do
   @doc """
   Checks if the subscription has alert access.
   """
-  def has_alerts?(%__MODULE__{plan_type: plan_type}) when plan_type in ["alert", "razem"], do: true
+  def has_alerts?(%__MODULE__{plan_type: plan_type}) when plan_type in ["alert", "razem"],
+    do: true
+
   def has_alerts?(_), do: false
 
   @doc """
   Checks if the subscription has search access.
   """
-  def has_search?(%__MODULE__{plan_type: plan_type}) when plan_type in ["wyszukiwarka", "razem"], do: true
+  def has_search?(%__MODULE__{plan_type: plan_type}) when plan_type in ["wyszukiwarka", "razem"],
+    do: true
+
   def has_search?(_), do: false
 end

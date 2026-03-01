@@ -28,8 +28,8 @@
       </div>
     </div>
   </section>
-
-  <!-- Features -->
+  
+<!-- Features -->
   <section class="py-20 lg:py-24">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
@@ -55,13 +55,15 @@
             Przeszukuj aktualne ogłoszenia z Biuletynu Zamówień Publicznych.
             Filtruj po regionie, rodzaju zamówienia i słowach kluczowych.
           </p>
-          <a href={~p"/przetargi"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
-            Przeglądaj przetargi
-            <.icon name="hero-arrow-right" class="size-4" />
+          <a
+            href={~p"/przetargi"}
+            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+          >
+            Przeglądaj przetargi <.icon name="hero-arrow-right" class="size-4" />
           </a>
         </div>
-
-        <!-- Feature 2: Alerty -->
+        
+<!-- Feature 2: Alerty -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10 flex items-center justify-center">
             <.icon name="hero-bell-alert" class="size-8 text-secondary" />
@@ -72,19 +74,23 @@
             Nigdy nie przegap interesującego zamówienia.
           </p>
           <%= if @current_scope do %>
-            <a href={~p"/alerty"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
-              Zarządzaj alertami
-              <.icon name="hero-arrow-right" class="size-4" />
+            <a
+              href={~p"/alerty"}
+              class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+            >
+              Zarządzaj alertami <.icon name="hero-arrow-right" class="size-4" />
             </a>
           <% else %>
-            <a href={~p"/rejestracja"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
-              Załóż konto
-              <.icon name="hero-arrow-right" class="size-4" />
+            <a
+              href={~p"/rejestracja"}
+              class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+            >
+              Załóż konto <.icon name="hero-arrow-right" class="size-4" />
             </a>
           <% end %>
         </div>
-
-        <!-- Feature 3: Orzecznictwo -->
+        
+<!-- Feature 3: Orzecznictwo -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent/10 flex items-center justify-center">
             <.icon name="hero-scale" class="size-8 text-accent" />
@@ -94,13 +100,15 @@
             Przeszukuj orzeczenia Krajowej Izby Odwoławczej, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
             Znajdź precedensy do swojej sprawy.
           </p>
-          <a href={~p"/szukaj"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
-            Szukaj orzeczeń
-            <.icon name="hero-arrow-right" class="size-4" />
+          <a
+            href={~p"/szukaj"}
+            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+          >
+            Szukaj orzeczeń <.icon name="hero-arrow-right" class="size-4" />
           </a>
         </div>
-
-        <!-- Feature 4: Raporty -->
+        
+<!-- Feature 4: Raporty -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-info/10 flex items-center justify-center">
             <.icon name="hero-chart-bar" class="size-8 text-info" />
@@ -110,13 +118,15 @@
             Comiesięczne analizy rynku zamówień publicznych z podziałem na regiony i kategorie.
             Śledź trendy i planuj strategię.
           </p>
-          <a href={~p"/raporty"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
-            Zobacz raporty
-            <.icon name="hero-arrow-right" class="size-4" />
+          <a
+            href={~p"/raporty"}
+            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+          >
+            Zobacz raporty <.icon name="hero-arrow-right" class="size-4" />
           </a>
         </div>
-
-        <!-- Feature 5: Filtry -->
+        
+<!-- Feature 5: Filtry -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-success/10 flex items-center justify-center">
             <.icon name="hero-funnel" class="size-8 text-success" />
@@ -126,13 +136,15 @@
             Filtruj przetargi po województwie, rodzaju zamówienia, wartości szacunkowej i terminie składania ofert.
             Oszczędź czas na przeglądaniu.
           </p>
-          <a href={~p"/przetargi"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
-            Wypróbuj filtry
-            <.icon name="hero-arrow-right" class="size-4" />
+          <a
+            href={~p"/przetargi"}
+            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+          >
+            Wypróbuj filtry <.icon name="hero-arrow-right" class="size-4" />
           </a>
         </div>
-
-        <!-- Feature 6: Aktualizacje -->
+        
+<!-- Feature 6: Aktualizacje -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/10 flex items-center justify-center">
             <.icon name="hero-arrow-path" class="size-8 text-warning" />
@@ -146,8 +158,8 @@
       </div>
     </div>
   </section>
-
-  <!-- Pricing -->
+  
+<!-- Pricing -->
   <section class="py-20 lg:py-24" id="cennik">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
@@ -188,13 +200,13 @@
             Wypróbuj
           </a>
         </div>
-
-        <!-- Alerty -->
+        
+<!-- Alerty -->
         <div class="pricing-card p-6">
           <h3 class="text-xl font-semibold text-base-content mb-2">Alerty</h3>
           <p class="text-sm text-base-content/60 mb-4">Powiadomienia</p>
           <div class="mb-6">
-            <span class="text-3xl font-bold text-base-content">29 zł</span>
+            <span class="text-3xl font-bold text-base-content">19 zł</span>
             <span class="text-base-content/60 text-sm">/mies.</span>
           </div>
           <ul class="space-y-3 mb-6 text-sm">
@@ -212,22 +224,28 @@
             </li>
           </ul>
           <%= if @current_scope do %>
-            <a href="/subskrypcja/nowa" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+            <a
+              href="/subskrypcja/nowa"
+              class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm"
+            >
               Wybierz
             </a>
           <% else %>
-            <a href="/rejestracja" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+            <a
+              href="/rejestracja"
+              class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm"
+            >
               Wybierz
             </a>
           <% end %>
         </div>
-
-        <!-- Orzeczenia -->
+        
+<!-- Orzeczenia -->
         <div class="pricing-card p-6">
           <h3 class="text-xl font-semibold text-base-content mb-2">Orzeczenia</h3>
           <p class="text-sm text-base-content/60 mb-4">Pełny dostęp</p>
           <div class="mb-6">
-            <span class="text-3xl font-bold text-base-content">29 zł</span>
+            <span class="text-3xl font-bold text-base-content">39 zł</span>
             <span class="text-base-content/60 text-sm">/mies.</span>
           </div>
           <ul class="space-y-3 mb-6 text-sm">
@@ -245,17 +263,23 @@
             </li>
           </ul>
           <%= if @current_scope do %>
-            <a href="/subskrypcja/nowa" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+            <a
+              href="/subskrypcja/nowa"
+              class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm"
+            >
               Wybierz
             </a>
           <% else %>
-            <a href="/rejestracja" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+            <a
+              href="/rejestracja"
+              class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm"
+            >
               Wybierz
             </a>
           <% end %>
         </div>
-
-        <!-- Razem (Featured) -->
+        
+<!-- Razem (Featured) -->
         <div class="pricing-card pricing-card-featured p-6 text-primary-content relative">
           <div class="absolute -top-3 left-1/2 -translate-x-1/2">
             <span class="px-3 py-1 bg-secondary text-secondary-content text-xs font-semibold rounded-full shadow-lg whitespace-nowrap">
@@ -287,11 +311,17 @@
             </li>
           </ul>
           <%= if @current_scope do %>
-            <a href="/subskrypcja/nowa" class="btn-gold block w-full py-2.5 text-center rounded-xl text-sm">
+            <a
+              href="/subskrypcja/nowa"
+              class="btn-gold block w-full py-2.5 text-center rounded-xl text-sm"
+            >
               Wybierz
             </a>
           <% else %>
-            <a href="/rejestracja" class="btn-gold block w-full py-2.5 text-center rounded-xl text-sm">
+            <a
+              href="/rejestracja"
+              class="btn-gold block w-full py-2.5 text-center rounded-xl text-sm"
+            >
               Rozpocznij
             </a>
           <% end %>
@@ -302,8 +332,8 @@
       </div>
     </div>
   </section>
-
-  <!-- CTA -->
+  
+<!-- CTA -->
   <section class="py-20 lg:py-24 bg-base-200/50">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <h2 class="text-3xl lg:text-4xl font-bold text-base-content mb-6">
@@ -317,7 +347,10 @@
           Przeglądaj przetargi
         </a>
       <% else %>
-        <a href={~p"/rejestracja"} class="btn-gold px-8 py-4 rounded-xl font-semibold inline-block">
+        <a
+          href={~p"/rejestracja"}
+          class="btn-gold px-8 py-4 rounded-xl font-semibold inline-block"
+        >
           Załóż darmowe konto
         </a>
       <% end %>

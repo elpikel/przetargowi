@@ -36,7 +36,15 @@ defmodule Przetargowi.Payments.PaymentTransaction do
   """
   def create_changeset(transaction \\ %__MODULE__{}, attrs) do
     transaction
-    |> cast(attrs, [:subscription_id, :user_id, :stripe_payment_intent_id, :stripe_description, :type, :amount, :currency])
+    |> cast(attrs, [
+      :subscription_id,
+      :user_id,
+      :stripe_payment_intent_id,
+      :stripe_description,
+      :type,
+      :amount,
+      :currency
+    ])
     |> validate_required([:user_id, :type, :amount])
     |> validate_inclusion(:type, @types)
     |> put_change(:status, "pending")

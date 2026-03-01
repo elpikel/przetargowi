@@ -175,7 +175,8 @@ defmodule Przetargowi.Tenders do
 
   # Parse HTML body and extract additional fields
   # Handle atom keys (from BZP Client)
-  defp enrich_with_parsed_data(%{html_body: html_body} = attrs) when is_binary(html_body) and html_body != "" do
+  defp enrich_with_parsed_data(%{html_body: html_body} = attrs)
+       when is_binary(html_body) and html_body != "" do
     case BzpParser.parse(html_body) do
       {:ok, parsed} ->
         Map.merge(attrs, %{
@@ -201,13 +202,17 @@ defmodule Przetargowi.Tenders do
         })
 
       {:error, reason} ->
-        Logger.warning("Failed to parse BZP HTML for tender #{attrs[:object_id]}: #{inspect(reason)}")
+        Logger.warning(
+          "Failed to parse BZP HTML for tender #{attrs[:object_id]}: #{inspect(reason)}"
+        )
+
         attrs
     end
   end
 
   # Handle string keys (for backwards compatibility with tests)
-  defp enrich_with_parsed_data(%{"html_body" => html_body} = attrs) when is_binary(html_body) and html_body != "" do
+  defp enrich_with_parsed_data(%{"html_body" => html_body} = attrs)
+       when is_binary(html_body) and html_body != "" do
     case BzpParser.parse(html_body) do
       {:ok, parsed} ->
         Map.merge(attrs, %{
@@ -233,7 +238,10 @@ defmodule Przetargowi.Tenders do
         })
 
       {:error, reason} ->
-        Logger.warning("Failed to parse BZP HTML for tender #{attrs["object_id"]}: #{inspect(reason)}")
+        Logger.warning(
+          "Failed to parse BZP HTML for tender #{attrs["object_id"]}: #{inspect(reason)}"
+        )
+
         attrs
     end
   end
@@ -252,7 +260,9 @@ defmodule Przetargowi.Tenders do
             {:ok, tender_notice}
 
           {:error, changeset} ->
-            Logger.error("Failed to upsert tender notice #{inspect(attrs[:object_id])}: #{inspect(changeset)}")
+            Logger.error(
+              "Failed to upsert tender notice #{inspect(attrs[:object_id])}: #{inspect(changeset)}"
+            )
 
             {:error, attrs, changeset}
         end

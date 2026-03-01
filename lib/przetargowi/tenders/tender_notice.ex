@@ -153,7 +153,8 @@ defmodule Przetargowi.Tenders.TenderNotice do
   end
 
   defp maybe_generate_slug(changeset) do
-    case {get_field(changeset, :slug), get_field(changeset, :order_object), get_field(changeset, :object_id)} do
+    case {get_field(changeset, :slug), get_field(changeset, :order_object),
+          get_field(changeset, :object_id)} do
       {nil, order_object, object_id} when is_binary(order_object) and is_binary(object_id) ->
         put_change(changeset, :slug, generate_slug(order_object, object_id))
 
@@ -168,7 +169,8 @@ defmodule Przetargowi.Tenders.TenderNotice do
   @doc """
   Generates a URL-friendly slug from the order_object (tender title) and object_id.
   """
-  def generate_slug(order_object, object_id) when is_binary(order_object) and is_binary(object_id) do
+  def generate_slug(order_object, object_id)
+      when is_binary(order_object) and is_binary(object_id) do
     base_slug =
       order_object
       |> String.downcase()

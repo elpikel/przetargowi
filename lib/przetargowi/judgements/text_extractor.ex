@@ -24,7 +24,9 @@ defmodule Przetargowi.Judgements.TextExtractor do
 
     # Find deliberation marker and extract everything after it
     case find_and_split_at_marker(text) do
-      nil -> nil
+      nil ->
+        nil
+
       deliberation ->
         deliberation
         |> String.trim()
@@ -128,7 +130,8 @@ defmodule Przetargowi.Judgements.TextExtractor do
   end
 
   defp try_secondary_markers(text) do
-    min_position = div(String.length(text), 20)  # Must be after first 5%
+    # Must be after first 5%
+    min_position = div(String.length(text), 20)
 
     results =
       @secondary_markers
@@ -171,7 +174,8 @@ defmodule Przetargowi.Judgements.TextExtractor do
   defp try_fallback_marker(text) do
     # Lower threshold to 1.5% - some postanowienia have "Uzasadnienie" very early
     # after a short ruling section (e.g., discontinuing proceedings)
-    min_position = div(String.length(text), 67)  # Must be after first ~1.5%
+    # Must be after first ~1.5%
+    min_position = div(String.length(text), 67)
 
     results =
       @fallback_markers

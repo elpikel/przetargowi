@@ -99,7 +99,9 @@ defmodule Przetargowi.Embeddings.EmbeddingWorker do
           success_count = Enum.count(results, &match?({:ok, _}, &1))
           error_count = length(results) - success_count
 
-          Logger.info("Embedding batch completed: #{success_count} success, #{error_count} errors")
+          Logger.info(
+            "Embedding batch completed: #{success_count} success, #{error_count} errors"
+          )
 
           if error_count > length(chunks) / 2 do
             {:error, "Too many embedding errors"}

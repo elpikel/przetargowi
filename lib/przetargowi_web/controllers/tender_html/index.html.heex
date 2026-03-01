@@ -6,8 +6,8 @@
         Aktualne ogłoszenia o zamówieniach publicznych z BZP
       </p>
     </div>
-
-    <!-- Search Form -->
+    
+<!-- Search Form -->
     <form action={~p"/przetargi"} method="get" class="card-base p-6 mb-8">
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <!-- Keyword Search -->
@@ -21,8 +21,8 @@
             class="search-input w-full px-4 py-3 rounded-lg"
           />
         </div>
-
-        <!-- Region Filter Dropdown -->
+        
+<!-- Region Filter Dropdown -->
         <div>
           <label class="block text-sm font-medium text-base-content/70 mb-2">Województwo</label>
           <details class="dropdown-filter relative">
@@ -31,7 +31,7 @@
                 <%= if @regions == [] do %>
                   Wszystkie
                 <% else %>
-                  <%= length(@regions) %> wybrano
+                  {length(@regions)} wybrano
                 <% end %>
               </span>
               <.icon name="hero-chevron-down" class="size-4 text-base-content/50 flex-shrink-0" />
@@ -58,24 +58,26 @@
                       checked={value in @regions}
                       class="checkbox checkbox-sm checkbox-primary region-checkbox"
                     />
-                    <span class="text-base-content"><%= label %></span>
+                    <span class="text-base-content">{label}</span>
                   </label>
                 <% end %>
               </div>
             </div>
           </details>
         </div>
-
-        <!-- Order Type Filter Dropdown -->
+        
+<!-- Order Type Filter Dropdown -->
         <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">Rodzaj zamówienia</label>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Rodzaj zamówienia
+          </label>
           <details class="dropdown-filter relative">
             <summary class="search-input w-full px-4 py-3 rounded-lg cursor-pointer flex items-center justify-between list-none">
               <span class="truncate">
                 <%= if @order_types == [] do %>
                   Wszystkie
                 <% else %>
-                  <%= Enum.map_join(@order_types, ", ", &format_order_type/1) %>
+                  {Enum.map_join(@order_types, ", ", &format_order_type/1)}
                 <% end %>
               </span>
               <.icon name="hero-chevron-down" class="size-4 text-base-content/50 flex-shrink-0" />
@@ -102,14 +104,13 @@
                       checked={value in @order_types}
                       class="checkbox checkbox-sm checkbox-primary order-type-checkbox"
                     />
-                    <span class="text-base-content"><%= label %></span>
+                    <span class="text-base-content">{label}</span>
                   </label>
                 <% end %>
               </div>
             </div>
           </details>
         </div>
-
       </div>
 
       <div class="mt-4 flex justify-end">
@@ -125,27 +126,29 @@
         </div>
       </div>
     </form>
-
-    <!-- Results Count -->
+    
+<!-- Results Count -->
     <div class="mb-6 flex items-center justify-between">
       <p class="text-base-content/60">
-        Znaleziono <span class="font-semibold text-base-content"><%= @total_count %></span> przetargów
+        Znaleziono <span class="font-semibold text-base-content">{@total_count}</span> przetargów
       </p>
       <%= if @current_scope && (@query != "" or @regions != [] or @order_types != []) do %>
         <a
           href={~p"/alerty/nowy?#{build_alert_params(@query, @regions, @order_types)}"}
           class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2"
         >
-          <.icon name="hero-bell" class="size-4" />
-          Utwórz alert
+          <.icon name="hero-bell" class="size-4" /> Utwórz alert
         </a>
       <% end %>
     </div>
-
-    <!-- Results -->
+    
+<!-- Results -->
     <%= if @notices == [] do %>
       <div class="card-base p-12 text-center">
-        <.icon name="hero-document-magnifying-glass" class="size-12 text-base-content/30 mx-auto mb-4" />
+        <.icon
+          name="hero-document-magnifying-glass"
+          class="size-12 text-base-content/30 mx-auto mb-4"
+        />
         <p class="text-base-content/60 mb-2">Brak wyników dla podanych kryteriów</p>
         <p class="text-sm text-base-content/40">Spróbuj zmienić filtry lub słowa kluczowe</p>
       </div>
@@ -157,31 +160,38 @@
               <div class="flex-1 min-w-0">
                 <a href={~p"/przetargi/#{notice.slug}"} class="block group">
                   <h2 class="text-lg font-semibold text-base-content group-hover:text-primary mb-2 transition-colors">
-                    <%= truncate(notice.order_object, 200) %>
+                    {truncate(notice.order_object, 200)}
                   </h2>
                 </a>
 
                 <div class="text-sm text-base-content/70 space-y-1">
                   <p class="flex items-center gap-2">
-                    <.icon name="hero-building-office-2" class="size-4 text-base-content/40 flex-shrink-0" />
-                    <span class="truncate"><%= notice.organization_name %></span>
+                    <.icon
+                      name="hero-building-office-2"
+                      class="size-4 text-base-content/40 flex-shrink-0"
+                    />
+                    <span class="truncate">{notice.organization_name}</span>
                   </p>
                   <p class="flex items-center gap-2">
                     <.icon name="hero-map-pin" class="size-4 text-base-content/40 flex-shrink-0" />
-                    <span><%= notice.organization_city %>, <%= format_province_name(notice.organization_province) %></span>
+                    <span>
+                      {notice.organization_city}, {format_province_name(
+                        notice.organization_province
+                      )}
+                    </span>
                   </p>
                 </div>
 
                 <div class="mt-3 flex flex-wrap gap-2">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                    <%= format_order_type(notice.order_type) %>
+                    {format_order_type(notice.order_type)}
                   </span>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-base-300 text-base-content/70">
-                    <%= notice.bzp_number %>
+                    {notice.bzp_number}
                   </span>
                   <%= if notice.estimated_value do %>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
-                      <%= format_value(notice.estimated_value) %>
+                      {format_value(notice.estimated_value)}
                     </span>
                   <% end %>
                 </div>
@@ -189,7 +199,7 @@
 
               <div class="flex-shrink-0 lg:text-right">
                 <div class="text-sm text-base-content/50 mb-1">
-                  Opublikowano: <%= format_date(notice.publication_date) %>
+                  Opublikowano: {format_date(notice.publication_date)}
                 </div>
                 <div class={[
                   "text-sm font-medium",
@@ -197,14 +207,15 @@
                   not is_urgent?(notice.submitting_offers_date) && "text-base-content"
                 ]}>
                   <.icon name="hero-clock" class="size-4 inline-block mr-1" />
-                  Termin: <%= format_datetime(notice.submitting_offers_date) %>
+                  Termin: {format_datetime(notice.submitting_offers_date)}
                   <%= if days = days_until_deadline(notice.submitting_offers_date) do %>
                     <span class={[
                       "ml-2 px-2 py-0.5 rounded text-xs",
                       is_urgent?(notice.submitting_offers_date) && "bg-error/10 text-error",
-                      not is_urgent?(notice.submitting_offers_date) && "bg-warning/10 text-warning"
+                      not is_urgent?(notice.submitting_offers_date) &&
+                        "bg-warning/10 text-warning"
                     ]}>
-                      <%= days %>
+                      {days}
                     </span>
                   <% end %>
                 </div>
@@ -212,8 +223,7 @@
                   href={~p"/przetargi/#{notice.slug}"}
                   class="inline-flex items-center gap-1 text-primary hover:underline text-sm mt-2"
                 >
-                  Zobacz szczegóły
-                  <.icon name="hero-arrow-right" class="size-4" />
+                  Zobacz szczegóły <.icon name="hero-arrow-right" class="size-4" />
                 </a>
               </div>
             </div>
@@ -221,14 +231,16 @@
         <% end %>
       </div>
     <% end %>
-
-    <!-- Pagination -->
+    
+<!-- Pagination -->
     <%= if @total_pages > 1 do %>
       <div class="mt-8 flex justify-center">
         <nav class="flex items-center space-x-2">
           <%= if @page > 1 do %>
             <a
-              href={~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @page - 1)}"}
+              href={
+                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @page - 1)}"
+              }
               class="btn-outline px-4 py-2 rounded-lg text-sm"
             >
               Poprzednia
@@ -236,12 +248,14 @@
           <% end %>
 
           <span class="px-3 py-2 text-base-content/60 text-sm">
-            Strona <%= @page %> z <%= @total_pages %>
+            Strona {@page} z {@total_pages}
           </span>
 
           <%= if @page < @total_pages do %>
             <a
-              href={~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @page + 1)}"}
+              href={
+                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @page + 1)}"
+              }
               class="btn-outline px-4 py-2 rounded-lg text-sm"
             >
               Następna

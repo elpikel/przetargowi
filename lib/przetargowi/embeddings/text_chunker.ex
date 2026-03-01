@@ -51,7 +51,8 @@ defmodule Przetargowi.Embeddings.TextChunker do
           {chunks, sentence, sentence_words}
 
         # Adding this sentence would exceed 1.5x target - finish current chunk
-        current_words + sentence_words > target_words * 1.5 and current_words >= target_words * 0.5 ->
+        current_words + sentence_words > target_words * 1.5 and
+            current_words >= target_words * 0.5 ->
           {[current_chunk | chunks], sentence, sentence_words}
 
         # Adding this sentence keeps us under or close to target - add it
@@ -61,6 +62,7 @@ defmodule Przetargowi.Embeddings.TextChunker do
         # Sentence itself is very long - split it forcefully
         sentence_words > target_words * 2 ->
           split_chunks = split_long_sentence(sentence, target_words)
+
           case split_chunks do
             [] ->
               {chunks, current_chunk, current_words}

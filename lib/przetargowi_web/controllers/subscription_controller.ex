@@ -121,7 +121,10 @@ defmodule PrzetargowiWeb.SubscriptionController do
     case Payments.reactivate_user_subscription(user.id) do
       {:ok, _subscription} ->
         conn
-        |> put_flash(:info, "Subskrypcja została wznowiona. Automatyczne odnowienie zostało włączone.")
+        |> put_flash(
+          :info,
+          "Subskrypcja została wznowiona. Automatyczne odnowienie zostało włączone."
+        )
         |> redirect(to: ~p"/subskrypcja")
 
       {:error, :no_subscription} ->

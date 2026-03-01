@@ -111,7 +111,9 @@ defmodule Przetargowi.Workers.GenerateMonthlyReports do
           Logger.info("Successfully generated detailed report: #{report.slug}")
 
         {:error, changeset} ->
-          Logger.error("Failed to generate detailed report for #{region}/#{order_type}: #{inspect(changeset.errors)}")
+          Logger.error(
+            "Failed to generate detailed report for #{region}/#{order_type}: #{inspect(changeset.errors)}"
+          )
       end
     else
       Logger.info("Skipping detailed report for #{region}/#{order_type} - no tenders found")
@@ -138,7 +140,9 @@ defmodule Przetargowi.Workers.GenerateMonthlyReports do
           Logger.info("Successfully generated region summary: #{report.slug}")
 
         {:error, changeset} ->
-          Logger.error("Failed to generate region summary for #{region}: #{inspect(changeset.errors)}")
+          Logger.error(
+            "Failed to generate region summary for #{region}: #{inspect(changeset.errors)}"
+          )
       end
     else
       Logger.info("Skipping region summary for #{region} - no tenders found")
@@ -165,7 +169,9 @@ defmodule Przetargowi.Workers.GenerateMonthlyReports do
           Logger.info("Successfully generated industry summary: #{report.slug}")
 
         {:error, changeset} ->
-          Logger.error("Failed to generate industry summary for #{order_type}: #{inspect(changeset.errors)}")
+          Logger.error(
+            "Failed to generate industry summary for #{order_type}: #{inspect(changeset.errors)}"
+          )
       end
     else
       Logger.info("Skipping industry summary for #{order_type} - no tenders found")

@@ -39,10 +39,11 @@ defmodule Przetargowi.Embeddings.OpenAIClient do
   end
 
   defp request_embedding(text, model, api_key) do
-    body = Jason.encode!(%{
-      model: model,
-      input: text
-    })
+    body =
+      Jason.encode!(%{
+        model: model,
+        input: text
+      })
 
     case Req.post(@embeddings_url, body: body, headers: headers(api_key)) do
       {:ok, %{status: 200, body: %{"data" => [%{"embedding" => embedding} | _]}}} ->
@@ -59,10 +60,11 @@ defmodule Przetargowi.Embeddings.OpenAIClient do
   end
 
   defp request_embeddings_batch(texts, model, api_key) do
-    body = Jason.encode!(%{
-      model: model,
-      input: texts
-    })
+    body =
+      Jason.encode!(%{
+        model: model,
+        input: texts
+      })
 
     case Req.post(@embeddings_url, body: body, headers: headers(api_key)) do
       {:ok, %{status: 200, body: %{"data" => data}}} ->

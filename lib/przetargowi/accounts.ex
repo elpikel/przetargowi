@@ -309,7 +309,10 @@ defmodule Przetargowi.Accounts do
   defp confirm_user_multi(user) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
-    |> Ecto.Multi.delete_all(:tokens, from(t in UserToken, where: t.user_id == ^user.id and t.context == "confirm"))
+    |> Ecto.Multi.delete_all(
+      :tokens,
+      from(t in UserToken, where: t.user_id == ^user.id and t.context == "confirm")
+    )
     |> Repo.transaction()
   end
 

@@ -126,7 +126,10 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, j1} = create_judgement()
       # j2 - with details synced
       {:ok, j2} = create_judgement()
-      {:ok, _j2_updated} = Judgements.update_with_details(j2, %{details_synced_at: DateTime.utc_now()})
+
+      {:ok, _j2_updated} =
+        Judgements.update_with_details(j2, %{details_synced_at: DateTime.utc_now()})
+
       # j3 - no details
       {:ok, j3} = create_judgement()
 
@@ -207,9 +210,13 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, _} = Judgements.update_with_details(j1, %{resolution_method: "Oddalenie odwołania"})
 
       {:ok, j2} = create_judgement()
-      {:ok, _} = Judgements.update_with_details(j2, %{resolution_method: "Uwzględnienie odwołania"})
 
-      result = Judgements.search_judgements("", filters: %{resolution_method: "Oddalenie odwołania"})
+      {:ok, _} =
+        Judgements.update_with_details(j2, %{resolution_method: "Uwzględnienie odwołania"})
+
+      result =
+        Judgements.search_judgements("", filters: %{resolution_method: "Oddalenie odwołania"})
+
       assert length(result) == 1
       assert hd(result).id == j1.id
     end
@@ -221,7 +228,9 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, j2} = create_judgement()
       {:ok, _} = Judgements.update_with_details(j2, %{procedure_type: "Zamówienie z wolnej ręki"})
 
-      result = Judgements.search_judgements("", filters: %{procedure_type: "Przetarg nieograniczony"})
+      result =
+        Judgements.search_judgements("", filters: %{procedure_type: "Przetarg nieograniczony"})
+
       assert length(result) == 1
       assert hd(result).id == j1.id
     end
@@ -249,7 +258,11 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, j2} = create_judgement(%{decision_date: ~D[2024-12-10]})
       {:ok, _j3} = create_judgement(%{decision_date: ~D[2024-12-20]})
 
-      result = Judgements.search_judgements("", filters: %{date_from: "2024-12-05", date_to: "2024-12-15"})
+      result =
+        Judgements.search_judgements("",
+          filters: %{date_from: "2024-12-05", date_to: "2024-12-15"}
+        )
+
       assert length(result) == 1
       assert hd(result).id == j2.id
     end
@@ -268,7 +281,9 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, j1} = create_judgement(%{document_type: "Wyrok"})
       {:ok, j2} = create_judgement(%{document_type: "Postanowienie"})
 
-      result = Judgements.search_judgements("", filters: %{document_type: "", issuing_authority: ""})
+      result =
+        Judgements.search_judgements("", filters: %{document_type: "", issuing_authority: ""})
+
       assert length(result) == 2
       ids = Enum.map(result, & &1.id)
       assert j1.id in ids
@@ -299,7 +314,12 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, _j1} = create_judgement(%{document_type: "Wyrok", issuing_authority: "KIO"})
       {:ok, _j2} = create_judgement(%{document_type: "Postanowienie", issuing_authority: "KIO"})
       {:ok, j3} = create_judgement(%{document_type: "Wyrok", issuing_authority: "SO"})
-      {:ok, _} = Judgements.update_with_details(j3, %{resolution_method: "Oddalenie", procedure_type: "Przetarg"})
+
+      {:ok, _} =
+        Judgements.update_with_details(j3, %{
+          resolution_method: "Oddalenie",
+          procedure_type: "Przetarg"
+        })
 
       options = Judgements.get_filter_options()
 

@@ -3,7 +3,7 @@
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-base-content mb-2">
         <%= if assigns[:region] do %>
-          Raporty przetargów - <%= format_region_name(@region) %>
+          Raporty przetargów - {format_region_name(@region)}
         <% else %>
           Raporty przetargów publicznych
         <% end %>
@@ -12,8 +12,8 @@
         Comiesięczne analizy rynku zamówień publicznych z podziałem na regiony i kategorie.
       </p>
     </div>
-
-    <!-- Search Form -->
+    
+<!-- Search Form -->
     <form action={~p"/raporty"} method="get" class="card-base p-6 mb-8">
       <div class="flex gap-4">
         <div class="flex-1">
@@ -27,7 +27,10 @@
         </div>
         <div class="flex gap-3">
           <%= if @query != "" do %>
-            <a href={~p"/raporty"} class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center">
+            <a
+              href={~p"/raporty"}
+              class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center"
+            >
               Wyczyść
             </a>
           <% end %>
@@ -37,24 +40,30 @@
         </div>
       </div>
     </form>
-
-    <!-- Results Count -->
+    
+<!-- Results Count -->
     <div class="mb-6">
       <p class="text-base-content/60">
-        Znaleziono <span class="font-semibold text-base-content"><%= @total_count %></span> raportów
+        Znaleziono <span class="font-semibold text-base-content">{@total_count}</span> raportów
       </p>
     </div>
 
     <%= if @reports == [] do %>
       <div class="card-base p-12 text-center">
-        <.icon name="hero-document-magnifying-glass" class="size-12 text-base-content/30 mx-auto mb-4" />
+        <.icon
+          name="hero-document-magnifying-glass"
+          class="size-12 text-base-content/30 mx-auto mb-4"
+        />
         <p class="text-base-content/60 mb-2">Brak raportów dla podanych kryteriów</p>
         <p class="text-sm text-base-content/40">Spróbuj zmienić wyszukiwanie</p>
       </div>
     <% else %>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <%= for report <- @reports do %>
-          <a href={~p"/raporty/#{report.slug}"} class="block card-base hover:shadow-lg transition-shadow overflow-hidden">
+          <a
+            href={~p"/raporty/#{report.slug}"}
+            class="block card-base hover:shadow-lg transition-shadow overflow-hidden"
+          >
             <div class="h-40 bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center relative overflow-hidden">
               <%= if report.cover_image_url do %>
                 <img
@@ -68,19 +77,19 @@
             </div>
             <div class="p-6">
               <h2 class="text-lg font-semibold text-base-content mb-2">
-                <%= report.title %>
+                {report.title}
               </h2>
               <div class="text-sm text-base-content/50 space-y-1">
-                <p><%= format_report_date(report.report_month) %></p>
+                <p>{format_report_date(report.report_month)}</p>
                 <%= if report.region do %>
-                  <p><%= format_region_name(report.region) %></p>
+                  <p>{format_region_name(report.region)}</p>
                 <% end %>
                 <%= if report.order_type do %>
-                  <p><%= format_order_type(report.order_type) %></p>
+                  <p>{format_order_type(report.order_type)}</p>
                 <% end %>
               </div>
               <p class="mt-4 text-sm text-base-content/70 line-clamp-2">
-                <%= report.meta_description %>
+                {report.meta_description}
               </p>
             </div>
           </a>
@@ -91,17 +100,23 @@
         <div class="mt-8 flex justify-center">
           <nav class="flex items-center space-x-2">
             <%= if @page > 1 do %>
-              <a href={~p"/raporty?#{build_pagination_params(@query, @page - 1)}"} class="btn-outline px-4 py-2 rounded-lg text-sm">
+              <a
+                href={~p"/raporty?#{build_pagination_params(@query, @page - 1)}"}
+                class="btn-outline px-4 py-2 rounded-lg text-sm"
+              >
                 Poprzednia
               </a>
             <% end %>
 
             <span class="px-3 py-2 text-base-content/60 text-sm">
-              Strona <%= @page %> z <%= @total_pages %>
+              Strona {@page} z {@total_pages}
             </span>
 
             <%= if @page < @total_pages do %>
-              <a href={~p"/raporty?#{build_pagination_params(@query, @page + 1)}"} class="btn-outline px-4 py-2 rounded-lg text-sm">
+              <a
+                href={~p"/raporty?#{build_pagination_params(@query, @page + 1)}"}
+                class="btn-outline px-4 py-2 rounded-lg text-sm"
+              >
                 Następna
               </a>
             <% end %>

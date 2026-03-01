@@ -28,10 +28,17 @@
           <%= if @subscription.cancel_at_period_end do %>
             <div class="mt-4 p-3 bg-warning/10 rounded-lg">
               <p class="text-sm text-warning">
-                Subskrypcja zostanie anulowana {Calendar.strftime(@subscription.current_period_end, "%d.%m.%Y")}.
+                Subskrypcja zostanie anulowana {Calendar.strftime(
+                  @subscription.current_period_end,
+                  "%d.%m.%Y"
+                )}.
               </p>
               <form action={~p"/subskrypcja/wznow"} method="post" class="mt-2">
-                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
                 <button type="submit" class="text-sm font-medium text-primary hover:underline">
                   Wznów subskrypcję
                 </button>
@@ -40,7 +47,11 @@
           <% else %>
             <div class="pt-4 border-t border-base-300 mt-4">
               <form action={~p"/subskrypcja"} method="post">
-                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
                 <input type="hidden" name="_method" value="delete" />
                 <button type="submit" class="text-sm text-error hover:underline">
                   Anuluj subskrypcję
@@ -57,7 +68,10 @@
         <p class="text-sm text-base-content/60 mb-4">
           Aktywuj plan Premium, aby uzyskać pełny dostęp do wszystkich funkcji.
         </p>
-        <a href={~p"/subskrypcja/nowa"} class="btn-primary-solid px-6 py-2.5 rounded-lg font-medium inline-block">
+        <a
+          href={~p"/subskrypcja/nowa"}
+          class="btn-primary-solid px-6 py-2.5 rounded-lg font-medium inline-block"
+        >
           Aktywuj Premium
         </a>
       </div>
@@ -85,11 +99,16 @@
                 transaction.status == "refunded" && "bg-info/10 text-info"
               ]}>
                 <%= case transaction.status do %>
-                  <% "completed" -> %>Opłacone
-                  <% "failed" -> %>Nieudane
-                  <% "pending" -> %>Oczekujące
-                  <% "refunded" -> %>Zwrócone
-                  <% _ -> %>{transaction.status}
+                  <% "completed" -> %>
+                    Opłacone
+                  <% "failed" -> %>
+                    Nieudane
+                  <% "pending" -> %>
+                    Oczekujące
+                  <% "refunded" -> %>
+                    Zwrócone
+                  <% _ -> %>
+                    {transaction.status}
                 <% end %>
               </span>
             </div>

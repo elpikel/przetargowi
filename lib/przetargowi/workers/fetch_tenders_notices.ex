@@ -24,7 +24,9 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
     publication_date_from = Date.utc_today() |> Date.add(-days) |> Date.to_iso8601()
     publication_date_to = Date.to_iso8601(Date.utc_today())
 
-    Logger.info("Starting tender notices fetch from #{publication_date_from} to #{publication_date_to} (#{days} days)")
+    Logger.info(
+      "Starting tender notices fetch from #{publication_date_from} to #{publication_date_to} (#{days} days)"
+    )
 
     upsert_all_tender_notices(publication_date_from, publication_date_to)
 
@@ -42,8 +44,18 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
     end
   end
 
-  defp upsert_all_tender_notices(object_id, publication_date_from, publication_date_to, notice_type) do
-    case BZPClient.fetch_tenders_notices(object_id, publication_date_from, publication_date_to, notice_type) do
+  defp upsert_all_tender_notices(
+         object_id,
+         publication_date_from,
+         publication_date_to,
+         notice_type
+       ) do
+    case BZPClient.fetch_tenders_notices(
+           object_id,
+           publication_date_from,
+           publication_date_to,
+           notice_type
+         ) do
       {:ok, %{tenders: []}} ->
         Logger.info("BZP API: No more results.")
         :ok
@@ -62,7 +74,12 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
         last_tender = List.last(tenders)
         next_object_id = last_tender.object_id
 
-        upsert_all_tender_notices(next_object_id, publication_date_from, publication_date_to, notice_type)
+        upsert_all_tender_notices(
+          next_object_id,
+          publication_date_from,
+          publication_date_to,
+          notice_type
+        )
 
       {:error, reason} ->
         Logger.error("BZP API: Error: #{inspect(reason)}")

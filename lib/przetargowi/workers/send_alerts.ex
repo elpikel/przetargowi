@@ -35,7 +35,10 @@ defmodule Przetargowi.Workers.SendAlerts do
     :ok
   end
 
-  defp send_alert_email(%{email: email, rules: %{"region" => region, "tender_category" => tender_category} = rules}) do
+  defp send_alert_email(%{
+         email: email,
+         rules: %{"region" => region, "tender_category" => tender_category} = rules
+       }) do
     Logger.info("Processing alert for #{email} with rules: #{inspect(rules)}")
 
     notices = fetch_matching_notices(region, tender_category)

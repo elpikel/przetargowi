@@ -55,7 +55,12 @@ defmodule PrzetargowiWeb.AnalyticsController do
       {:ok, %{status: 200, body: script}} when is_binary(script) ->
         # Modify script to use our proxy endpoint
         modified_script = String.replace(script, @plausible_host, "przetargowi.pl")
-        :persistent_term.put({__MODULE__, :script}, {modified_script, System.monotonic_time(:millisecond)})
+
+        :persistent_term.put(
+          {__MODULE__, :script},
+          {modified_script, System.monotonic_time(:millisecond)}
+        )
+
         {:ok, modified_script}
 
       {:ok, %{status: status}} ->

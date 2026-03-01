@@ -19,7 +19,7 @@
           >
             <option value="">Wybierz region...</option>
             <%= for {value, label} <- region_options() do %>
-              <option value={value}><%= label %></option>
+              <option value={value}>{label}</option>
             <% end %>
           </select>
         </div>
@@ -35,7 +35,7 @@
           >
             <option value="">Wybierz kategorię...</option>
             <%= for {value, label} <- category_options() do %>
-              <option value={value}><%= label %></option>
+              <option value={value}>{label}</option>
             <% end %>
           </select>
         </div>

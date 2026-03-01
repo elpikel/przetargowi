@@ -279,7 +279,11 @@ defmodule Przetargowi.Judgements do
   """
   def judgements_needing_meritum(limit \\ 100) do
     Judgement
-    |> where([j], not is_nil(j.deliberation) and j.deliberation != "" and (is_nil(j.meritum) or j.meritum == ""))
+    |> where(
+      [j],
+      not is_nil(j.deliberation) and j.deliberation != "" and
+        (is_nil(j.meritum) or j.meritum == "")
+    )
     |> select([j], %{id: j.id, deliberation: j.deliberation})
     |> limit(^limit)
     |> Repo.all()
@@ -290,7 +294,11 @@ defmodule Przetargowi.Judgements do
   """
   def count_judgements_needing_meritum do
     Judgement
-    |> where([j], not is_nil(j.deliberation) and j.deliberation != "" and (is_nil(j.meritum) or j.meritum == ""))
+    |> where(
+      [j],
+      not is_nil(j.deliberation) and j.deliberation != "" and
+        (is_nil(j.meritum) or j.meritum == "")
+    )
     |> Repo.aggregate(:count)
   end
 
@@ -300,10 +308,12 @@ defmodule Przetargowi.Judgements do
   def update_meritum_by_id(id, meritum) do
     Judgement
     |> where([j], j.id == ^id)
-    |> Repo.update_all(set: [
-      meritum: meritum,
-      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    ])
+    |> Repo.update_all(
+      set: [
+        meritum: meritum,
+        updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      ]
+    )
     |> case do
       {1, _} -> {:ok, id}
       {0, _} -> {:error, :not_found}
@@ -325,11 +335,13 @@ defmodule Przetargowi.Judgements do
   def update_deliberation_by_id(id, attrs) do
     Judgement
     |> where([j], j.id == ^id)
-    |> Repo.update_all(set: [
-      deliberation: attrs.deliberation,
-      meritum: attrs.meritum,
-      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    ])
+    |> Repo.update_all(
+      set: [
+        deliberation: attrs.deliberation,
+        meritum: attrs.meritum,
+        updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      ]
+    )
     |> case do
       {1, _} -> {:ok, id}
       {0, _} -> {:error, :not_found}
@@ -358,8 +370,11 @@ defmodule Przetargowi.Judgements do
   def judgements_needing_document_type_fix(limit \\ 100) do
     # Find documents with uppercase letters, typos, or "-"
     Judgement
-    |> where([j], j.document_type == "-" or j.document_type == "wyok" or
-                  j.document_type == "Wyrok" or j.document_type == "Postanowienie")
+    |> where(
+      [j],
+      j.document_type == "-" or j.document_type == "wyok" or
+        j.document_type == "Wyrok" or j.document_type == "Postanowienie"
+    )
     |> select([j], %{id: j.id, document_type: j.document_type, content_html: j.content_html})
     |> limit(^limit)
     |> Repo.all()
@@ -370,8 +385,11 @@ defmodule Przetargowi.Judgements do
   """
   def count_judgements_needing_document_type_fix do
     Judgement
-    |> where([j], j.document_type == "-" or j.document_type == "wyok" or
-                  j.document_type == "Wyrok" or j.document_type == "Postanowienie")
+    |> where(
+      [j],
+      j.document_type == "-" or j.document_type == "wyok" or
+        j.document_type == "Wyrok" or j.document_type == "Postanowienie"
+    )
     |> Repo.aggregate(:count)
   end
 
@@ -422,10 +440,12 @@ defmodule Przetargowi.Judgements do
   def update_document_type_by_id(id, document_type) do
     Judgement
     |> where([j], j.id == ^id)
-    |> Repo.update_all(set: [
-      document_type: document_type,
-      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    ])
+    |> Repo.update_all(
+      set: [
+        document_type: document_type,
+        updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      ]
+    )
     |> case do
       {1, _} -> {:ok, id}
       {0, _} -> {:error, :not_found}
@@ -471,15 +491,26 @@ defmodule Przetargowi.Judgements do
   defp map_resolution_method("umarzenie postępowania"), do: "umorzone"
   defp map_resolution_method("umorzone (art. 568 ust. 2 ustawy pzp)"), do: "umorzone"
   defp map_resolution_method("umorzone (568 pkt 2)"), do: "umorzone"
-  defp map_resolution_method("umorzenie postępowania wszczętego na skutek złożenia wniosku o uchylenie zakazu zawarcia umowy"), do: "umorzone"
+
+  defp map_resolution_method(
+         "umorzenie postępowania wszczętego na skutek złożenia wniosku o uchylenie zakazu zawarcia umowy"
+       ),
+       do: "umorzone"
 
   defp map_resolution_method("umorzone (wycofanie)"), do: "umorzone (wycofanie)"
   defp map_resolution_method("wycofanie"), do: "umorzone (wycofanie)"
 
-  defp map_resolution_method("umorzone (uwzględnienie zarzutów przez zamawiającego w całości)"), do: "umorzone (uwzględnienie zarzutów)"
-  defp map_resolution_method("umorzone (uwzględnienie zarzutów w całosci przez zamawiającego)"), do: "umorzone (uwzględnienie zarzutów)"
-  defp map_resolution_method("umorzone (uwzględnienie zarzutów przez zamawiającego)"), do: "umorzone (uwzględnienie zarzutów)"
-  defp map_resolution_method("uwzględnienie zarzutów przez zamawiającego w całości"), do: "umorzone (uwzględnienie zarzutów)"
+  defp map_resolution_method("umorzone (uwzględnienie zarzutów przez zamawiającego w całości)"),
+    do: "umorzone (uwzględnienie zarzutów)"
+
+  defp map_resolution_method("umorzone (uwzględnienie zarzutów w całosci przez zamawiającego)"),
+    do: "umorzone (uwzględnienie zarzutów)"
+
+  defp map_resolution_method("umorzone (uwzględnienie zarzutów przez zamawiającego)"),
+    do: "umorzone (uwzględnienie zarzutów)"
+
+  defp map_resolution_method("uwzględnienie zarzutów przez zamawiającego w całości"),
+    do: "umorzone (uwzględnienie zarzutów)"
 
   defp map_resolution_method("odrzucone"), do: "odrzucone"
   defp map_resolution_method("odrzucenie"), do: "odrzucone"
@@ -492,7 +523,9 @@ defmodule Przetargowi.Judgements do
 
   defp map_resolution_method("postanowienie"), do: "postanowienie"
 
-  defp map_resolution_method("odmowa uchylenia zakazu zawarcia umowy"), do: "odmowa uchylenia zakazu"
+  defp map_resolution_method("odmowa uchylenia zakazu zawarcia umowy"),
+    do: "odmowa uchylenia zakazu"
+
   defp map_resolution_method("uchylenie zakazu zawarcia umowy"), do: "uchylenie zakazu"
 
   defp map_resolution_method("wyrok"), do: nil
@@ -504,14 +537,24 @@ defmodule Przetargowi.Judgements do
   """
   def judgements_needing_resolution_method_fix(limit \\ 100) do
     normalized_values = [
-      "oddalone", "uwzględnione", "uwzględnione w części",
-      "umorzone", "umorzone (wycofanie)", "umorzone (uwzględnienie zarzutów)",
-      "odrzucone", "zwrócone", "postanowienie",
-      "odmowa uchylenia zakazu", "uchylenie zakazu"
+      "oddalone",
+      "uwzględnione",
+      "uwzględnione w części",
+      "umorzone",
+      "umorzone (wycofanie)",
+      "umorzone (uwzględnienie zarzutów)",
+      "odrzucone",
+      "zwrócone",
+      "postanowienie",
+      "odmowa uchylenia zakazu",
+      "uchylenie zakazu"
     ]
 
     Judgement
-    |> where([j], not is_nil(j.resolution_method) and j.resolution_method not in ^normalized_values)
+    |> where(
+      [j],
+      not is_nil(j.resolution_method) and j.resolution_method not in ^normalized_values
+    )
     |> select([j], %{id: j.id, resolution_method: j.resolution_method})
     |> limit(^limit)
     |> Repo.all()
@@ -522,14 +565,24 @@ defmodule Przetargowi.Judgements do
   """
   def count_judgements_needing_resolution_method_fix do
     normalized_values = [
-      "oddalone", "uwzględnione", "uwzględnione w części",
-      "umorzone", "umorzone (wycofanie)", "umorzone (uwzględnienie zarzutów)",
-      "odrzucone", "zwrócone", "postanowienie",
-      "odmowa uchylenia zakazu", "uchylenie zakazu"
+      "oddalone",
+      "uwzględnione",
+      "uwzględnione w części",
+      "umorzone",
+      "umorzone (wycofanie)",
+      "umorzone (uwzględnienie zarzutów)",
+      "odrzucone",
+      "zwrócone",
+      "postanowienie",
+      "odmowa uchylenia zakazu",
+      "uchylenie zakazu"
     ]
 
     Judgement
-    |> where([j], not is_nil(j.resolution_method) and j.resolution_method not in ^normalized_values)
+    |> where(
+      [j],
+      not is_nil(j.resolution_method) and j.resolution_method not in ^normalized_values
+    )
     |> Repo.aggregate(:count)
   end
 
@@ -539,10 +592,12 @@ defmodule Przetargowi.Judgements do
   def update_resolution_method_by_id(id, resolution_method) do
     Judgement
     |> where([j], j.id == ^id)
-    |> Repo.update_all(set: [
-      resolution_method: resolution_method,
-      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    ])
+    |> Repo.update_all(
+      set: [
+        resolution_method: resolution_method,
+        updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      ]
+    )
     |> case do
       {1, _} -> {:ok, id}
       {0, _} -> {:error, :not_found}
@@ -595,11 +650,21 @@ defmodule Przetargowi.Judgements do
   defp map_procedure_type(other), do: other
 
   @normalized_procedure_types [
-    "przetarg nieograniczony", "przetarg ograniczony", "tryb podstawowy",
-    "dialog konkurencyjny", "negocjacje z ogłoszeniem", "zamówienie z wolnej ręki",
-    "negocjacje bez ogłoszenia", "umowa ramowa", "konkurs", "zapytanie o cenę",
-    "licytacja elektroniczna", "poza ustawą", "partnerstwo innowacyjne",
-    "dynamiczny system zakupów", "usługi społeczne"
+    "przetarg nieograniczony",
+    "przetarg ograniczony",
+    "tryb podstawowy",
+    "dialog konkurencyjny",
+    "negocjacje z ogłoszeniem",
+    "zamówienie z wolnej ręki",
+    "negocjacje bez ogłoszenia",
+    "umowa ramowa",
+    "konkurs",
+    "zapytanie o cenę",
+    "licytacja elektroniczna",
+    "poza ustawą",
+    "partnerstwo innowacyjne",
+    "dynamiczny system zakupów",
+    "usługi społeczne"
   ]
 
   @doc """
@@ -607,7 +672,10 @@ defmodule Przetargowi.Judgements do
   """
   def judgements_needing_procedure_type_fix(limit \\ 100) do
     Judgement
-    |> where([j], not is_nil(j.procedure_type) and j.procedure_type not in ^@normalized_procedure_types)
+    |> where(
+      [j],
+      not is_nil(j.procedure_type) and j.procedure_type not in ^@normalized_procedure_types
+    )
     |> select([j], %{id: j.id, procedure_type: j.procedure_type})
     |> limit(^limit)
     |> Repo.all()
@@ -618,7 +686,10 @@ defmodule Przetargowi.Judgements do
   """
   def count_judgements_needing_procedure_type_fix do
     Judgement
-    |> where([j], not is_nil(j.procedure_type) and j.procedure_type not in ^@normalized_procedure_types)
+    |> where(
+      [j],
+      not is_nil(j.procedure_type) and j.procedure_type not in ^@normalized_procedure_types
+    )
     |> Repo.aggregate(:count)
   end
 
@@ -628,10 +699,12 @@ defmodule Przetargowi.Judgements do
   def update_procedure_type_by_id(id, procedure_type) do
     Judgement
     |> where([j], j.id == ^id)
-    |> Repo.update_all(set: [
-      procedure_type: procedure_type,
-      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    ])
+    |> Repo.update_all(
+      set: [
+        procedure_type: procedure_type,
+        updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      ]
+    )
     |> case do
       {1, _} -> {:ok, id}
       {0, _} -> {:error, :not_found}
@@ -667,10 +740,12 @@ defmodule Przetargowi.Judgements do
   def update_slug_by_id(id, slug) do
     Judgement
     |> where([j], j.id == ^id)
-    |> Repo.update_all(set: [
-      slug: slug,
-      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    ])
+    |> Repo.update_all(
+      set: [
+        slug: slug,
+        updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      ]
+    )
     |> case do
       {1, _} -> {:ok, id}
       {0, _} -> {:error, :not_found}

@@ -5,5 +5,6 @@ defmodule Przetargowi.UZP.HTTPClientBehaviour do
   """
 
   @callback get(url :: String.t()) :: {:ok, Req.Response.t()} | {:error, term()}
-  @callback post(url :: String.t(), body :: String.t()) :: {:ok, Req.Response.t()} | {:error, term()}
+  @callback post(url :: String.t(), body :: String.t()) ::
+              {:ok, Req.Response.t()} | {:error, term()}
 end

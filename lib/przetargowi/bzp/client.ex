@@ -29,7 +29,8 @@ defmodule Przetargowi.Bzp.Client do
   - `:notice_type` - type of notice to fetch (e.g., "TenderResultNotice")
   """
   def fetch_tenders_notices(object_id, publication_date_from, publication_date_to, notice_type) do
-    params = build_query_params(object_id, publication_date_from, publication_date_to, notice_type)
+    params =
+      build_query_params(object_id, publication_date_from, publication_date_to, notice_type)
 
     Logger.info(
       "BZP API: Fetching tenders notices from #{publication_date_from} to #{publication_date_to} from object_id #{inspect(object_id)} with notice_type #{inspect(notice_type)}"
@@ -48,7 +49,13 @@ defmodule Przetargowi.Bzp.Client do
     fetch_all_tender_notices(nil, publication_date_from, publication_date_to, notice_type, [])
   end
 
-  defp fetch_all_tender_notices(object_id, publication_date_from, publication_date_to, notice_type, acc) do
+  defp fetch_all_tender_notices(
+         object_id,
+         publication_date_from,
+         publication_date_to,
+         notice_type,
+         acc
+       ) do
     case fetch_tenders_notices(object_id, publication_date_from, publication_date_to, notice_type) do
       {:ok, %{tenders: []}} ->
         Logger.info("BZP API: No more results.")
@@ -60,7 +67,14 @@ defmodule Przetargowi.Bzp.Client do
         Process.sleep(500)
         last_tender = List.last(tenders)
         next_object_id = last_tender.object_id
-        fetch_all_tender_notices(next_object_id, publication_date_from, publication_date_to, notice_type, acc ++ tenders)
+
+        fetch_all_tender_notices(
+          next_object_id,
+          publication_date_from,
+          publication_date_to,
+          notice_type,
+          acc ++ tenders
+        )
 
       {:error, reason} ->
         Logger.error("BZP API: Error: #{inspect(reason)}")

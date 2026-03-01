@@ -21,7 +21,8 @@ defmodule Przetargowi.Tenders.TenderNoticeParser do
     html = decode_html_entities(html_body)
 
     # Pattern for: "8.2.) Wartość umowy/umowy ramowej: 21918,60 PLN"
-    regex = ~r/8\.2\.\)\s*Wartość umowy\/umowy ramowej:\s*(?:<[^>]+>)?\s*([\d\s]+[,\.]\d{2})\s*(PLN|EUR)/iu
+    regex =
+      ~r/8\.2\.\)\s*Wartość umowy\/umowy ramowej:\s*(?:<[^>]+>)?\s*([\d\s]+[,\.]\d{2})\s*(PLN|EUR)/iu
 
     regex
     |> Regex.scan(html)
@@ -111,9 +112,12 @@ defmodule Przetargowi.Tenders.TenderNoticeParser do
     html = decode_html_entities(html_body)
 
     # Lowest price: 6.2.)
-    lowest_regex = ~r/6\.2\.\)[^:]*najniższą[^:]*:\s*(?:<[^>]+>)?\s*([\d\s]+[,\.]\d{2})\s*(PLN|EUR)/iu
+    lowest_regex =
+      ~r/6\.2\.\)[^:]*najniższą[^:]*:\s*(?:<[^>]+>)?\s*([\d\s]+[,\.]\d{2})\s*(PLN|EUR)/iu
+
     # Highest price: 6.3.)
-    highest_regex = ~r/6\.3\.\)[^:]*najwyższą[^:]*:\s*(?:<[^>]+>)?\s*([\d\s]+[,\.]\d{2})\s*(PLN|EUR)/iu
+    highest_regex =
+      ~r/6\.3\.\)[^:]*najwyższą[^:]*:\s*(?:<[^>]+>)?\s*([\d\s]+[,\.]\d{2})\s*(PLN|EUR)/iu
 
     lowest_matches = Regex.scan(lowest_regex, html)
     highest_matches = Regex.scan(highest_regex, html)
@@ -159,7 +163,8 @@ defmodule Przetargowi.Tenders.TenderNoticeParser do
 
     # Pattern for part headers followed by cancellation
     # Looking for "Część N" followed by cancellation info
-    regex = ~r/Część\s+(\d+).*?5\.2\.\)\s*Podstawa prawna unieważnienia[^:]*:\s*(?:<[^>]+>)?\s*([^<]+)/isu
+    regex =
+      ~r/Część\s+(\d+).*?5\.2\.\)\s*Podstawa prawna unieważnienia[^:]*:\s*(?:<[^>]+>)?\s*([^<]+)/isu
 
     regex
     |> Regex.scan(html)
@@ -235,7 +240,8 @@ defmodule Przetargowi.Tenders.TenderNoticeParser do
       end)
 
     %{
-      estimated_values: html_body |> extract_part_estimated_values() |> Enum.map(& &1.estimated_value),
+      estimated_values:
+        html_body |> extract_part_estimated_values() |> Enum.map(& &1.estimated_value),
       estimated_value: html_body |> extract_estimated_value() |> Map.get(:value, nil),
       total_contract_value: total_contract_value(html_body),
       total_contractors_contracts_count: length(contractors),

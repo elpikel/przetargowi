@@ -14,7 +14,14 @@
       </p>
     </div>
 
-    <.form :let={f} for={@form} as={:user} id="login_form" action={~p"/logowanie"} class="space-y-4">
+    <.form
+      :let={f}
+      for={@form}
+      as={:user}
+      id="login_form"
+      action={~p"/logowanie"}
+      class="space-y-4"
+    >
       <div>
         <label for={f[:email].id} class="block text-sm font-medium text-base-content mb-2">
           Email
@@ -46,7 +53,12 @@
           placeholder="••••••••"
         />
       </div>
-      <button type="submit" name={f[:remember_me].name} value="true" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
+      <button
+        type="submit"
+        name={f[:remember_me].name}
+        value="true"
+        class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium"
+      >
         Zaloguj się
       </button>
     </.form>

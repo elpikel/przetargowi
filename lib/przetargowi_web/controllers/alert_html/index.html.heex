@@ -1,7 +1,10 @@
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-900">Twoje alerty</h1>
-    <a href={~p"/alerty/nowy"} class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+    <a
+      href={~p"/alerty/nowy"}
+      class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+    >
       + Nowy alert
     </a>
   </div>
@@ -28,19 +31,21 @@
                 <%= if alert.rules["region"] || alert.rules[:region] do %>
                   <p>
                     <span class="font-medium">Region:</span>
-                    <%= format_region(alert.rules["region"] || alert.rules[:region]) %>
+                    {format_region(alert.rules["region"] || alert.rules[:region])}
                   </p>
                 <% end %>
                 <%= if alert.rules["tender_category"] || alert.rules[:tender_category] do %>
                   <p>
                     <span class="font-medium">Kategoria:</span>
-                    <%= format_category(alert.rules["tender_category"] || alert.rules[:tender_category]) %>
+                    {format_category(
+                      alert.rules["tender_category"] || alert.rules[:tender_category]
+                    )}
                   </p>
                 <% end %>
                 <%= if alert.rules["keywords"] || alert.rules[:keywords] do %>
                   <p>
                     <span class="font-medium">Słowa kluczowe:</span>
-                    <%= Enum.join(alert.rules["keywords"] || alert.rules[:keywords] || [], ", ") %>
+                    {Enum.join(alert.rules["keywords"] || alert.rules[:keywords] || [], ", ")}
                   </p>
                 <% end %>
               </div>

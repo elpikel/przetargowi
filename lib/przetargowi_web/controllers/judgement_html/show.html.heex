@@ -65,19 +65,20 @@
               <% end %>
             </dl>
           </div>
-
-          <!-- Contracting Authority Card -->
+          
+<!-- Contracting Authority Card -->
           <%= if @judgement.contracting_authority || @judgement.location do %>
             <div class="pricing-card p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
-                <.icon name="hero-building-office-2" class="size-5 text-secondary" />
-                Zamawiający
+                <.icon name="hero-building-office-2" class="size-5 text-secondary" /> Zamawiający
               </h2>
               <dl class="space-y-4">
                 <%= if @judgement.contracting_authority do %>
                   <div>
                     <dt class="text-sm text-base-content/50 mb-1">Nazwa</dt>
-                    <dd class="text-base-content font-medium">{@judgement.contracting_authority}</dd>
+                    <dd class="text-base-content font-medium">
+                      {@judgement.contracting_authority}
+                    </dd>
                   </div>
                 <% end %>
                 <%= if @judgement.location do %>
@@ -89,8 +90,8 @@
               </dl>
             </div>
           <% end %>
-
-          <!-- Procedure Card -->
+          
+<!-- Procedure Card -->
           <%= if @judgement.procedure_type do %>
             <div class="pricing-card p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
@@ -105,8 +106,8 @@
               </dl>
             </div>
           <% end %>
-
-          <!-- Key Provisions Card -->
+          
+<!-- Key Provisions Card -->
           <%= if @judgement.key_provisions && length(@judgement.key_provisions) > 0 do %>
             <div class="pricing-card p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
@@ -122,13 +123,12 @@
               </div>
             </div>
           <% end %>
-
-          <!-- Thematic Issues Card -->
+          
+<!-- Thematic Issues Card -->
           <%= if @judgement.thematic_issues && length(@judgement.thematic_issues) > 0 do %>
             <div class="pricing-card p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
-                <.icon name="hero-tag" class="size-5 text-secondary" />
-                Zagadnienia merytoryczne
+                <.icon name="hero-tag" class="size-5 text-secondary" /> Zagadnienia merytoryczne
               </h2>
               <div class="flex flex-wrap gap-2">
                 <%= for issue <- @judgement.thematic_issues do %>
@@ -140,20 +140,22 @@
             </div>
           <% end %>
         </div>
-
-        <!-- Main content -->
+        
+<!-- Main content -->
         <div class="lg:col-span-2 flex flex-col gap-6">
           <!-- Document Content -->
           <div class="pricing-card p-6 flex-1 flex flex-col">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-lg font-semibold text-base-content flex items-center gap-2">
-                <.icon name="hero-document-text" class="size-5 text-secondary" />
-                Treść dokumentu
+                <.icon name="hero-document-text" class="size-5 text-secondary" /> Treść dokumentu
               </h2>
               <%= if @judgement.pdf_url do %>
-                <a href={@judgement.pdf_url} target="_blank" class="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-                  <.icon name="hero-document-arrow-down" class="size-4" />
-                  Pobierz PDF
+                <a
+                  href={@judgement.pdf_url}
+                  target="_blank"
+                  class="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <.icon name="hero-document-arrow-down" class="size-4" /> Pobierz PDF
                 </a>
               <% end %>
             </div>

@@ -13,8 +13,7 @@
                   class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
                 >
                   <span class="flex items-center gap-2">
-                    <.icon name="hero-magnifying-glass" class="size-4" />
-                    Słowa kluczowe
+                    <.icon name="hero-magnifying-glass" class="size-4" /> Słowa kluczowe
                   </span>
                 </a>
                 <a
@@ -22,20 +21,21 @@
                   class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
                 >
                   <span class="flex items-center gap-2">
-                    <.icon name="hero-sparkles" class="size-4" />
-                    Semantyczne (AI)
+                    <.icon name="hero-sparkles" class="size-4" /> Semantyczne (AI)
                   </span>
                 </a>
               </div>
               <%= if @search_mode == "semantic" do %>
-                <span class="text-xs text-base-content/50">Wyszukuje podobne znaczeniowo orzeczenia</span>
+                <span class="text-xs text-base-content/50">
+                  Wyszukuje podobne znaczeniowo orzeczenia
+                </span>
               <% end %>
             </div>
-
-            <!-- Hidden field to preserve mode on form submit -->
+            
+<!-- Hidden field to preserve mode on form submit -->
             <input type="hidden" name="mode" value={@search_mode} />
-
-            <!-- Main search input -->
+            
+<!-- Main search input -->
             <div class="flex flex-col md:flex-row gap-4">
               <div class="flex-1 relative">
                 <input
@@ -43,15 +43,20 @@
                   name="q"
                   value={@query}
                   class="search-input w-full pl-5 pr-5 py-3.5 rounded-xl text-base"
-                  placeholder={if(@search_mode == "semantic", do: "Opisz czego szukasz własnymi słowami...", else: "Wpisz słowa kluczowe...")}
+                  placeholder={
+                    if(@search_mode == "semantic",
+                      do: "Opisz czego szukasz własnymi słowami...",
+                      else: "Wpisz słowa kluczowe..."
+                    )
+                  }
                 />
               </div>
               <button type="submit" class="btn-gold px-6 py-2.5 rounded-xl font-semibold">
                 Szukaj
               </button>
             </div>
-
-            <!-- Filters -->
+            
+<!-- Filters -->
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <select
                 name="document_type"
@@ -69,7 +74,9 @@
               >
                 <option value="">Organ wydający</option>
                 <%= for authority <- @filter_options.issuing_authorities do %>
-                  <option value={authority} selected={@filters[:issuing_authority] == authority}>{authority}</option>
+                  <option value={authority} selected={@filters[:issuing_authority] == authority}>
+                    {authority}
+                  </option>
                 <% end %>
               </select>
 
@@ -79,7 +86,9 @@
               >
                 <option value="">Sposób rozstrzygnięcia</option>
                 <%= for method <- @filter_options.resolution_methods do %>
-                  <option value={method} selected={@filters[:resolution_method] == method}>{method}</option>
+                  <option value={method} selected={@filters[:resolution_method] == method}>
+                    {method}
+                  </option>
                 <% end %>
               </select>
 
@@ -89,7 +98,9 @@
               >
                 <option value="">Tryb postępowania</option>
                 <%= for proc_type <- @filter_options.procedure_types do %>
-                  <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>{proc_type}</option>
+                  <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>
+                    {proc_type}
+                  </option>
                 <% end %>
               </select>
 
@@ -120,8 +131,8 @@
         </form>
       </div>
     </div>
-
-    <!-- Results -->
+    
+<!-- Results -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div class="flex items-center justify-between mb-8">
         <div>
@@ -134,7 +145,8 @@
           </h1>
           <p class="text-base-content/60 mt-1">
             <%= if @query != "" do %>
-              Znaleziono <span class="font-semibold text-secondary">{@total_count}</span> orzeczeń dla „<span class="font-medium">{@query}</span>"
+              Znaleziono <span class="font-semibold text-secondary">{@total_count}</span>
+              orzeczeń dla „<span class="font-medium">{@query}</span>"
             <% else %>
               <span class="font-semibold text-secondary">{@total_count}</span> orzeczeń w bazie
             <% end %>
@@ -164,17 +176,21 @@
             <p class="text-base-content/60 mb-6">
               Aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
             </p>
-            <a href="/subskrypcja/nowa" class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
-              <.icon name="hero-sparkles" class="size-5" />
-              Aktywuj Premium
+            <a
+              href="/subskrypcja/nowa"
+              class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
+            >
+              <.icon name="hero-sparkles" class="size-5" /> Aktywuj Premium
             </a>
           <% else %>
             <p class="text-base-content/60 mb-6">
               Załóż konto i aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
             </p>
-            <a href="/rejestracja" class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
-              <.icon name="hero-user-plus" class="size-5" />
-              Załóż konto
+            <a
+              href="/rejestracja"
+              class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
+            >
+              <.icon name="hero-user-plus" class="size-5" /> Załóż konto
             </a>
           <% end %>
         </div>
@@ -187,120 +203,125 @@
             <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
             <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
           </div>
-      <% else %>
-        <div class="space-y-5">
-          <%= for result <- @results do %>
-            <article class="result-card p-6">
-              <div class="flex items-start justify-between gap-4 mb-3">
-                <div class="flex items-center gap-3">
-                  <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
-                </div>
-                <div class="flex items-center gap-3 text-sm text-base-content/50">
-                  <%= if result.decision_date do %>
-                    <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
-                  <% end %>
-                  <%= if result.document_type do %>
-                    <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
-                      {result.document_type}
-                    </span>
-                  <% end %>
-                </div>
-              </div>
-
-              <!-- Additional metadata -->
-              <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
-                <%= if result.resolution_method do %>
-                  <div class="flex items-center gap-1.5">
-                    <.icon name="hero-scale" class="size-4 text-secondary/70" />
-                    <span>{result.resolution_method}</span>
+        <% else %>
+          <div class="space-y-5">
+            <%= for result <- @results do %>
+              <article class="result-card p-6">
+                <div class="flex items-start justify-between gap-4 mb-3">
+                  <div class="flex items-center gap-3">
+                    <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
                   </div>
-                <% end %>
-                <%= if result.contracting_authority do %>
-                  <div class="flex items-center gap-1.5">
-                    <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
-                    <span>{result.contracting_authority}</span>
+                  <div class="flex items-center gap-3 text-sm text-base-content/50">
+                    <%= if result.decision_date do %>
+                      <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
+                    <% end %>
+                    <%= if result.document_type do %>
+                      <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
+                        {result.document_type}
+                      </span>
+                    <% end %>
                   </div>
-                <% end %>
-              </div>
-
-              <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
-                <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
-                  <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                    <.icon name="hero-sparkles-solid" class="size-5" />
-                    <span>Dopasowany fragment</span>
-                  </div>
-                  <p class="text-base-content/80 leading-relaxed text-sm">
-                    {String.slice(result.matched_chunk, 0, 300)}<%= if String.length(result.matched_chunk) > 300, do: "..." %>
-                  </p>
                 </div>
-              <% else %>
-                <%= if result.meritum do %>
-                  <div class="meritum-box rounded-xl p-5 mb-5">
-                    <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                      <.icon name="hero-light-bulb-solid" class="size-5" />
-                      <span>Meritum</span>
+                
+<!-- Additional metadata -->
+                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
+                  <%= if result.resolution_method do %>
+                    <div class="flex items-center gap-1.5">
+                      <.icon name="hero-scale" class="size-4 text-secondary/70" />
+                      <span>{result.resolution_method}</span>
                     </div>
-                    <p class="text-base-content/80 leading-relaxed">
-                      {result.meritum}
+                  <% end %>
+                  <%= if result.contracting_authority do %>
+                    <div class="flex items-center gap-1.5">
+                      <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
+                      <span>{result.contracting_authority}</span>
+                    </div>
+                  <% end %>
+                </div>
+
+                <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
+                  <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
+                    <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
+                      <.icon name="hero-sparkles-solid" class="size-5" />
+                      <span>Dopasowany fragment</span>
+                    </div>
+                    <p class="text-base-content/80 leading-relaxed text-sm">
+                      {String.slice(result.matched_chunk, 0, 300)}{if String.length(
+                                                                        result.matched_chunk
+                                                                      ) > 300,
+                                                                      do: "..."}
                     </p>
                   </div>
+                <% else %>
+                  <%= if result.meritum do %>
+                    <div class="meritum-box rounded-xl p-5 mb-5">
+                      <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
+                        <.icon name="hero-light-bulb-solid" class="size-5" />
+                        <span>Meritum</span>
+                      </div>
+                      <p class="text-base-content/80 leading-relaxed">
+                        {result.meritum}
+                      </p>
+                    </div>
+                  <% end %>
+                <% end %>
+
+                <div class="flex items-center justify-end">
+                  <a
+                    href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"}
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Zobacz pełne orzeczenie <.icon name="hero-arrow-right" class="size-4" />
+                  </a>
+                </div>
+              </article>
+            <% end %>
+          </div>
+          
+<!-- Pagination -->
+          <%= if @total_pages > 1 do %>
+            <nav class="flex items-center justify-center gap-2 mt-10">
+              <%= if @current_page > 1 do %>
+                <a
+                  href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
+                  class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
+                >
+                  <.icon name="hero-chevron-left" class="size-4" />
+                </a>
+              <% else %>
+                <span class="px-4 py-2 rounded-lg bg-base-200/50 text-base-content/30 cursor-not-allowed">
+                  <.icon name="hero-chevron-left" class="size-4" />
+                </span>
+              <% end %>
+
+              <%= for page_num <- pagination_range(@current_page, @total_pages) do %>
+                <%= if page_num == :ellipsis do %>
+                  <span class="px-3 py-2 text-base-content/50">...</span>
+                <% else %>
+                  <a
+                    href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, page_num)}"}
+                    class={"px-4 py-2 rounded-lg font-medium transition-colors " <> if(page_num == @current_page, do: "bg-primary text-primary-content", else: "bg-base-200 hover:bg-base-300 text-base-content")}
+                  >
+                    {page_num}
+                  </a>
                 <% end %>
               <% end %>
 
-              <div class="flex items-center justify-end">
-                <a href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"} class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                  Zobacz pełne orzeczenie
-                  <.icon name="hero-arrow-right" class="size-4" />
-                </a>
-              </div>
-            </article>
-          <% end %>
-        </div>
-
-        <!-- Pagination -->
-        <%= if @total_pages > 1 do %>
-          <nav class="flex items-center justify-center gap-2 mt-10">
-            <%= if @current_page > 1 do %>
-              <a
-                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
-                class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
-              >
-                <.icon name="hero-chevron-left" class="size-4" />
-              </a>
-            <% else %>
-              <span class="px-4 py-2 rounded-lg bg-base-200/50 text-base-content/30 cursor-not-allowed">
-                <.icon name="hero-chevron-left" class="size-4" />
-              </span>
-            <% end %>
-
-            <%= for page_num <- pagination_range(@current_page, @total_pages) do %>
-              <%= if page_num == :ellipsis do %>
-                <span class="px-3 py-2 text-base-content/50">...</span>
-              <% else %>
+              <%= if @current_page < @total_pages do %>
                 <a
-                  href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, page_num)}"}
-                  class={"px-4 py-2 rounded-lg font-medium transition-colors " <> if(page_num == @current_page, do: "bg-primary text-primary-content", else: "bg-base-200 hover:bg-base-300 text-base-content")}
+                  href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
+                  class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
                 >
-                  {page_num}
+                  <.icon name="hero-chevron-right" class="size-4" />
                 </a>
+              <% else %>
+                <span class="px-4 py-2 rounded-lg bg-base-200/50 text-base-content/30 cursor-not-allowed">
+                  <.icon name="hero-chevron-right" class="size-4" />
+                </span>
               <% end %>
-            <% end %>
-
-            <%= if @current_page < @total_pages do %>
-              <a
-                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
-                class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
-              >
-                <.icon name="hero-chevron-right" class="size-4" />
-              </a>
-            <% else %>
-              <span class="px-4 py-2 rounded-lg bg-base-200/50 text-base-content/30 cursor-not-allowed">
-                <.icon name="hero-chevron-right" class="size-4" />
-              </span>
-            <% end %>
-          </nav>
+            </nav>
+          <% end %>
         <% end %>
-      <% end %>
       <% end %>
     </div>
   </div>

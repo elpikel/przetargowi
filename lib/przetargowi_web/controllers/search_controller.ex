@@ -41,7 +41,9 @@ defmodule PrzetargowiWeb.SearchController do
 
   defp perform_keyword_search(conn, query, filters, page, offset) do
     # Fetch judgements and count from database
-    results = Judgements.search_judgements(query, limit: @per_page, offset: offset, filters: filters)
+    results =
+      Judgements.search_judgements(query, limit: @per_page, offset: offset, filters: filters)
+
     total_count = Judgements.count_search_results(query, filters)
     total_pages = ceil(total_count / @per_page)
 
@@ -199,18 +201,24 @@ defmodule PrzetargowiWeb.SearchController do
       date = Map.get(result, field)
 
       cond do
-        is_nil(date) -> false
+        is_nil(date) ->
+          false
+
         date_from != "" and date_to != "" ->
           from = Date.from_iso8601!(date_from)
           to = Date.from_iso8601!(date_to)
           Date.compare(date, from) != :lt and Date.compare(date, to) != :gt
+
         date_from != "" ->
           from = Date.from_iso8601!(date_from)
           Date.compare(date, from) != :lt
+
         date_to != "" ->
           to = Date.from_iso8601!(date_to)
           Date.compare(date, to) != :gt
-        true -> true
+
+        true ->
+          true
       end
     end)
   end

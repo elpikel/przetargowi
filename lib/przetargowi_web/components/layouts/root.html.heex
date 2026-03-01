@@ -4,24 +4,45 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <meta name="description" content={assigns[:meta_description] || "Przetargowi — wyszukiwarka orzeczeń KIO, SO, SA i SN w sprawach zamówień publicznych."} />
-    <meta name="keywords" content="orzeczenia KIO, zamówienia publiczne, przetargi, Sąd Okręgowy, Sąd Apelacyjny, Sąd Najwyższy" />
+    <meta
+      name="description"
+      content={
+        assigns[:meta_description] ||
+          "Przetargowi — wyszukiwarka orzeczeń KIO, SO, SA i SN w sprawach zamówień publicznych."
+      }
+    />
+    <meta
+      name="keywords"
+      content="orzeczenia KIO, zamówienia publiczne, przetargi, Sąd Okręgowy, Sąd Apelacyjny, Sąd Najwyższy"
+    />
     <meta name="robots" content="index, follow" />
     <meta property="og:title" content={assigns[:page_title] || "Przetargowi"} />
-    <meta property="og:description" content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."} />
+    <meta
+      property="og:description"
+      content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."}
+    />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="pl_PL" />
-    <meta property="og:url" content={assigns[:og_url] || assigns[:canonical_url] || "https://przetargowi.pl"} />
+    <meta
+      property="og:url"
+      content={assigns[:og_url] || assigns[:canonical_url] || "https://przetargowi.pl"}
+    />
     <meta property="og:site_name" content="Przetargowi" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={assigns[:page_title] || "Przetargowi"} />
-    <meta name="twitter:description" content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."} />
+    <meta
+      name="twitter:description"
+      content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."}
+    />
     <link rel="canonical" href={assigns[:canonical_url] || "https://przetargowi.pl"} />
     <link rel="icon" href={~p"/favicon.ico"} type="image/x-icon" />
     <title>{assigns[:page_title] || "Przetargowi"} — Wyszukiwarka Orzeczeń</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
@@ -54,7 +75,8 @@
         })) %>
       </script>
     <% end %>
-    <script defer data-domain="przetargowi.pl" data-api="/api/event" src="/js/stats.js"></script>
+    <script defer data-domain="przetargowi.pl" data-api="/api/event" src="/js/stats.js">
+    </script>
   </head>
   <body class="bg-base-100 text-base-content">
     {@inner_content}

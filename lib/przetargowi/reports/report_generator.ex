@@ -123,9 +123,14 @@ defmodule Przetargowi.Reports.ReportGenerator do
         if is_list(tender.contractors) do
           Enum.map(tender.contractors, fn c ->
             cond do
-              is_map(c) && Map.has_key?(c, :contractor_national_id) -> c.contractor_national_id
-              is_map(c) && Map.has_key?(c, "contractor_national_id") -> c["contractor_national_id"]
-              true -> nil
+              is_map(c) && Map.has_key?(c, :contractor_national_id) ->
+                c.contractor_national_id
+
+              is_map(c) && Map.has_key?(c, "contractor_national_id") ->
+                c["contractor_national_id"]
+
+              true ->
+                nil
             end
           end)
         else
@@ -228,9 +233,14 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
               nip =
                 cond do
-                  is_map(c) && Map.has_key?(c, :contractor_national_id) -> c.contractor_national_id
-                  is_map(c) && Map.has_key?(c, "contractor_national_id") -> c["contractor_national_id"]
-                  true -> nil
+                  is_map(c) && Map.has_key?(c, :contractor_national_id) ->
+                    c.contractor_national_id
+
+                  is_map(c) && Map.has_key?(c, "contractor_national_id") ->
+                    c["contractor_national_id"]
+
+                  true ->
+                    nil
                 end
 
               if name && nip, do: {name, nip}
@@ -470,9 +480,15 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
   defp generate_analysis(_report_type, _region, _order_type, stats, _trends, graphs) do
     closed_count = stats.summary["closed_tenders"]
-    total_contract_value = stats.summary["total_contract_value"] |> Decimal.new() |> format_currency()
+
+    total_contract_value =
+      stats.summary["total_contract_value"] |> Decimal.new() |> format_currency()
+
     avg_contract_value = stats.summary["avg_contract_value"] |> Decimal.new() |> format_currency()
-    total_estimated_value = stats.summary["total_estimated_value"] |> Decimal.new() |> format_currency()
+
+    total_estimated_value =
+      stats.summary["total_estimated_value"] |> Decimal.new() |> format_currency()
+
     total_contractors = stats.summary["total_contractors"]
 
     top_org_html =

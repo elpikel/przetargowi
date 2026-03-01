@@ -27,21 +27,35 @@ defmodule PrzetargowiWeb.Layouts do
               <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
                 <.icon name="hero-scale" class="size-5 text-primary-content" />
               </div>
-              <span class="text-xl font-display font-semibold tracking-tight text-base-content">Przetargowi</span>
+              <span class="text-xl font-display font-semibold tracking-tight text-base-content">
+                Przetargowi
+              </span>
             </a>
 
             <%= unless @hide_nav do %>
               <nav class="hidden md:flex items-center gap-8">
-                <a href="/szukaj" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                <a
+                  href="/szukaj"
+                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
                   Wyszukiwarka
                 </a>
-                <a href="/przetargi" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                <a
+                  href="/przetargi"
+                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
                   Przetargi
                 </a>
-                <a href="/raporty" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                <a
+                  href="/raporty"
+                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
                   Raporty
                 </a>
-                <a href="/#cennik" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                <a
+                  href="/#cennik"
+                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
                   Cennik
                 </a>
               </nav>
@@ -52,17 +66,30 @@ defmodule PrzetargowiWeb.Layouts do
                 <span class="hidden sm:block text-sm text-base-content/60">
                   {@current_scope.user.email}
                 </span>
-                <a href="/ustawienia" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                <a
+                  href="/ustawienia"
+                  class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
                   Ustawienia
                 </a>
-                <.link href="/wyloguj" method="delete" class="btn-primary-solid px-5 py-2.5 text-sm font-medium rounded-xl">
+                <.link
+                  href="/wyloguj"
+                  method="delete"
+                  class="btn-primary-solid px-5 py-2.5 text-sm font-medium rounded-xl"
+                >
                   Wyloguj
                 </.link>
               <% else %>
-                <a href="/logowanie" class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                <a
+                  href="/logowanie"
+                  class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
                   Zaloguj się
                 </a>
-                <a href="/rejestracja" class="btn-primary-solid px-5 py-2.5 text-sm font-medium rounded-xl">
+                <a
+                  href="/rejestracja"
+                  class="btn-primary-solid px-5 py-2.5 text-sm font-medium rounded-xl"
+                >
                   Rozpocznij
                 </a>
               <% end %>
@@ -86,14 +113,18 @@ defmodule PrzetargowiWeb.Layouts do
                 <div class="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center">
                   <.icon name="hero-scale" class="size-4 text-secondary-content" />
                 </div>
-                <span class="font-display font-semibold text-lg text-primary-content">Przetargowi</span>
+                <span class="font-display font-semibold text-lg text-primary-content">
+                  Przetargowi
+                </span>
               </a>
               <p class="text-sm text-primary-content/60 leading-relaxed">
                 Wyszukiwarka orzeczeń zamówień publicznych wspierana przez AI.
               </p>
             </div>
             <div>
-              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Produkt</h4>
+              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">
+                Produkt
+              </h4>
               <ul class="space-y-3">
                 <li><a href="/szukaj">Wyszukiwarka</a></li>
                 <li><a href="/przetargi">Przetargi</a></li>
@@ -102,14 +133,18 @@ defmodule PrzetargowiWeb.Layouts do
               </ul>
             </div>
             <div>
-              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Firma</h4>
+              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">
+                Firma
+              </h4>
               <ul class="space-y-3">
                 <li><a href="/o-nas">O nas</a></li>
                 <li><a href="/kontakt">Kontakt</a></li>
               </ul>
             </div>
             <div>
-              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Prawne</h4>
+              <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">
+                Prawne
+              </h4>
               <ul class="space-y-3">
                 <li><a href="/regulamin">Regulamin</a></li>
                 <li><a href="/polityka-prywatnosci">Polityka prywatności</a></li>

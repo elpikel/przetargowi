@@ -93,7 +93,13 @@ defmodule Przetargowi.Payments do
   def list_expired_subscriptions do
     now = DateTime.utc_now()
 
-    Repo.all(from(s in Subscription, where: s.status == "active", where: s.current_period_end < ^now, preload: [:user]))
+    Repo.all(
+      from(s in Subscription,
+        where: s.status == "active",
+        where: s.current_period_end < ^now,
+        preload: [:user]
+      )
+    )
   end
 
   @doc """
@@ -147,7 +153,8 @@ defmodule Przetargowi.Payments do
         }
 
         with {:ok, subscription} <- create_subscription_record(subscription_attrs),
-             {:ok, stripe_result} <- initiate_stripe_checkout(user, subscription, callbacks, existing_customer_id) do
+             {:ok, stripe_result} <-
+               initiate_stripe_checkout(user, subscription, callbacks, existing_customer_id) do
           {:ok,
            %{
              redirect_url: stripe_result.checkout_url,
@@ -335,7 +342,9 @@ defmodule Przetargowi.Payments do
   Handles a successful payment notification from Stripe.
   Can be called for both initial checkout and recurring invoices.
   """
-  def handle_payment_completed(%{session_id: _session_id, subscription_id: stripe_subscription_id} = event) do
+  def handle_payment_completed(
+        %{session_id: _session_id, subscription_id: stripe_subscription_id} = event
+      ) do
     # This is a checkout.session.completed event (initial payment)
     metadata = event[:metadata] || %{}
     subscription_id = metadata["subscription_id"]
@@ -366,7 +375,9 @@ defmodule Przetargowi.Payments do
     end
   end
 
-  def handle_payment_completed(%{invoice_id: _invoice_id, subscription_id: stripe_subscription_id} = event) do
+  def handle_payment_completed(
+        %{invoice_id: _invoice_id, subscription_id: stripe_subscription_id} = event
+      ) do
     # This is an invoice.payment_succeeded event (renewal)
     subscription = get_subscription_by_stripe_id(stripe_subscription_id)
 
@@ -389,7 +400,9 @@ defmodule Przetargowi.Payments do
   @doc """
   Handles a failed payment notification from Stripe.
   """
-  def handle_payment_failed(%{invoice_id: _invoice_id, subscription_id: stripe_subscription_id} = event) do
+  def handle_payment_failed(
+        %{invoice_id: _invoice_id, subscription_id: stripe_subscription_id} = event
+      ) do
     subscription = get_subscription_by_stripe_id(stripe_subscription_id)
 
     if subscription do
@@ -541,14 +554,25 @@ defmodule Przetargowi.Payments do
   def list_user_transactions(user_id, opts \\ []) do
     limit = Keyword.get(opts, :limit, 10)
 
-    Repo.all(from(t in PaymentTransaction, where: t.user_id == ^user_id, order_by: [desc: t.inserted_at], limit: ^limit))
+    Repo.all(
+      from(t in PaymentTransaction,
+        where: t.user_id == ^user_id,
+        order_by: [desc: t.inserted_at],
+        limit: ^limit
+      )
+    )
   end
 
   @doc """
   Lists transactions for a subscription.
   """
   def list_subscription_transactions(subscription_id) do
-    Repo.all(from(t in PaymentTransaction, where: t.subscription_id == ^subscription_id, order_by: [desc: t.inserted_at]))
+    Repo.all(
+      from(t in PaymentTransaction,
+        where: t.subscription_id == ^subscription_id,
+        order_by: [desc: t.inserted_at]
+      )
+    )
   end
 
   # ============================================================================
@@ -585,8 +609,11 @@ defmodule Przetargowi.Payments do
   """
   def has_alerts_access?(user_id) do
     case get_user_subscription(user_id) do
-      nil -> false
-      subscription -> Subscription.active?(subscription) and Subscription.has_alerts?(subscription)
+      nil ->
+        false
+
+      subscription ->
+        Subscription.active?(subscription) and Subscription.has_alerts?(subscription)
     end
   end
 
@@ -595,8 +622,11 @@ defmodule Przetargowi.Payments do
   """
   def has_search_access?(user_id) do
     case get_user_subscription(user_id) do
-      nil -> false
-      subscription -> Subscription.active?(subscription) and Subscription.has_search?(subscription)
+      nil ->
+        false
+
+      subscription ->
+        Subscription.active?(subscription) and Subscription.has_search?(subscription)
     end
   end
 end

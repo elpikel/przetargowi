@@ -71,7 +71,10 @@ defmodule PrzetargowiWeb.TenderHTML do
   def format_notice_type("NoticeUpdateNotice"), do: "Ogłoszenie o zmianie ogłoszenia"
   def format_notice_type("AgreementUpdateNotice"), do: "Ogłoszenie o zmianie umowy"
   def format_notice_type("ContractPerformingNotice"), do: "Ogłoszenie o wykonaniu umowy"
-  def format_notice_type("CircumstancesFulfillmentNotice"), do: "Ogłoszenie o spełnieniu okoliczności"
+
+  def format_notice_type("CircumstancesFulfillmentNotice"),
+    do: "Ogłoszenie o spełnieniu okoliczności"
+
   def format_notice_type("SmallContractNotice"), do: "Ogłoszenie o zamówieniu bagatelnym"
   def format_notice_type(nil), do: "-"
   def format_notice_type(other), do: other

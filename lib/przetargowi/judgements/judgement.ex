@@ -80,7 +80,14 @@ defmodule Przetargowi.Judgements.Judgement do
 
   def list_changeset(judgement, attrs) do
     judgement
-    |> cast(attrs, [:uzp_id, :signature, :issuing_authority, :document_type, :decision_date, :synced_at])
+    |> cast(attrs, [
+      :uzp_id,
+      :signature,
+      :issuing_authority,
+      :document_type,
+      :decision_date,
+      :synced_at
+    ])
     |> validate_required([:uzp_id, :signature])
     |> maybe_generate_slug()
     |> unique_constraint(:uzp_id)
@@ -90,9 +97,18 @@ defmodule Przetargowi.Judgements.Judgement do
   def details_changeset(judgement, attrs) do
     judgement
     |> cast(attrs, [
-      :chairman, :contracting_authority, :location, :resolution_method,
-      :procedure_type, :key_provisions, :thematic_issues,
-      :content_html, :deliberation, :meritum, :pdf_url, :details_synced_at
+      :chairman,
+      :contracting_authority,
+      :location,
+      :resolution_method,
+      :procedure_type,
+      :key_provisions,
+      :thematic_issues,
+      :content_html,
+      :deliberation,
+      :meritum,
+      :pdf_url,
+      :details_synced_at
     ])
   end
 end

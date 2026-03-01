@@ -21,33 +21,55 @@
             </p>
             <p>
               <span class="font-medium">Okres:</span>
-              {Calendar.strftime(@subscription.current_period_start, "%d.%m.%Y")} -
-              {Calendar.strftime(@subscription.current_period_end, "%d.%m.%Y")}
+              {Calendar.strftime(@subscription.current_period_start, "%d.%m.%Y")} - {Calendar.strftime(
+                @subscription.current_period_end,
+                "%d.%m.%Y"
+              )}
             </p>
             <%= if @subscription.cancel_at_period_end do %>
               <p class="text-warning">
-                Subskrypcja zostanie anulowana {Calendar.strftime(@subscription.current_period_end, "%d.%m.%Y")}
+                Subskrypcja zostanie anulowana {Calendar.strftime(
+                  @subscription.current_period_end,
+                  "%d.%m.%Y"
+                )}
               </p>
             <% end %>
           </div>
           <div class="flex gap-3">
             <%= if @subscription.cancel_at_period_end do %>
               <form action={~p"/subskrypcja/wznow"} method="post">
-                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-                <button type="submit" class="btn-primary-solid px-4 py-2 rounded-lg text-sm font-medium">
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
+                <button
+                  type="submit"
+                  class="btn-primary-solid px-4 py-2 rounded-lg text-sm font-medium"
+                >
                   Wznów subskrypcję
                 </button>
               </form>
             <% else %>
               <form action={~p"/subskrypcja"} method="post">
-                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
                 <input type="hidden" name="_method" value="delete" />
-                <button type="submit" class="btn btn-outline btn-error px-4 py-2 rounded-lg text-sm font-medium">
+                <button
+                  type="submit"
+                  class="btn btn-outline btn-error px-4 py-2 rounded-lg text-sm font-medium"
+                >
                   Anuluj subskrypcję
                 </button>
               </form>
             <% end %>
-            <a href={~p"/subskrypcja"} class="btn btn-ghost px-4 py-2 rounded-lg text-sm font-medium">
+            <a
+              href={~p"/subskrypcja"}
+              class="btn btn-ghost px-4 py-2 rounded-lg text-sm font-medium"
+            >
               Szczegóły
             </a>
           </div>
@@ -57,14 +79,17 @@
           <p class="text-base-content/70">
             Nie masz aktywnej subskrypcji. Wybierz plan, aby uzyskać dostęp do funkcji Premium.
           </p>
-          <a href={~p"/subskrypcja/nowa"} class="btn-gold px-6 py-2.5 rounded-lg font-medium inline-block">
+          <a
+            href={~p"/subskrypcja/nowa"}
+            class="btn-gold px-6 py-2.5 rounded-lg font-medium inline-block"
+          >
             Wybierz plan
           </a>
         </div>
       <% end %>
     </div>
-
-    <!-- Alerts Section -->
+    
+<!-- Alerts Section -->
     <div class="bg-base-100 rounded-xl border border-base-300 p-6 mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="font-semibold text-base-content">Alerty przetargowe</h2>
@@ -79,7 +104,9 @@
         <%= if @alerts == [] do %>
           <p class="text-base-content/70 text-sm">
             Nie masz jeszcze żadnych alertów.
-            <a href={~p"/alerty/nowy"} class="text-primary hover:underline">Utwórz pierwszy alert</a>
+            <a href={~p"/alerty/nowy"} class="text-primary hover:underline">
+              Utwórz pierwszy alert
+            </a>
           </p>
         <% else %>
           <div class="space-y-3">
@@ -87,11 +114,15 @@
               <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
                 <div class="text-sm">
                   <%= if alert.rules["region"] || alert.rules[:region] do %>
-                    <span class="font-medium">{format_region(alert.rules["region"] || alert.rules[:region])}</span>
+                    <span class="font-medium">
+                      {format_region(alert.rules["region"] || alert.rules[:region])}
+                    </span>
                   <% end %>
                   <%= if alert.rules["tender_category"] || alert.rules[:tender_category] do %>
                     <span class="text-base-content/60">
-                      - {format_category(alert.rules["tender_category"] || alert.rules[:tender_category])}
+                      - {format_category(
+                        alert.rules["tender_category"] || alert.rules[:tender_category]
+                      )}
                     </span>
                   <% end %>
                 </div>
@@ -115,7 +146,8 @@
       <% else %>
         <div class="space-y-3">
           <p class="text-base-content/70 text-sm">
-            Alerty przetargowe są dostępne w planach <strong>Alerty</strong> lub <strong>Razem</strong>.
+            Alerty przetargowe są dostępne w planach <strong>Alerty</strong>
+            lub <strong>Razem</strong>.
           </p>
           <a href={~p"/subskrypcja/nowa"} class="btn btn-sm btn-outline">
             Aktywuj plan z alertami
@@ -126,7 +158,13 @@
 
     <div class="bg-base-100 rounded-xl border border-base-300 p-6">
       <h2 class="font-semibold text-base-content mb-4">Zmień hasło</h2>
-      <.form :let={f} for={@password_changeset} action={~p"/ustawienia"} id="update_password" class="space-y-4">
+      <.form
+        :let={f}
+        for={@password_changeset}
+        action={~p"/ustawienia"}
+        id="update_password"
+        class="space-y-4"
+      >
         <input type="hidden" name="action" value="update_password" />
 
         <div>
@@ -148,7 +186,10 @@
         </div>
 
         <div>
-          <label for={f[:password_confirmation].id} class="block text-sm font-medium text-base-content mb-2">
+          <label
+            for={f[:password_confirmation].id}
+            class="block text-sm font-medium text-base-content mb-2"
+          >
             Potwierdź nowe hasło
           </label>
           <input

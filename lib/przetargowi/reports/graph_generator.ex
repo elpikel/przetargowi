@@ -20,14 +20,16 @@ defmodule Przetargowi.Reports.GraphGenerator do
   def generate_graphs(report_data) do
     %{
       "tender_count_trend" => generate_weekly_trend_chart(report_data["trends"]["weekly_counts"]),
-      "value_distribution" => generate_value_distribution_chart(report_data["statistics"]["by_value_range"])
+      "value_distribution" =>
+        generate_value_distribution_chart(report_data["statistics"]["by_value_range"])
     }
   end
 
   @doc """
   Generates a weekly trend bar chart showing tender counts per week.
   """
-  def generate_weekly_trend_chart(weekly_data) when is_list(weekly_data) and length(weekly_data) > 0 do
+  def generate_weekly_trend_chart(weekly_data)
+      when is_list(weekly_data) and length(weekly_data) > 0 do
     max_count = weekly_data |> Enum.map(& &1["count"]) |> Enum.max(fn -> 1 end)
     bar_width = 40
     gap = 10
@@ -67,7 +69,8 @@ defmodule Przetargowi.Reports.GraphGenerator do
   @doc """
   Generates a horizontal bar chart showing value distribution.
   """
-  def generate_value_distribution_chart(value_ranges) when is_list(value_ranges) and length(value_ranges) > 0 do
+  def generate_value_distribution_chart(value_ranges)
+      when is_list(value_ranges) and length(value_ranges) > 0 do
     max_count = value_ranges |> Enum.map(& &1["count"]) |> Enum.max(fn -> 1 end)
     bar_height = 30
     gap = 10
@@ -101,7 +104,8 @@ defmodule Przetargowi.Reports.GraphGenerator do
     """
   end
 
-  def generate_value_distribution_chart(_), do: generate_no_data_message("Brak danych o wartościach")
+  def generate_value_distribution_chart(_),
+    do: generate_no_data_message("Brak danych o wartościach")
 
   # Helper function for empty data states
   defp generate_no_data_message(message) do

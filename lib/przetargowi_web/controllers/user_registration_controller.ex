@@ -32,7 +32,10 @@ defmodule PrzetargowiWeb.UserRegistrationController do
     case Accounts.confirm_user(token) do
       {:ok, user} ->
         conn
-        |> put_flash(:info, "Konto zostało potwierdzone. Aktywuj Premium, aby korzystać ze wszystkich funkcji.")
+        |> put_flash(
+          :info,
+          "Konto zostało potwierdzone. Aktywuj Premium, aby korzystać ze wszystkich funkcji."
+        )
         |> put_session(:user_return_to, ~p"/subskrypcja/nowa")
         |> UserAuth.log_in_user(user)
 

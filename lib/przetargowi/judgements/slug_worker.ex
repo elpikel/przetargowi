@@ -35,8 +35,12 @@ defmodule Przetargowi.Judgements.SlugWorker do
           slug = Judgement.generate_slug(signature)
 
           case Judgements.update_slug_by_id(id, slug) do
-            {:ok, _} -> :ok
-            {:error, :duplicate} -> handle_duplicate(id, slug)
+            {:ok, _} ->
+              :ok
+
+            {:error, :duplicate} ->
+              handle_duplicate(id, slug)
+
             {:error, reason} ->
               Logger.warning("Failed to update slug for #{id}: #{inspect(reason)}")
               :error
@@ -54,7 +58,9 @@ defmodule Przetargowi.Judgements.SlugWorker do
     slug_with_id = "#{base_slug}-#{id}"
 
     case Judgements.update_slug_by_id(id, slug_with_id) do
-      {:ok, _} -> :ok
+      {:ok, _} ->
+        :ok
+
       {:error, reason} ->
         Logger.warning("Failed to update duplicate slug for #{id}: #{inspect(reason)}")
         :error
