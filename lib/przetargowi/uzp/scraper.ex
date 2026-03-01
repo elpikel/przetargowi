@@ -180,27 +180,57 @@ defmodule Przetargowi.UZP.Scraper do
     # Try DD-MM-YYYY format (used by UZP)
     case Regex.run(~r/(\d{2})-(\d{2})-(\d{4})/, text) do
       [_, day, month, year] ->
-        case Date.new(String.to_integer(year), String.to_integer(month), String.to_integer(day)) do
-          {:ok, date} -> date
-          _ -> nil
-        end
+        build_validated_date(year, month, day)
 
       _ ->
         # Try YYYY-MM-DD format
         case Regex.run(~r/(\d{4})-(\d{2})-(\d{2})/, text) do
           [_, year, month, day] ->
-            case Date.new(
-                   String.to_integer(year),
-                   String.to_integer(month),
-                   String.to_integer(day)
-                 ) do
-              {:ok, date} -> date
-              _ -> nil
-            end
+            build_validated_date(year, month, day)
 
           _ ->
             nil
         end
+    end
+  end
+
+  defp build_validated_date(year_str, month_str, day_str) do
+    year = String.to_integer(year_str)
+    month = String.to_integer(month_str)
+    day = String.to_integer(day_str)
+    current_year = Date.utc_today().year
+
+    # Validate year is reasonable (1990 to current year + 1)
+    validated_year =
+      cond do
+        year >= 1990 and year <= current_year + 1 ->
+          year
+
+        year > 2025 and year < 3000 ->
+          # Likely a typo - try to fix by using last 2 digits as the actual year
+          # e.g., 2929 -> 2029, but we know KIO started in ~2004, so cap at current_year
+          corrected = 2000 + rem(year, 100)
+
+          if corrected >= 1990 and corrected <= current_year + 1 do
+            Logger.warning("Corrected suspicious year #{year} to #{corrected}")
+            corrected
+          else
+            Logger.warning("Cannot correct suspicious year #{year}, using nil")
+            nil
+          end
+
+        true ->
+          Logger.warning("Invalid year #{year} outside valid range, using nil")
+          nil
+      end
+
+    if validated_year do
+      case Date.new(validated_year, month, day) do
+        {:ok, date} -> date
+        _ -> nil
+      end
+    else
+      nil
     end
   end
 
