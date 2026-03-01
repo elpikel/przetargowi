@@ -1,328 +1,328 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="min-h-[calc(100vh-4rem)]">
-    <!-- Search Bar -->
-    <div class="border-b border-base-300 bg-base-100/95 backdrop-blur-sm sticky top-[4.5rem] z-40">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <form action="/szukaj" method="get">
-          <div class="flex flex-col gap-4">
-            <!-- Search mode toggle -->
-            <div class="flex items-center gap-2">
-              <div class="inline-flex rounded-lg bg-base-200 p-1">
-                <a
-                  href={"/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
-                  class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
-                >
-                  <span class="flex items-center gap-2">
-                    <.icon name="hero-magnifying-glass" class="size-4" /> Słowa kluczowe
-                  </span>
-                </a>
-                <a
-                  href={"/szukaj?mode=semantic" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
-                  class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
-                >
-                  <span class="flex items-center gap-2">
-                    <.icon name="hero-sparkles" class="size-4" /> Semantyczne (AI)
-                  </span>
-                </a>
-              </div>
-              <%= if @search_mode == "semantic" do %>
-                <span class="text-xs text-base-content/50">
-                  Wyszukuje podobne znaczeniowo orzeczenia
-                </span>
-              <% end %>
-            </div>
-            
-<!-- Hidden field to preserve mode on form submit -->
-            <input type="hidden" name="mode" value={@search_mode} />
-            
-<!-- Main search input -->
-            <div class="flex flex-col md:flex-row gap-4">
-              <div class="flex-1 relative">
-                <input
-                  type="text"
-                  name="q"
-                  value={@query}
-                  class="search-input w-full pl-5 pr-5 py-3.5 rounded-xl text-base"
-                  placeholder={
-                    if(@search_mode == "semantic",
-                      do: "Opisz czego szukasz własnymi słowami...",
-                      else: "Wpisz słowa kluczowe..."
-                    )
-                  }
-                />
-              </div>
-              <button type="submit" class="btn-gold px-6 py-2.5 rounded-xl font-semibold">
-                Szukaj
-              </button>
-            </div>
-            
-<!-- Filters -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <select
-                name="document_type"
-                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
-              >
-                <option value="">Rodzaj dokumentu</option>
-                <%= for type <- @filter_options.document_types do %>
-                  <option value={type} selected={@filters[:document_type] == type}>{type}</option>
-                <% end %>
-              </select>
-
-              <select
-                name="issuing_authority"
-                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
-              >
-                <option value="">Organ wydający</option>
-                <%= for authority <- @filter_options.issuing_authorities do %>
-                  <option value={authority} selected={@filters[:issuing_authority] == authority}>
-                    {authority}
-                  </option>
-                <% end %>
-              </select>
-
-              <select
-                name="resolution_method"
-                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
-              >
-                <option value="">Sposób rozstrzygnięcia</option>
-                <%= for method <- @filter_options.resolution_methods do %>
-                  <option value={method} selected={@filters[:resolution_method] == method}>
-                    {method}
-                  </option>
-                <% end %>
-              </select>
-
-              <select
-                name="procedure_type"
-                class="select select-bordered select-sm w-full bg-base-200 border-base-300 text-sm"
-              >
-                <option value="">Tryb postępowania</option>
-                <%= for proc_type <- @filter_options.procedure_types do %>
-                  <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>
-                    {proc_type}
-                  </option>
-                <% end %>
-              </select>
-
-              <input
-                type="date"
-                name="date_from"
-                value={@filters[:date_from]}
-                class="input input-bordered input-sm w-full bg-base-200 border-base-300 text-sm"
-                placeholder="Data od"
-              />
-
-              <input
-                type="date"
-                name="date_to"
-                value={@filters[:date_to]}
-                class="input input-bordered input-sm w-full bg-base-200 border-base-300 text-sm"
-                placeholder="Data do"
-              />
-            </div>
-
-            <%= if has_active_filters?(@filters) do %>
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-base-content/60">Aktywne filtry:</span>
-                <a href="/szukaj" class="text-sm text-primary hover:underline">Wyczyść filtry</a>
-              </div>
-            <% end %>
-          </div>
-        </form>
-      </div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-2">Orzeczenia KIO</h1>
+      <p class="text-base-content/60">
+        Przeszukuj bazę orzeczeń Krajowej Izby Odwoławczej
+      </p>
     </div>
-    
-<!-- Results -->
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-2xl font-bold text-base-content">
-            <%= if @query != "" do %>
-              Wyniki wyszukiwania
-            <% else %>
-              Orzeczenia KIO
-            <% end %>
-          </h1>
-          <p class="text-base-content/60 mt-1">
-            <%= if @query != "" do %>
-              Znaleziono <span class="font-semibold text-secondary">{@total_count}</span>
-              orzeczeń dla „<span class="font-medium">{@query}</span>"
-            <% else %>
-              <span class="font-semibold text-secondary">{@total_count}</span> orzeczeń w bazie
-            <% end %>
+
+    <!-- Search Form -->
+    <form action="/szukaj" method="get" class="card-base p-6 mb-8">
+      <!-- Search mode toggle -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-base-content/70 mb-2">Tryb wyszukiwania</label>
+        <div class="inline-flex rounded-lg bg-base-200 p-1">
+          <a
+            href={"/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+            class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
+          >
+            <span class="flex items-center gap-2">
+              <.icon name="hero-magnifying-glass" class="size-4" /> Słowa kluczowe
+            </span>
+          </a>
+          <a
+            href={"/szukaj?mode=semantic" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+            class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
+          >
+            <span class="flex items-center gap-2">
+              <.icon name="hero-sparkles" class="size-4" /> Semantyczne (AI)
+            </span>
+          </a>
+        </div>
+        <%= if @search_mode == "semantic" do %>
+          <p class="text-xs text-base-content/50 mt-2">
+            Wyszukuje podobne znaczeniowo orzeczenia
           </p>
+        <% end %>
+      </div>
+
+      <input type="hidden" name="mode" value={@search_mode} />
+
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <!-- Search Input -->
+        <div class="lg:col-span-2">
+          <label class="block text-sm font-medium text-base-content/70 mb-2">Szukaj</label>
+          <input
+            type="text"
+            name="q"
+            value={@query}
+            placeholder={
+              if(@search_mode == "semantic",
+                do: "Opisz czego szukasz własnymi słowami...",
+                else: "Słowa kluczowe..."
+              )
+            }
+            class="search-input w-full px-4 py-3 rounded-lg"
+          />
+        </div>
+
+        <!-- Document Type -->
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">Rodzaj dokumentu</label>
+          <select
+            name="document_type"
+            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+          >
+            <option value="">Wszystkie</option>
+            <%= for type <- @filter_options.document_types do %>
+              <option value={type} selected={@filters[:document_type] == type}>{type}</option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Issuing Authority -->
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">Organ wydający</label>
+          <select
+            name="issuing_authority"
+            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+          >
+            <option value="">Wszystkie</option>
+            <%= for authority <- @filter_options.issuing_authorities do %>
+              <option value={authority} selected={@filters[:issuing_authority] == authority}>
+                {authority}
+              </option>
+            <% end %>
+          </select>
         </div>
       </div>
 
-      <%= if @semantic_error do %>
-        <div class="text-center py-10">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-error/20 flex items-center justify-center">
-            <.icon name="hero-exclamation-triangle" class="size-8 text-error" />
-          </div>
-          <p class="text-lg text-base-content mb-2">{@semantic_error}</p>
-          <p class="text-base-content/60">
-            Spróbuj wyszukiwania słów kluczowych.
-          </p>
+      <!-- Second Row of Filters -->
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+        <!-- Resolution Method -->
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Sposób rozstrzygnięcia
+          </label>
+          <select
+            name="resolution_method"
+            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+          >
+            <option value="">Wszystkie</option>
+            <%= for method <- @filter_options.resolution_methods do %>
+              <option value={method} selected={@filters[:resolution_method] == method}>
+                {method}
+              </option>
+            <% end %>
+          </select>
         </div>
-      <% end %>
 
-      <%= if @rate_limited do %>
-        <div class="text-center py-20">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/20 flex items-center justify-center">
-            <.icon name="hero-lock-closed" class="size-8 text-warning" />
-          </div>
-          <p class="text-lg text-base-content mb-2">Wykorzystałeś limit wyszukiwań</p>
-          <%= if @current_scope && @current_scope.user do %>
-            <p class="text-base-content/60 mb-6">
-              Aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
-            </p>
-            <a
-              href="/subskrypcja/nowa"
-              class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
-            >
-              <.icon name="hero-sparkles" class="size-5" /> Aktywuj Premium
-            </a>
-          <% else %>
-            <p class="text-base-content/60 mb-6">
-              Załóż konto i aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
-            </p>
-            <a
-              href="/rejestracja"
-              class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
-            >
-              <.icon name="hero-user-plus" class="size-5" /> Załóż konto
+        <!-- Procedure Type -->
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Tryb postępowania
+          </label>
+          <select
+            name="procedure_type"
+            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+          >
+            <option value="">Wszystkie</option>
+            <%= for proc_type <- @filter_options.procedure_types do %>
+              <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>
+                {proc_type}
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Date From -->
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">Data od</label>
+          <input
+            type="date"
+            name="date_from"
+            value={@filters[:date_from]}
+            class="search-input w-full px-4 py-3 rounded-lg"
+          />
+        </div>
+
+        <!-- Date To -->
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">Data do</label>
+          <input
+            type="date"
+            name="date_to"
+            value={@filters[:date_to]}
+            class="search-input w-full px-4 py-3 rounded-lg"
+          />
+        </div>
+      </div>
+
+      <div class="mt-4 flex justify-end">
+        <div class="flex gap-3">
+          <%= if has_active_filters?(@filters) do %>
+            <a href="/szukaj" class="btn-outline px-4 py-2 rounded-lg text-sm">
+              Wyczyść filtry
             </a>
           <% end %>
+          <button type="submit" class="btn-gold px-6 py-2 rounded-lg text-sm font-medium">
+            Szukaj
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Results Count -->
+    <div class="mb-6">
+      <p class="text-base-content/60">
+        <%= if @query != "" do %>
+          Znaleziono <span class="font-semibold text-base-content">{@total_count}</span>
+          orzeczeń dla „<span class="font-medium">{@query}</span>"
+        <% else %>
+          <span class="font-semibold text-base-content">{@total_count}</span> orzeczeń w bazie
+        <% end %>
+      </p>
+    </div>
+
+    <!-- Error States -->
+    <%= if @semantic_error do %>
+      <div class="card-base p-12 text-center">
+        <.icon name="hero-exclamation-triangle" class="size-12 text-error mx-auto mb-4" />
+        <p class="text-base-content mb-2">{@semantic_error}</p>
+        <p class="text-sm text-base-content/60">Spróbuj wyszukiwania słów kluczowych.</p>
+      </div>
+    <% end %>
+
+    <%= if @rate_limited do %>
+      <div class="card-base p-12 text-center">
+        <.icon name="hero-lock-closed" class="size-12 text-warning mx-auto mb-4" />
+        <p class="text-base-content mb-2">Wykorzystałeś limit wyszukiwań</p>
+        <%= if @current_scope && @current_scope.user do %>
+          <p class="text-sm text-base-content/60 mb-6">
+            Aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
+          </p>
+          <a
+            href="/subskrypcja/nowa"
+            class="btn-gold px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
+          >
+            <.icon name="hero-sparkles" class="size-5" /> Aktywuj Premium
+          </a>
+        <% else %>
+          <p class="text-sm text-base-content/60 mb-6">
+            Załóż konto i aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
+          </p>
+          <a
+            href="/rejestracja"
+            class="btn-gold px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
+          >
+            <.icon name="hero-user-plus" class="size-5" /> Załóż konto
+          </a>
+        <% end %>
+      </div>
+    <% else %>
+      <!-- Results -->
+      <%= if @results == [] do %>
+        <div class="text-center py-20">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
+            <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
+          </div>
+          <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
+          <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
         </div>
       <% else %>
-        <%= if @results == [] do %>
-          <div class="text-center py-20">
-            <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
-              <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
-            </div>
-            <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
-            <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
-          </div>
-        <% else %>
-          <div class="space-y-5">
-            <%= for result <- @results do %>
-              <article class="result-card p-6">
-                <div class="flex items-start justify-between gap-4 mb-3">
-                  <div class="flex items-center gap-3">
-                    <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
-                  </div>
-                  <div class="flex items-center gap-3 text-sm text-base-content/50">
-                    <%= if result.decision_date do %>
-                      <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
-                    <% end %>
-                    <%= if result.document_type do %>
-                      <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
-                        {result.document_type}
-                      </span>
-                    <% end %>
-                  </div>
+        <div class="space-y-5">
+          <%= for result <- @results do %>
+            <article class="result-card p-6">
+              <div class="flex items-start justify-between gap-4 mb-3">
+                <div class="flex items-center gap-3">
+                  <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
                 </div>
-                
-<!-- Additional metadata -->
-                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
-                  <%= if result.resolution_method do %>
-                    <div class="flex items-center gap-1.5">
-                      <.icon name="hero-scale" class="size-4 text-secondary/70" />
-                      <span>{result.resolution_method}</span>
-                    </div>
+                <div class="flex items-center gap-3 text-sm text-base-content/50">
+                  <%= if result.decision_date do %>
+                    <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
                   <% end %>
-                  <%= if result.contracting_authority do %>
-                    <div class="flex items-center gap-1.5">
-                      <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
-                      <span>{result.contracting_authority}</span>
-                    </div>
+                  <%= if result.document_type do %>
+                    <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
+                      {result.document_type}
+                    </span>
                   <% end %>
                 </div>
+              </div>
 
-                <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
-                  <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
+              <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
+                <%= if result.resolution_method do %>
+                  <div class="flex items-center gap-1.5">
+                    <.icon name="hero-scale" class="size-4 text-secondary/70" />
+                    <span>{result.resolution_method}</span>
+                  </div>
+                <% end %>
+                <%= if result.contracting_authority do %>
+                  <div class="flex items-center gap-1.5">
+                    <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
+                    <span>{result.contracting_authority}</span>
+                  </div>
+                <% end %>
+              </div>
+
+              <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
+                <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
+                  <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
+                    <.icon name="hero-sparkles-solid" class="size-5" />
+                    <span>Dopasowany fragment</span>
+                  </div>
+                  <p class="text-base-content/80 leading-relaxed text-sm">
+                    {String.slice(result.matched_chunk, 0, 300)}{if String.length(
+                                                                      result.matched_chunk
+                                                                    ) > 300,
+                                                                    do: "..."}
+                  </p>
+                </div>
+              <% else %>
+                <%= if result.meritum do %>
+                  <div class="meritum-box rounded-xl p-5 mb-5">
                     <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                      <.icon name="hero-sparkles-solid" class="size-5" />
-                      <span>Dopasowany fragment</span>
+                      <.icon name="hero-light-bulb-solid" class="size-5" />
+                      <span>Meritum</span>
                     </div>
-                    <p class="text-base-content/80 leading-relaxed text-sm">
-                      {String.slice(result.matched_chunk, 0, 300)}{if String.length(
-                                                                        result.matched_chunk
-                                                                      ) > 300,
-                                                                      do: "..."}
+                    <p class="text-base-content/80 leading-relaxed">
+                      {result.meritum}
                     </p>
                   </div>
-                <% else %>
-                  <%= if result.meritum do %>
-                    <div class="meritum-box rounded-xl p-5 mb-5">
-                      <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                        <.icon name="hero-light-bulb-solid" class="size-5" />
-                        <span>Meritum</span>
-                      </div>
-                      <p class="text-base-content/80 leading-relaxed">
-                        {result.meritum}
-                      </p>
-                    </div>
-                  <% end %>
-                <% end %>
-
-                <div class="flex items-center justify-end">
-                  <a
-                    href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"}
-                    class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-                  >
-                    Zobacz pełne orzeczenie <.icon name="hero-arrow-right" class="size-4" />
-                  </a>
-                </div>
-              </article>
-            <% end %>
-          </div>
-          
-<!-- Pagination -->
-          <%= if @total_pages > 1 do %>
-            <nav class="flex items-center justify-center gap-2 mt-10">
-              <%= if @current_page > 1 do %>
-                <a
-                  href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
-                  class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
-                >
-                  <.icon name="hero-chevron-left" class="size-4" />
-                </a>
-              <% else %>
-                <span class="px-4 py-2 rounded-lg bg-base-200/50 text-base-content/30 cursor-not-allowed">
-                  <.icon name="hero-chevron-left" class="size-4" />
-                </span>
-              <% end %>
-
-              <%= for page_num <- pagination_range(@current_page, @total_pages) do %>
-                <%= if page_num == :ellipsis do %>
-                  <span class="px-3 py-2 text-base-content/50">...</span>
-                <% else %>
-                  <a
-                    href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, page_num)}"}
-                    class={"px-4 py-2 rounded-lg font-medium transition-colors " <> if(page_num == @current_page, do: "bg-primary text-primary-content", else: "bg-base-200 hover:bg-base-300 text-base-content")}
-                  >
-                    {page_num}
-                  </a>
                 <% end %>
               <% end %>
 
-              <%= if @current_page < @total_pages do %>
+              <div class="flex items-center justify-end">
                 <a
-                  href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
-                  class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
+                  href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"}
+                  class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
                 >
-                  <.icon name="hero-chevron-right" class="size-4" />
+                  Zobacz pełne orzeczenie <.icon name="hero-arrow-right" class="size-4" />
                 </a>
-              <% else %>
-                <span class="px-4 py-2 rounded-lg bg-base-200/50 text-base-content/30 cursor-not-allowed">
-                  <.icon name="hero-chevron-right" class="size-4" />
-                </span>
-              <% end %>
-            </nav>
+              </div>
+            </article>
           <% end %>
-        <% end %>
+        </div>
       <% end %>
-    </div>
+
+      <!-- Pagination -->
+      <%= if @total_pages > 1 do %>
+        <div class="mt-8 flex justify-center">
+          <nav class="flex items-center space-x-2">
+            <%= if @current_page > 1 do %>
+              <a
+                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
+                class="btn-outline px-4 py-2 rounded-lg text-sm"
+              >
+                Poprzednia
+              </a>
+            <% end %>
+
+            <span class="px-3 py-2 text-base-content/60 text-sm">
+              Strona {@current_page} z {@total_pages}
+            </span>
+
+            <%= if @current_page < @total_pages do %>
+              <a
+                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
+                class="btn-outline px-4 py-2 rounded-lg text-sm"
+              >
+                Następna
+              </a>
+            <% end %>
+          </nav>
+        </div>
+      <% end %>
+    <% end %>
   </div>
 </Layouts.app>
