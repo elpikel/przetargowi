@@ -87,18 +87,27 @@ defmodule Przetargowi.Accounts.User do
     user
     |> cast(attrs, [:password])
     |> validate_confirmation(:password, message: "hasła nie są zgodne")
-    |> validate_password(opts)
+    |> validate_password(Keyword.put(opts, :require_password, true))
   end
 
   defp validate_password(changeset, opts) do
-    changeset
-    |> validate_required([:password])
-    |> validate_length(:password, min: 6, max: 72)
+    # Password is optional for magic-link-only registration unless :require_password is set
+    require_password? = Keyword.get(opts, :require_password, false)
+
+    changeset =
+      if require_password? or get_change(changeset, :password) do
+        changeset
+        |> validate_required([:password])
+        |> validate_length(:password, min: 6, max: 72)
+      else
+        changeset
+      end
+
     # Examples of additional password validation:
     # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
     # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
-    |> maybe_hash_password(opts)
+    maybe_hash_password(changeset, opts)
   end
 
   defp maybe_hash_password(changeset, opts) do

@@ -15,7 +15,7 @@ defmodule Przetargowi.Judgements do
     offset = Keyword.get(opts, :offset, 0)
 
     Judgement
-    |> order_by(desc: :decision_date)
+    |> order_by([j], desc_nulls_last: j.decision_date)
     |> limit(^limit)
     |> offset(^offset)
     |> Repo.all()
@@ -125,7 +125,7 @@ defmodule Przetargowi.Judgements do
   def judgements_needing_details(limit \\ 100) do
     Judgement
     |> where([j], is_nil(j.details_synced_at))
-    |> order_by(desc: :decision_date)
+    |> order_by([j], desc_nulls_last: j.decision_date)
     |> limit(^limit)
     |> Repo.all()
   end
@@ -156,7 +156,7 @@ defmodule Przetargowi.Judgements do
 
     base_query
     |> apply_filters(filters)
-    |> order_by(desc: :decision_date)
+    |> order_by([j], desc_nulls_last: j.decision_date)
     |> select([j], %{
       id: j.id,
       slug: j.slug,

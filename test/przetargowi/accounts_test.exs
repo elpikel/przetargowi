@@ -58,7 +58,7 @@ defmodule Przetargowi.AccountsTest do
     test "validates email when given" do
       {:error, changeset} = Accounts.register_user(%{email: "not valid"})
 
-      assert %{email: ["must have the @ sign and no spaces"]} = errors_on(changeset)
+      assert %{email: ["musi zawierać @ i nie może mieć spacji"]} = errors_on(changeset)
     end
 
     test "validates maximum values for email for security" do
@@ -210,13 +210,13 @@ defmodule Przetargowi.AccountsTest do
     test "validates password", %{user: user} do
       {:error, changeset} =
         Accounts.update_user_password(user, %{
-          password: "not valid",
+          password: "short",
           password_confirmation: "another"
         })
 
       assert %{
-               password: ["should be at least 12 character(s)"],
-               password_confirmation: ["does not match password"]
+               password: ["should be at least 6 character(s)"],
+               password_confirmation: ["hasła nie są zgodne"]
              } = errors_on(changeset)
     end
 

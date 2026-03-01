@@ -21,7 +21,7 @@ defmodule PrzetargowiWeb.UserRegistrationControllerTest do
 
   describe "POST /rejestracja" do
     @tag :capture_log
-    test "creates account but does not log in", %{conn: conn} do
+    test "creates account and shows confirmation page", %{conn: conn} do
       email = unique_user_email()
 
       conn =
@@ -29,10 +29,9 @@ defmodule PrzetargowiWeb.UserRegistrationControllerTest do
           "user" => valid_user_attributes(email: email)
         })
 
-      assert redirected_to(conn) == ~p"/logowanie"
-
-      assert conn.assigns.flash["info"] =~
-               ~r/email/i
+      response = html_response(conn, 200)
+      assert response =~ "Sprawdź swoją skrzynkę"
+      assert response =~ email
     end
 
     test "render errors for invalid data", %{conn: conn} do
@@ -43,7 +42,7 @@ defmodule PrzetargowiWeb.UserRegistrationControllerTest do
 
       response = html_response(conn, 200)
       assert response =~ "Utwórz konto"
-      assert response =~ "must have the @ sign and no spaces"
+      assert response =~ "musi zawierać @ i nie może mieć spacji"
     end
   end
 end

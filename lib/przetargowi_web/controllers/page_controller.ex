@@ -54,7 +54,7 @@ defmodule PrzetargowiWeb.PageController do
     ]
 
     conn
-    |> assign(:page_title, "Strona Główna")
+    |> assign(:page_title, "Wyszukiwarka Orzeczeń KIO")
     |> assign(:sample_results, sample_results)
     |> render(:home)
   end
