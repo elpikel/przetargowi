@@ -140,8 +140,9 @@ defmodule PrzetargowiWeb.TenderHTML do
   def days_until_deadline(nil), do: nil
 
   def days_until_deadline(%DateTime{} = deadline) do
-    now = DateTime.utc_now()
-    diff = DateTime.diff(deadline, now, :day)
+    today = Date.utc_today()
+    deadline_date = DateTime.to_date(deadline)
+    diff = Date.diff(deadline_date, today)
 
     cond do
       diff < 0 -> nil
@@ -155,8 +156,9 @@ defmodule PrzetargowiWeb.TenderHTML do
   def is_urgent?(nil), do: false
 
   def is_urgent?(%DateTime{} = deadline) do
-    now = DateTime.utc_now()
-    diff = DateTime.diff(deadline, now, :day)
+    today = Date.utc_today()
+    deadline_date = DateTime.to_date(deadline)
+    diff = Date.diff(deadline_date, today)
     diff >= 0 and diff <= 3
   end
 

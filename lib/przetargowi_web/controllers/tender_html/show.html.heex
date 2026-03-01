@@ -306,6 +306,19 @@
             </div>
           </div>
         <% end %>
+        
+<!-- Full Notice HTML -->
+        <%= if @tender.html_body do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-document-text" class="size-5 text-primary" />
+              Pełna treść ogłoszenia
+            </h2>
+            <div class="prose prose-sm max-w-none text-base-content/80 tender-html-body">
+              {raw(@tender.html_body)}
+            </div>
+          </div>
+        <% end %>
       </div>
       
 <!-- Sidebar -->

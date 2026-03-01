@@ -455,3 +455,90 @@ h1, h2, h3, .font-display {
   height: 1px;
   background: linear-gradient(90deg, transparent, #f3e4c3, transparent);
 }
+
+/* ===== Tender HTML Body ===== */
+
+.tender-html-body {
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.tender-html-body h1,
+.tender-html-body h2,
+.tender-html-body h3,
+.tender-html-body h4,
+.tender-html-body h5,
+.tender-html-body h6 {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 600;
+  color: #0a1628;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.tender-html-body h1 { font-size: 1.5rem; }
+.tender-html-body h2 { font-size: 1.25rem; }
+.tender-html-body h3 { font-size: 1.125rem; }
+.tender-html-body h4 { font-size: 1rem; }
+
+.tender-html-body p {
+  margin-bottom: 0.75em;
+}
+
+.tender-html-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.8125rem;
+}
+
+.tender-html-body th,
+.tender-html-body td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #f3e4c3;
+  text-align: left;
+}
+
+.tender-html-body th {
+  background: #fdf8ed;
+  font-weight: 600;
+  color: #0a1628;
+}
+
+.tender-html-body tr:nth-child(even) {
+  background: rgba(253, 248, 237, 0.5);
+}
+
+.tender-html-body ul,
+.tender-html-body ol {
+  margin: 0.75em 0;
+  padding-left: 1.5em;
+}
+
+.tender-html-body li {
+  margin-bottom: 0.25em;
+}
+
+.tender-html-body a {
+  color: #2d527d;
+  text-decoration: underline;
+}
+
+.tender-html-body a:hover {
+  color: #12233d;
+}
+
+/* ===== Card Styles ===== */
+
+.card-base {
+  background: #fefcf8;
+  border: 1px solid #f3e4c3;
+  border-radius: 1.25rem;
+}
+
+.card-elevated {
+  background: #fefcf8;
+  border: 1px solid #f3e4c3;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 12px rgba(10, 22, 40, 0.08);
+}
