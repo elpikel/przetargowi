@@ -70,7 +70,8 @@ defmodule Przetargowi.MixProject do
       {:oban, "~> 2.18"},
       {:floki, "~> 0.36"},
       {:pgvector, "~> 0.3"},
-      {:mox, "~> 1.1", only: :test}
+      {:mox, "~> 1.1", only: :test},
+      {:stripity_stripe, "~> 3.2"}
     ]
   end
 

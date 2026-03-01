@@ -150,6 +150,33 @@ defmodule Przetargowi.Accounts.UserToken do
     end
   end
 
+  @doc """
+  Checks if the confirmation token is valid and returns its underlying lookup query.
+
+  The query returns the user found by the token, if any.
+
+  The given token is valid if it matches its hashed counterpart in the
+  database and if it has not expired (after 7 days).
+  """
+  def verify_confirmation_token_query(token) do
+    case Base.url_decode64(token, padding: false) do
+      {:ok, decoded_token} ->
+        hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
+
+        query =
+          from token in by_token_and_context_query(hashed_token, "confirm"),
+            join: user in assoc(token, :user),
+            where: token.inserted_at > ago(@change_email_validity_in_days, "day"),
+            where: token.sent_to == user.email,
+            select: user
+
+        {:ok, query}
+
+      :error ->
+        :error
+    end
+  end
+
   defp by_token_and_context_query(token, context) do
     from UserToken, where: [token: ^token, context: ^context]
   end

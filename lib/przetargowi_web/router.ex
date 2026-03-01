@@ -68,6 +68,7 @@ defmodule PrzetargowiWeb.Router do
 
     get "/rejestracja", UserRegistrationController, :new
     post "/rejestracja", UserRegistrationController, :create
+    get "/rejestracja/potwierdz/:token", UserRegistrationController, :confirm
   end
 
   scope "/", PrzetargowiWeb do
@@ -76,13 +77,28 @@ defmodule PrzetargowiWeb.Router do
     get "/ustawienia", UserSettingsController, :edit
     put "/ustawienia", UserSettingsController, :update
     get "/ustawienia/potwierdz-email/:token", UserSettingsController, :confirm_email
+
+    # Subscription management
+    get "/subskrypcja", SubscriptionController, :show
+    get "/subskrypcja/nowa", SubscriptionController, :new
+    post "/subskrypcja", SubscriptionController, :create
+    delete "/subskrypcja", SubscriptionController, :cancel
+    post "/subskrypcja/wznow", SubscriptionController, :reactivate
+    get "/subskrypcja/sukces", SubscriptionController, :payment_success
+    get "/subskrypcja/blad", SubscriptionController, :payment_error
+  end
+
+  # Webhook endpoints (no CSRF protection)
+  scope "/webhooks", PrzetargowiWeb do
+    pipe_through :api
+
+    post "/stripe", WebhookController, :stripe
   end
 
   scope "/", PrzetargowiWeb do
     pipe_through [:browser]
 
     get "/logowanie", UserSessionController, :new
-    get "/logowanie/:token", UserSessionController, :confirm
     post "/logowanie", UserSessionController, :create
     delete "/wyloguj", UserSessionController, :delete
   end

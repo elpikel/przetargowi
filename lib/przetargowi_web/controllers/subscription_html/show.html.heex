@@ -1,0 +1,107 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-lg py-16">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gradient mb-2">Twoja subskrypcja</h1>
+      <p class="text-base-content/60">Zarządzaj swoim planem Premium</p>
+    </div>
+
+    <%= if @subscription && Przetargowi.Payments.Subscription.active?(@subscription) do %>
+      <div class="bg-base-100 rounded-xl border border-base-300 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold text-base-content">Plan Premium</h2>
+          <span class="px-3 py-1 bg-success/10 text-success text-sm font-medium rounded-full">
+            Aktywny
+          </span>
+        </div>
+
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-base-content/60">Kwota</span>
+            <span class="text-base-content font-medium">{@subscription.amount} zł/mies.</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-base-content/60">Następna płatność</span>
+            <span class="text-base-content font-medium">
+              {Calendar.strftime(@subscription.current_period_end, "%d.%m.%Y")}
+            </span>
+          </div>
+          <%= if @subscription.cancel_at_period_end do %>
+            <div class="mt-4 p-3 bg-warning/10 rounded-lg">
+              <p class="text-sm text-warning">
+                Subskrypcja zostanie anulowana {Calendar.strftime(@subscription.current_period_end, "%d.%m.%Y")}.
+              </p>
+              <form action={~p"/subskrypcja/wznow"} method="post" class="mt-2">
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <button type="submit" class="text-sm font-medium text-primary hover:underline">
+                  Wznów subskrypcję
+                </button>
+              </form>
+            </div>
+          <% else %>
+            <div class="pt-4 border-t border-base-300 mt-4">
+              <form action={~p"/subskrypcja"} method="post">
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <input type="hidden" name="_method" value="delete" />
+                <button type="submit" class="text-sm text-error hover:underline">
+                  Anuluj subskrypcję
+                </button>
+              </form>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="bg-base-100 rounded-xl border border-base-300 p-6 mb-6 text-center">
+        <.icon name="hero-sparkles" class="size-12 text-base-content/30 mx-auto mb-4" />
+        <h2 class="font-semibold text-base-content mb-2">Brak aktywnej subskrypcji</h2>
+        <p class="text-sm text-base-content/60 mb-4">
+          Aktywuj plan Premium, aby uzyskać pełny dostęp do wszystkich funkcji.
+        </p>
+        <a href={~p"/subskrypcja/nowa"} class="btn-primary-solid px-6 py-2.5 rounded-lg font-medium inline-block">
+          Aktywuj Premium
+        </a>
+      </div>
+    <% end %>
+
+    <%= if length(@transactions) > 0 do %>
+      <div class="bg-base-100 rounded-xl border border-base-300 p-6">
+        <h2 class="font-semibold text-base-content mb-4">Historia płatności</h2>
+        <div class="space-y-3">
+          <%= for transaction <- @transactions do %>
+            <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+              <div>
+                <p class="text-sm font-medium text-base-content">
+                  {transaction.amount} zł
+                </p>
+                <p class="text-xs text-base-content/60">
+                  {Calendar.strftime(transaction.inserted_at, "%d.%m.%Y %H:%M")}
+                </p>
+              </div>
+              <span class={[
+                "px-2 py-1 text-xs font-medium rounded-full",
+                transaction.status == "completed" && "bg-success/10 text-success",
+                transaction.status == "failed" && "bg-error/10 text-error",
+                transaction.status == "pending" && "bg-warning/10 text-warning",
+                transaction.status == "refunded" && "bg-info/10 text-info"
+              ]}>
+                <%= case transaction.status do %>
+                  <% "completed" -> %>Opłacone
+                  <% "failed" -> %>Nieudane
+                  <% "pending" -> %>Oczekujące
+                  <% "refunded" -> %>Zwrócone
+                  <% _ -> %>{transaction.status}
+                <% end %>
+              </span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="text-center mt-6">
+      <a href={~p"/ustawienia"} class="text-sm text-base-content/60 hover:text-base-content">
+        Wróć do ustawień
+      </a>
+    </div>
+  </div>
+</Layouts.app>

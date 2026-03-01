@@ -379,21 +379,6 @@ h1, h2, h3, .font-display {
   position: relative;
 }
 
-.pricing-card-featured::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 1.5rem;
-  background: linear-gradient(135deg, #c9a227, #b8922a);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.pricing-card-featured:hover::before {
-  opacity: 1;
-}
-
 .pricing-card-featured:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 60px rgba(18, 35, 61, 0.3);

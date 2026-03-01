@@ -1,0 +1,54 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-lg py-16">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gradient mb-2">Aktywuj Premium</h1>
+      <p class="text-base-content/60">Uzyskaj pełny dostęp do wszystkich funkcji</p>
+    </div>
+
+    <div class="pricing-card pricing-card-featured p-8 text-primary-content">
+      <div class="text-center mb-6">
+        <h3 class="text-xl font-semibold mb-2">Plan Profesjonalny</h3>
+        <div class="mb-4">
+          <span class="text-4xl font-bold">{@subscription_amount} zł</span>
+          <span class="text-primary-content/70">/mies.</span>
+        </div>
+      </div>
+
+      <ul class="space-y-4 mb-8">
+        <li class="flex items-center gap-3 text-primary-content/90">
+          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+          <span>Nielimitowane wyszukiwania</span>
+        </li>
+        <li class="flex items-center gap-3 text-primary-content/90">
+          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+          <span>Pełna treść orzeczeń</span>
+        </li>
+        <li class="flex items-center gap-3 text-primary-content/90">
+          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+          <span>Historia wyszukiwań</span>
+        </li>
+        <li class="flex items-center gap-3 text-primary-content/90">
+          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+          <span>Wsparcie priorytetowe</span>
+        </li>
+      </ul>
+
+      <form action={~p"/subskrypcja"} method="post">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button type="submit" class="btn-gold w-full py-3 rounded-xl font-semibold">
+          Przejdź do płatności
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-primary-content/60 mt-4">
+        Płatność obsługiwana przez Stripe. Możesz anulować w dowolnym momencie.
+      </p>
+    </div>
+
+    <div class="text-center mt-6">
+      <a href={~p"/ustawienia"} class="text-sm text-base-content/60 hover:text-base-content">
+        Wróć do ustawień
+      </a>
+    </div>
+  </div>
+</Layouts.app>

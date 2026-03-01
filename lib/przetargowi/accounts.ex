@@ -63,20 +63,27 @@ defmodule Przetargowi.Accounts do
   ## User registration
 
   @doc """
-  Registers a user.
+  Returns an `%Ecto.Changeset{}` for tracking user registration changes.
+  """
+  def change_user_registration(%User{} = user, attrs \\ %{}) do
+    User.registration_changeset(user, attrs, hash_password: false, validate_unique: false)
+  end
+
+  @doc """
+  Registers a user with email and password.
 
   ## Examples
 
-      iex> register_user(%{field: value})
+      iex> register_user(%{email: "test@example.com", password: "validpassword123"})
       {:ok, %User{}}
 
-      iex> register_user(%{field: bad_value})
+      iex> register_user(%{email: "bad", password: "short"})
       {:error, %Ecto.Changeset{}}
 
   """
   def register_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.registration_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -274,6 +281,39 @@ defmodule Przetargowi.Accounts do
   end
 
   @doc """
+  Delivers the confirmation instructions to the given user.
+  """
+  def deliver_confirmation_instructions(%User{} = user, confirmation_url_fun)
+      when is_function(confirmation_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
+    Repo.insert!(user_token)
+    UserNotifier.deliver_confirmation_instructions(user, confirmation_url_fun.(encoded_token))
+  end
+
+  @doc """
+  Confirms a user by the given token.
+
+  If the token matches, the user account is marked as confirmed
+  and the token is deleted.
+  """
+  def confirm_user(token) do
+    with {:ok, query} <- UserToken.verify_confirmation_token_query(token),
+         %User{} = user <- Repo.one(query),
+         {:ok, %{user: user}} <- confirm_user_multi(user) do
+      {:ok, user}
+    else
+      _ -> :error
+    end
+  end
+
+  defp confirm_user_multi(user) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:user, User.confirm_changeset(user))
+    |> Ecto.Multi.delete_all(:tokens, from(t in UserToken, where: t.user_id == ^user.id and t.context == "confirm"))
+    |> Repo.transaction()
+  end
+
+  @doc """
   Deletes the signed token with the given context.
   """
   def delete_user_session_token(token) do
@@ -293,5 +333,73 @@ defmodule Przetargowi.Accounts do
         {:ok, {user, tokens_to_expire}}
       end
     end)
+  end
+
+  ## Premium subscription
+
+  @doc """
+  Gets a single user by ID.
+
+  Returns nil if the user does not exist.
+
+  ## Examples
+
+      iex> get_user(123)
+      %User{}
+
+      iex> get_user(456)
+      nil
+
+  """
+  def get_user(id), do: Repo.get(User, id)
+
+  @doc """
+  Upgrades a user to premium status.
+
+  ## Examples
+
+      iex> upgrade_to_premium(user)
+      {:ok, %User{is_premium: true}}
+
+      iex> upgrade_to_premium(user_id)
+      {:ok, %User{is_premium: true}}
+
+  """
+  def upgrade_to_premium(%User{} = user) do
+    user
+    |> Ecto.Changeset.change(is_premium: true)
+    |> Repo.update()
+  end
+
+  def upgrade_to_premium(user_id) when is_integer(user_id) do
+    case get_user(user_id) do
+      nil -> {:error, :not_found}
+      user -> upgrade_to_premium(user)
+    end
+  end
+
+  @doc """
+  Downgrades a user from premium status.
+
+  ## Examples
+
+      iex> downgrade_to_free(user)
+      {:ok, %User{is_premium: false}}
+
+      iex> downgrade_to_free(user_id)
+      {:ok, %User{is_premium: false}}
+
+  """
+  def downgrade_to_free(%User{} = user) do
+    user
+    |> Ecto.Changeset.change(is_premium: false)
+    |> Repo.update()
+  end
+
+  def downgrade_to_free(user_id) when is_integer(user_id) do
+    case get_user(user_id) do
+      nil -> {:error, :not_found}
+      user -> downgrade_to_free(user)
+    end
   end
 end

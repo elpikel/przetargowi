@@ -88,6 +88,14 @@ config :przetargowi, Oban,
 # Configure HTTP client for UZP scraper
 config :przetargowi, :uzp_http_client, Przetargowi.UZP.HTTPClient
 
+# Configure Stripe client
+config :przetargowi, :stripe_client, Przetargowi.Stripe.Client
+
+# Stripe configuration placeholder (actual values set in runtime.exs)
+config :przetargowi, :stripe,
+  price_id: nil,
+  webhook_secret: nil
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

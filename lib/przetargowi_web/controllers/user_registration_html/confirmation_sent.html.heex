@@ -1,0 +1,26 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-sm py-16">
+    <div class="text-center">
+      <div class="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-6">
+        <.icon name="hero-envelope" class="size-8 text-success" />
+      </div>
+      <h1 class="text-2xl font-bold text-gradient mb-4">Sprawdź swoją skrzynkę</h1>
+      <p class="text-base-content/70 mb-6">
+        Wysłaliśmy email na adres <span class="font-semibold text-base-content">{@email}</span>
+        z linkiem do potwierdzenia konta.
+      </p>
+      <div class="bg-base-200/50 rounded-xl p-4 text-sm text-base-content/60">
+        <p class="mb-2">Nie otrzymałeś emaila?</p>
+        <ul class="text-left space-y-1">
+          <li>Sprawdź folder spam</li>
+          <li>Upewnij się, że adres email jest poprawny</li>
+        </ul>
+      </div>
+      <div class="mt-8">
+        <.link navigate={~p"/logowanie"} class="text-primary hover:underline font-medium">
+          Wróć do logowania
+        </.link>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

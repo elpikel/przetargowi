@@ -188,7 +188,10 @@ defmodule Przetargowi.Accounts.UserNotifier do
     deliver(user.email, "Twój link do logowania", text_body, html_body)
   end
 
-  defp deliver_confirmation_instructions(user, url) do
+  @doc """
+  Deliver instructions to confirm account.
+  """
+  def deliver_confirmation_instructions(user, url) do
     text_body = """
     Cześć,
 

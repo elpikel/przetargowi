@@ -14,60 +14,20 @@
       </p>
     </div>
 
-    <div :if={local_mail_adapter?()} class="bg-info/10 border border-info/20 rounded-lg p-4 mb-6">
-      <div class="flex items-start gap-3">
-        <.icon name="hero-information-circle" class="size-5 text-info shrink-0 mt-0.5" />
-        <div class="text-sm">
-          <p class="text-base-content">Używasz lokalnego adaptera email.</p>
-          <p class="text-base-content/60">
-            Wysłane emaile znajdziesz w <.link href="/dev/mailbox" class="underline text-primary">skrzynce testowej</.link>.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <.form :let={f} for={@form} as={:user} id="login_form_magic" action={~p"/logowanie"} class="space-y-4 mb-6">
+    <.form :let={f} for={@form} as={:user} id="login_form" action={~p"/logowanie"} class="space-y-4">
       <div>
-        <label for="magic_email" class="block text-sm font-medium text-base-content mb-2">
+        <label for={f[:email].id} class="block text-sm font-medium text-base-content mb-2">
           Email
         </label>
         <input
           type="email"
-          id="magic_email"
+          id={f[:email].id}
           name={f[:email].name}
           value={Phoenix.HTML.Form.normalize_value("email", f[:email].value)}
           readonly={!!@current_scope}
           autocomplete="email"
           required
           phx-mounted={JS.focus()}
-          class="search-input w-full px-4 py-3 rounded-lg text-base"
-          placeholder="twoj@email.pl"
-        />
-      </div>
-      <button type="submit" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
-        Wyślij link do logowania
-      </button>
-    </.form>
-
-    <div class="flex items-center gap-4 my-6">
-      <div class="flex-1 h-px bg-base-300"></div>
-      <span class="text-sm text-base-content/40">lub</span>
-      <div class="flex-1 h-px bg-base-300"></div>
-    </div>
-
-    <.form :let={f} for={@form} as={:user} id="login_form_password" action={~p"/logowanie"} class="space-y-4">
-      <div>
-        <label for="password_email" class="block text-sm font-medium text-base-content mb-2">
-          Email
-        </label>
-        <input
-          type="email"
-          id="password_email"
-          name={f[:email].name}
-          value={Phoenix.HTML.Form.normalize_value("email", f[:email].value)}
-          readonly={!!@current_scope}
-          autocomplete="email"
-          required
           class="search-input w-full px-4 py-3 rounded-lg text-base"
           placeholder="twoj@email.pl"
         />
@@ -81,12 +41,13 @@
           id={f[:password].id}
           name={f[:password].name}
           autocomplete="current-password"
+          required
           class="search-input w-full px-4 py-3 rounded-lg text-base"
           placeholder="••••••••"
         />
       </div>
-      <button type="submit" name={@form[:remember_me].name} value="true" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
-        Zaloguj się z hasłem
+      <button type="submit" name={f[:remember_me].name} value="true" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
+        Zaloguj się
       </button>
     </.form>
   </div>

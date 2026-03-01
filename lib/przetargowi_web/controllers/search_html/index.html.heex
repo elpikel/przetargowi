@@ -160,13 +160,23 @@
             <.icon name="hero-lock-closed" class="size-8 text-warning" />
           </div>
           <p class="text-lg text-base-content mb-2">Wykorzystałeś limit wyszukiwań</p>
-          <p class="text-base-content/60 mb-6">
-            Zaloguj się, aby korzystać z wyszukiwarki bez ograniczeń.
-          </p>
-          <a href="/logowanie" class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
-            <.icon name="hero-arrow-right-on-rectangle" class="size-5" />
-            Zaloguj się
-          </a>
+          <%= if @current_scope && @current_scope.user do %>
+            <p class="text-base-content/60 mb-6">
+              Aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
+            </p>
+            <a href="/subskrypcja/nowa" class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
+              <.icon name="hero-sparkles" class="size-5" />
+              Aktywuj Premium
+            </a>
+          <% else %>
+            <p class="text-base-content/60 mb-6">
+              Załóż konto i aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
+            </p>
+            <a href="/rejestracja" class="btn-gold px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
+              <.icon name="hero-user-plus" class="size-5" />
+              Załóż konto
+            </a>
+          <% end %>
         </div>
       <% else %>
         <%= if @results == [] do %>

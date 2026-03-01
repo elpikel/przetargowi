@@ -3,9 +3,10 @@ defmodule PrzetargowiWeb.SearchController do
 
   alias Przetargowi.Judgements
   alias Przetargowi.Embeddings
+  alias Przetargowi.Payments
 
   @per_page 10
-  @max_searches_for_guests 3
+  @max_searches_free 3
   @semantic_results_limit 20
 
   def index(conn, params) do
@@ -15,17 +16,17 @@ defmodule PrzetargowiWeb.SearchController do
     offset = (page - 1) * @per_page
     filters = extract_filters(params)
 
-    is_logged_in = logged_in?(conn)
     is_search = query != "" or has_filters?(filters)
+    has_premium = has_premium_access?(conn)
     search_count = get_session(conn, :search_count) || 0
 
-    # Check rate limit for non-logged-in users
-    if not is_logged_in and is_search and search_count >= @max_searches_for_guests do
+    # Check rate limit for non-premium users
+    if not has_premium and is_search and search_count >= @max_searches_free do
       render_rate_limited(conn, query, filters, search_mode)
     else
-      # Increment search count for non-logged-in users
+      # Increment search count for non-premium users
       conn =
-        if not is_logged_in and is_search do
+        if not has_premium and is_search do
           put_session(conn, :search_count, search_count + 1)
         else
           conn
@@ -214,8 +215,14 @@ defmodule PrzetargowiWeb.SearchController do
     end)
   end
 
-  defp logged_in?(conn) do
-    conn.assigns[:current_scope] != nil and conn.assigns.current_scope.user != nil
+  defp has_premium_access?(conn) do
+    case conn.assigns[:current_scope] do
+      %{user: %{id: user_id}} when not is_nil(user_id) ->
+        Payments.subscription_active?(user_id)
+
+      _ ->
+        false
+    end
   end
 
   defp has_filters?(filters) do

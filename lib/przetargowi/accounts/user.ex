@@ -8,6 +8,7 @@ defmodule Przetargowi.Accounts.User do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :is_premium, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -34,7 +35,7 @@ defmodule Przetargowi.Accounts.User do
       changeset
       |> validate_required([:email])
       |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
-        message: "must have the @ sign and no spaces"
+        message: "musi zawierać @ i nie może mieć spacji"
       )
       |> validate_length(:email, max: 160)
 
@@ -50,10 +51,21 @@ defmodule Przetargowi.Accounts.User do
 
   defp validate_email_changed(changeset) do
     if get_field(changeset, :email) && get_change(changeset, :email) == nil do
-      add_error(changeset, :email, "did not change")
+      add_error(changeset, :email, "nie został zmieniony")
     else
       changeset
     end
+  end
+
+  @doc """
+  A user changeset for registration with email and password.
+  """
+  def registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password])
+    |> validate_confirmation(:password, message: "hasła nie są zgodne")
+    |> validate_email(opts)
+    |> validate_password(opts)
   end
 
   @doc """
@@ -74,14 +86,14 @@ defmodule Przetargowi.Accounts.User do
   def password_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:password])
-    |> validate_confirmation(:password, message: "does not match password")
+    |> validate_confirmation(:password, message: "hasła nie są zgodne")
     |> validate_password(opts)
   end
 
   defp validate_password(changeset, opts) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 72)
+    |> validate_length(:password, min: 6, max: 72)
     # Examples of additional password validation:
     # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
