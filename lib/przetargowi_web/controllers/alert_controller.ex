@@ -4,21 +4,27 @@ defmodule PrzetargowiWeb.AlertController do
   alias Przetargowi.Alerts
   alias Przetargowi.Payments
 
-  plug :require_alerts_access when action in [:index, :new, :create, :delete]
+  plug :require_can_create_alert when action in [:new, :create]
 
   def index(conn, _params) do
     user = conn.assigns.current_scope.user
     alerts = Alerts.list_user_alerts(user.id)
     is_premium = Payments.has_alerts_access?(user.id)
+    can_create = is_premium or Alerts.can_create_free_alert?(user.id)
 
-    render(conn, :index, alerts: alerts, is_premium: is_premium)
+    render(conn, :index, alerts: alerts, is_premium: is_premium, can_create: can_create)
   end
 
-  def new(conn, _params) do
+  def new(conn, params) do
     user = conn.assigns.current_scope.user
     is_premium = Payments.has_alerts_access?(user.id)
 
-    render(conn, :new, is_premium: is_premium)
+    render(conn, :new,
+      is_premium: is_premium,
+      keywords: params["keywords"] || "",
+      regions: params["regions"] || [],
+      order_types: params["order_types"] || []
+    )
   end
 
   def create(conn, %{"alert" => alert_params}) do
@@ -63,15 +69,20 @@ defmodule PrzetargowiWeb.AlertController do
     end
   end
 
-  defp require_alerts_access(conn, _opts) do
+  defp require_can_create_alert(conn, _opts) do
     user = conn.assigns.current_scope.user
+    is_premium = Payments.has_alerts_access?(user.id)
+    can_create_free = Alerts.can_create_free_alert?(user.id)
 
-    if Payments.has_alerts_access?(user.id) do
+    if is_premium or can_create_free do
       conn
     else
       conn
-      |> put_flash(:error, "Aby korzystać z alertów, wybierz plan Alerty lub Razem.")
-      |> redirect(to: ~p"/subskrypcja/nowa")
+      |> put_flash(
+        :error,
+        "Osiągnąłeś limit darmowych alertów. Wybierz plan Alerty lub Razem, aby tworzyć więcej."
+      )
+      |> redirect(to: ~p"/alerty")
       |> halt()
     end
   end

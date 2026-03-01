@@ -88,75 +88,8 @@
         </div>
       <% end %>
     </div>
-    
-<!-- Alerts Section -->
-    <div class="bg-base-100 rounded-xl border border-base-300 p-6 mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="font-semibold text-base-content">Alerty przetargowe</h2>
-        <%= if @has_alerts_access do %>
-          <a href={~p"/alerty/nowy"} class="btn btn-sm btn-primary">
-            + Nowy alert
-          </a>
-        <% end %>
-      </div>
 
-      <%= if @has_alerts_access do %>
-        <%= if @alerts == [] do %>
-          <p class="text-base-content/70 text-sm">
-            Nie masz jeszcze żadnych alertów.
-            <a href={~p"/alerty/nowy"} class="text-primary hover:underline">
-              Utwórz pierwszy alert
-            </a>
-          </p>
-        <% else %>
-          <div class="space-y-3">
-            <%= for alert <- Enum.take(@alerts, 3) do %>
-              <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
-                <div class="text-sm">
-                  <%= if alert.rules["region"] || alert.rules[:region] do %>
-                    <span class="font-medium">
-                      {format_region(alert.rules["region"] || alert.rules[:region])}
-                    </span>
-                  <% end %>
-                  <%= if alert.rules["tender_category"] || alert.rules[:tender_category] do %>
-                    <span class="text-base-content/60">
-                      - {format_category(
-                        alert.rules["tender_category"] || alert.rules[:tender_category]
-                      )}
-                    </span>
-                  <% end %>
-                </div>
-                <.link
-                  href={~p"/alerty/#{alert.id}"}
-                  method="delete"
-                  data-confirm="Czy na pewno chcesz usunąć ten alert?"
-                  class="text-error hover:text-error/80 text-sm"
-                >
-                  Usuń
-                </.link>
-              </div>
-            <% end %>
-            <%= if length(@alerts) > 3 do %>
-              <a href={~p"/alerty"} class="text-sm text-primary hover:underline">
-                Zobacz wszystkie ({length(@alerts)})
-              </a>
-            <% end %>
-          </div>
-        <% end %>
-      <% else %>
-        <div class="space-y-3">
-          <p class="text-base-content/70 text-sm">
-            Alerty przetargowe są dostępne w planach <strong>Alerty</strong>
-            lub <strong>Razem</strong>.
-          </p>
-          <a href={~p"/subskrypcja/nowa"} class="btn btn-sm btn-outline">
-            Aktywuj plan z alertami
-          </a>
-        </div>
-      <% end %>
-    </div>
-
-    <div class="bg-base-100 rounded-xl border border-base-300 p-6">
+    <div class="bg-base-100 rounded-xl border border-base-300 p-6 mt-6">
       <h2 class="font-semibold text-base-content mb-4">Zmień hasło</h2>
       <.form
         :let={f}

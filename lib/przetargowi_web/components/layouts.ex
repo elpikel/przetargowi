@@ -63,9 +63,12 @@ defmodule PrzetargowiWeb.Layouts do
 
             <div class="flex items-center gap-4">
               <%= if @current_scope do %>
-                <span class="hidden sm:block text-sm text-base-content/60">
-                  {@current_scope.user.email}
-                </span>
+                <a
+                  href="/alerty"
+                  class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
+                  Alerty
+                </a>
                 <a
                   href="/ustawienia"
                   class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"

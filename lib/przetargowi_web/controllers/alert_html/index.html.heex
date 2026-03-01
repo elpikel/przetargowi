@@ -1,72 +1,104 @@
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-900">Twoje alerty</h1>
-    <a
-      href={~p"/alerty/nowy"}
-      class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-    >
-      + Nowy alert
-    </a>
-  </div>
-
-  <p class="text-gray-600 mb-8">
-    Otrzymuj codzienne powiadomienia o nowych przetargach pasujących do Twoich kryteriów.
-  </p>
-
-  <%= if @alerts == [] do %>
-    <div class="bg-white rounded-lg shadow p-8 text-center">
-      <p class="text-gray-500 mb-4">Nie masz jeszcze żadnych alertów.</p>
-      <a href={~p"/alerty/nowy"} class="text-blue-600 hover:underline">
-        Utwórz swój pierwszy alert →
-      </a>
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-display font-bold text-base-content">Twoje alerty</h1>
+      <%= if @can_create do %>
+        <a
+          href={~p"/alerty/nowy"}
+          class="btn-primary-solid px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2"
+        >
+          <.icon name="hero-plus" class="size-4" /> Nowy alert
+        </a>
+      <% end %>
     </div>
-  <% else %>
-    <div class="space-y-4">
-      <%= for alert <- @alerts do %>
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-semibold text-gray-900 mb-2">Alert przetargowy</h3>
-              <div class="text-sm text-gray-600 space-y-1">
-                <%= if alert.rules["region"] || alert.rules[:region] do %>
-                  <p>
-                    <span class="font-medium">Region:</span>
-                    {format_region(alert.rules["region"] || alert.rules[:region])}
-                  </p>
-                <% end %>
-                <%= if alert.rules["tender_category"] || alert.rules[:tender_category] do %>
-                  <p>
-                    <span class="font-medium">Kategoria:</span>
-                    {format_category(
-                      alert.rules["tender_category"] || alert.rules[:tender_category]
-                    )}
-                  </p>
-                <% end %>
-                <%= if alert.rules["keywords"] || alert.rules[:keywords] do %>
-                  <p>
-                    <span class="font-medium">Słowa kluczowe:</span>
-                    {Enum.join(alert.rules["keywords"] || alert.rules[:keywords] || [], ", ")}
-                  </p>
-                <% end %>
+
+    <p class="text-base-content/60 mb-8">
+      Otrzymuj codzienne powiadomienia o nowych przetargach pasujących do Twoich kryteriów.
+    </p>
+
+    <%= if @alerts == [] do %>
+      <div class="card-elevated p-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <.icon name="hero-bell" class="size-8 text-primary" />
+        </div>
+        <p class="text-base-content/60 mb-4">Nie masz jeszcze żadnych alertów.</p>
+        <a href={~p"/alerty/nowy"} class="text-primary hover:text-primary/80 font-medium">
+          Utwórz swój pierwszy alert →
+        </a>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <%= for alert <- @alerts do %>
+          <div class="card-elevated p-6">
+            <div class="flex justify-between items-start">
+              <div class="flex gap-4">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <.icon name="hero-bell" class="size-5 text-primary" />
+                </div>
+                <div>
+                  <h3 class="font-semibold text-base-content mb-2">Alert przetargowy</h3>
+                  <div class="text-sm text-base-content/60 space-y-1">
+                    <%= if alert.rules["region"] || alert.rules[:region] do %>
+                      <p>
+                        <span class="font-medium text-base-content/80">Region:</span>
+                        {format_region(alert.rules["region"] || alert.rules[:region])}
+                      </p>
+                    <% end %>
+                    <%= if alert.rules["tender_category"] || alert.rules[:tender_category] do %>
+                      <p>
+                        <span class="font-medium text-base-content/80">Kategoria:</span>
+                        {format_category(
+                          alert.rules["tender_category"] || alert.rules[:tender_category]
+                        )}
+                      </p>
+                    <% end %>
+                    <%= if alert.rules["keywords"] || alert.rules[:keywords] do %>
+                      <p>
+                        <span class="font-medium text-base-content/80">Słowa kluczowe:</span>
+                        {Enum.join(alert.rules["keywords"] || alert.rules[:keywords] || [], ", ")}
+                      </p>
+                    <% end %>
+                  </div>
+                </div>
               </div>
+              <.link
+                href={~p"/alerty/#{alert.id}"}
+                method="delete"
+                data-confirm="Czy na pewno chcesz usunąć ten alert?"
+                class="text-error hover:text-error/80 text-sm font-medium"
+              >
+                Usuń
+              </.link>
             </div>
-            <.link
-              href={~p"/alerty/#{alert.id}"}
-              method="delete"
-              data-confirm="Czy na pewno chcesz usunąć ten alert?"
-              class="text-red-600 hover:text-red-800"
-            >
-              Usuń
-            </.link>
+          </div>
+        <% end %>
+      </div>
+
+      <%= unless @is_premium do %>
+        <div class="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
+          <div class="flex items-start gap-3">
+            <.icon name="hero-sparkles" class="size-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p class="text-sm text-base-content/80">
+                <span class="font-medium">Darmowy plan:</span>
+                1 alert. Wybierz plan Alerty lub Razem, aby tworzyć więcej alertów i korzystać ze słów kluczowych.
+              </p>
+              <a
+                href={~p"/subskrypcja/nowa"}
+                class="text-sm text-primary hover:text-primary/80 font-medium mt-1 inline-block"
+              >
+                Zobacz plany →
+              </a>
+            </div>
           </div>
         </div>
       <% end %>
-    </div>
-  <% end %>
+    <% end %>
 
-  <div class="mt-8 text-center">
-    <a href={~p"/ustawienia"} class="text-gray-500 hover:text-gray-700 text-sm">
-      ← Wróć do ustawień
-    </a>
+    <div class="mt-8 text-center">
+      <a href={~p"/przetargi"} class="text-base-content/50 hover:text-base-content/70 text-sm">
+        ← Wróć do przetargów
+      </a>
+    </div>
   </div>
-</div>
+</Layouts.app>

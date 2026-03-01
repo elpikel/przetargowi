@@ -138,6 +138,13 @@ defmodule Przetargowi.Alerts do
   end
 
   @doc """
+  Checks if a user can create a free alert (limit: 1).
+  """
+  def can_create_free_alert?(user_id) do
+    count_user_alerts(user_id) < 1
+  end
+
+  @doc """
   Gets all alerts that need to be processed (for sending notifications).
   Returns alerts that haven't been sent today.
   """
