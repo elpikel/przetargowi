@@ -649,4 +649,38 @@ defmodule Przetargowi.Judgements do
     |> order_by(desc: :updated_at)
     |> Repo.stream()
   end
+
+  @doc """
+  Returns judgements that need slug regeneration (NULL slug with signature).
+  """
+  def judgements_needing_slug_regeneration(limit \\ 100) do
+    Judgement
+    |> where([j], is_nil(j.slug) and not is_nil(j.signature))
+    |> select([j], %{id: j.id, signature: j.signature})
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates slug by judgement ID. Returns {:error, :duplicate} on unique constraint violation.
+  """
+  def update_slug_by_id(id, slug) do
+    Judgement
+    |> where([j], j.id == ^id)
+    |> Repo.update_all(set: [
+      slug: slug,
+      updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    ])
+    |> case do
+      {1, _} -> {:ok, id}
+      {0, _} -> {:error, :not_found}
+    end
+  rescue
+    e in Postgrex.Error ->
+      if e.postgres.code == :unique_violation do
+        {:error, :duplicate}
+      else
+        reraise e, __STACKTRACE__
+      end
+  end
 end

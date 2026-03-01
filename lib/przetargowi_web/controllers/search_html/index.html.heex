@@ -5,6 +5,36 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         <form action="/szukaj" method="get">
           <div class="flex flex-col gap-4">
+            <!-- Search mode toggle -->
+            <div class="flex items-center gap-2">
+              <div class="inline-flex rounded-lg bg-base-200 p-1">
+                <a
+                  href={"/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+                  class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
+                >
+                  <span class="flex items-center gap-2">
+                    <.icon name="hero-magnifying-glass" class="size-4" />
+                    Słowa kluczowe
+                  </span>
+                </a>
+                <a
+                  href={"/szukaj?mode=semantic" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+                  class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
+                >
+                  <span class="flex items-center gap-2">
+                    <.icon name="hero-sparkles" class="size-4" />
+                    Semantyczne (AI)
+                  </span>
+                </a>
+              </div>
+              <%= if @search_mode == "semantic" do %>
+                <span class="text-xs text-base-content/50">Wyszukuje podobne znaczeniowo orzeczenia</span>
+              <% end %>
+            </div>
+
+            <!-- Hidden field to preserve mode on form submit -->
+            <input type="hidden" name="mode" value={@search_mode} />
+
             <!-- Main search input -->
             <div class="flex flex-col md:flex-row gap-4">
               <div class="flex-1 relative">
@@ -13,7 +43,7 @@
                   name="q"
                   value={@query}
                   class="search-input w-full pl-5 pr-5 py-3.5 rounded-xl text-base"
-                  placeholder="Opisz czego szukasz..."
+                  placeholder={if(@search_mode == "semantic", do: "Opisz czego szukasz własnymi słowami...", else: "Wpisz słowa kluczowe...")}
                 />
               </div>
               <button type="submit" class="btn-gold px-6 py-2.5 rounded-xl font-semibold">
@@ -112,6 +142,18 @@
         </div>
       </div>
 
+      <%= if @semantic_error do %>
+        <div class="text-center py-10">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-error/20 flex items-center justify-center">
+            <.icon name="hero-exclamation-triangle" class="size-8 text-error" />
+          </div>
+          <p class="text-lg text-base-content mb-2">{@semantic_error}</p>
+          <p class="text-base-content/60">
+            Spróbuj wyszukiwania słów kluczowych.
+          </p>
+        </div>
+      <% end %>
+
       <%= if @rate_limited do %>
         <div class="text-center py-20">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/20 flex items-center justify-center">
@@ -171,16 +213,28 @@
                 <% end %>
               </div>
 
-              <%= if result.meritum do %>
-                <div class="meritum-box rounded-xl p-5 mb-5">
+              <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
+                <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
                   <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                    <.icon name="hero-light-bulb-solid" class="size-5" />
-                    <span>Meritum</span>
+                    <.icon name="hero-sparkles-solid" class="size-5" />
+                    <span>Dopasowany fragment</span>
                   </div>
-                  <p class="text-base-content/80 leading-relaxed">
-                    {result.meritum}
+                  <p class="text-base-content/80 leading-relaxed text-sm">
+                    {String.slice(result.matched_chunk, 0, 300)}<%= if String.length(result.matched_chunk) > 300, do: "..." %>
                   </p>
                 </div>
+              <% else %>
+                <%= if result.meritum do %>
+                  <div class="meritum-box rounded-xl p-5 mb-5">
+                    <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
+                      <.icon name="hero-light-bulb-solid" class="size-5" />
+                      <span>Meritum</span>
+                    </div>
+                    <p class="text-base-content/80 leading-relaxed">
+                      {result.meritum}
+                    </p>
+                  </div>
+                <% end %>
               <% end %>
 
               <div class="flex items-center justify-end">
@@ -198,7 +252,7 @@
           <nav class="flex items-center justify-center gap-2 mt-10">
             <%= if @current_page > 1 do %>
               <a
-                href={"/szukaj?#{pagination_params(@query, @filters, @current_page - 1)}"}
+                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
                 class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
               >
                 <.icon name="hero-chevron-left" class="size-4" />
@@ -214,7 +268,7 @@
                 <span class="px-3 py-2 text-base-content/50">...</span>
               <% else %>
                 <a
-                  href={"/szukaj?#{pagination_params(@query, @filters, page_num)}"}
+                  href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, page_num)}"}
                   class={"px-4 py-2 rounded-lg font-medium transition-colors " <> if(page_num == @current_page, do: "bg-primary text-primary-content", else: "bg-base-200 hover:bg-base-300 text-base-content")}
                 >
                   {page_num}
@@ -224,7 +278,7 @@
 
             <%= if @current_page < @total_pages do %>
               <a
-                href={"/szukaj?#{pagination_params(@query, @filters, @current_page + 1)}"}
+                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
                 class="px-4 py-2 rounded-lg bg-base-200 hover:bg-base-300 text-base-content font-medium transition-colors"
               >
                 <.icon name="hero-chevron-right" class="size-4" />

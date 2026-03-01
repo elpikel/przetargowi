@@ -9,6 +9,7 @@ defmodule Przetargowi.UZP.SyncWorker do
     max_attempts: 3,
     unique: [period: :infinity, states: [:available, :scheduled, :executing]]
 
+  alias Przetargowi.Embeddings.EmbeddingWorker
   alias Przetargowi.Judgements
   alias Przetargowi.Judgements.TextExtractor
   alias Przetargowi.UZP.Scraper
@@ -40,6 +41,8 @@ defmodule Przetargowi.UZP.SyncWorker do
          :ok <- fix_document_types(),
          :ok <- fix_resolution_methods(),
          :ok <- fix_procedure_types() do
+      Logger.info("SyncWorker completed, enqueueing EmbeddingWorker")
+      Oban.insert(EmbeddingWorker.new(%{}))
       :ok
     end
   end

@@ -8,10 +8,11 @@ defmodule PrzetargowiWeb.SearchHTML do
 
   embed_templates "search_html/*"
 
-  def pagination_params(query, filters, page) do
+  def pagination_params(query, filters, search_mode, page) do
     params =
       [page: page]
       |> add_if_present(:q, query)
+      |> add_if_present(:mode, search_mode)
       |> add_if_present(:document_type, filters[:document_type])
       |> add_if_present(:issuing_authority, filters[:issuing_authority])
       |> add_if_present(:resolution_method, filters[:resolution_method])
