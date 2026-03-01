@@ -2,14 +2,6 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-display font-bold text-base-content">Twoje alerty</h1>
-      <%= if @can_create do %>
-        <a
-          href={~p"/alerty/nowy"}
-          class="btn-primary-solid px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2"
-        >
-          <.icon name="hero-plus" class="size-4" /> Nowy alert
-        </a>
-      <% end %>
     </div>
 
     <p class="text-base-content/60 mb-8">
@@ -22,9 +14,9 @@
           <.icon name="hero-bell" class="size-8 text-primary" />
         </div>
         <p class="text-base-content/60 mb-4">Nie masz jeszcze żadnych alertów.</p>
-        <a href={~p"/alerty/nowy"} class="text-primary hover:text-primary/80 font-medium">
-          Utwórz swój pierwszy alert →
-        </a>
+        <p class="text-sm text-base-content/50">
+          Alerty możesz tworzyć na stronie wyszukiwania przetargów.
+        </p>
       </div>
     <% else %>
       <div class="space-y-4">

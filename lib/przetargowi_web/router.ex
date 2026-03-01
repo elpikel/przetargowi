@@ -97,7 +97,6 @@ defmodule PrzetargowiWeb.Router do
 
     # Alerts
     get "/alerty", AlertController, :index
-    get "/alerty/nowy", AlertController, :new
     post "/alerty", AlertController, :create
     delete "/alerty/:id", AlertController, :delete
   end

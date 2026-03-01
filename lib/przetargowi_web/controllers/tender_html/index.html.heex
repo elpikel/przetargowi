@@ -113,9 +113,35 @@
         </div>
       </div>
 
+      <!-- Deadline Date Filters -->
+      <div class="grid gap-4 md:grid-cols-2 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Termin od
+          </label>
+          <input
+            type="date"
+            name="deadline_from"
+            value={@deadline_from}
+            class="search-input w-full px-4 py-3 rounded-lg"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Termin do
+          </label>
+          <input
+            type="date"
+            name="deadline_to"
+            value={@deadline_to}
+            class="search-input w-full px-4 py-3 rounded-lg"
+          />
+        </div>
+      </div>
+
       <div class="mt-4 flex justify-end">
         <div class="flex gap-3">
-          <%= if @query != "" or @regions != [] or @order_types != [] do %>
+          <%= if @query != "" or @regions != [] or @order_types != [] or @deadline_from != "" or @deadline_to != "" do %>
             <a href={~p"/przetargi"} class="btn-outline px-4 py-2 rounded-lg text-sm">
               Wyczyść filtry
             </a>
@@ -132,13 +158,22 @@
       <p class="text-base-content/60">
         Znaleziono <span class="font-semibold text-base-content">{@total_count}</span> przetargów
       </p>
-      <%= if @current_scope && (@query != "" or @regions != [] or @order_types != []) do %>
-        <a
-          href={~p"/alerty/nowy?#{build_alert_params(@query, @regions, @order_types)}"}
-          class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-        >
-          <.icon name="hero-bell" class="size-4" /> Utwórz alert
-        </a>
+      <%= if @can_create_alert && (@regions != [] or @order_types != []) do %>
+        <form action={~p"/alerty"} method="post" class="inline">
+          <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+          <%= for region <- @regions do %>
+            <input type="hidden" name="alert[regions][]" value={region} />
+          <% end %>
+          <%= for order_type <- @order_types do %>
+            <input type="hidden" name="alert[order_types][]" value={order_type} />
+          <% end %>
+          <button
+            type="submit"
+            class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+          >
+            <.icon name="hero-bell" class="size-4" /> Utwórz alert
+          </button>
+        </form>
       <% end %>
     </div>
     
@@ -239,7 +274,7 @@
           <%= if @page > 1 do %>
             <a
               href={
-                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @page - 1)}"
+                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @deadline_from, @deadline_to, @page - 1)}"
               }
               class="btn-outline px-4 py-2 rounded-lg text-sm"
             >
@@ -254,7 +289,7 @@
           <%= if @page < @total_pages do %>
             <a
               href={
-                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @page + 1)}"
+                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @deadline_from, @deadline_to, @page + 1)}"
               }
               class="btn-outline px-4 py-2 rounded-lg text-sm"
             >

@@ -38,13 +38,17 @@ defmodule Przetargowi.Alerts.Alert do
     alert
     |> cast(attrs, [:user_id])
     |> validate_required([:user_id])
-    |> put_change(:rules, %{
-      region: attrs["region"] || attrs[:region],
-      tender_category: attrs["tender_category"] || attrs[:tender_category]
-    })
+    |> put_change(:rules, build_simple_rules(attrs))
     |> validate_required([:rules])
     |> validate_simple_rules()
     |> foreign_key_constraint(:user_id)
+  end
+
+  defp build_simple_rules(attrs) do
+    %{
+      region: attrs["region"] || attrs[:region],
+      tender_category: attrs["tender_category"] || attrs[:tender_category]
+    }
   end
 
   @doc """
@@ -124,16 +128,13 @@ defmodule Przetargowi.Alerts.Alert do
 
   defp validate_simple_rules(changeset) do
     rules = get_field(changeset, :rules)
+    has_region = not is_nil(rules[:region]) or not is_nil(rules["region"])
+    has_category = not is_nil(rules[:tender_category]) or not is_nil(rules["tender_category"])
 
-    cond do
-      is_nil(rules[:region]) && is_nil(rules["region"]) ->
-        add_error(changeset, :rules, "region jest wymagany")
-
-      is_nil(rules[:tender_category]) && is_nil(rules["tender_category"]) ->
-        add_error(changeset, :rules, "rodzaj zamówienia jest wymagany")
-
-      true ->
-        changeset
+    if has_region or has_category do
+      changeset
+    else
+      add_error(changeset, :rules, "region lub rodzaj zamówienia jest wymagany")
     end
   end
 

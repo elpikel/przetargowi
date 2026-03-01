@@ -454,14 +454,17 @@
           </a>
 
           <%= if @current_scope do %>
-            <a
-              href={
-                ~p"/alerty/nowy?regions[]=#{province_to_region(@tender.organization_province)}&order_types[]=#{@tender.order_type}"
-              }
-              class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
-            >
-              <.icon name="hero-bell" class="size-4" /> Utwórz podobny alert
-            </a>
+            <form action={~p"/alerty"} method="post">
+              <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+              <input type="hidden" name="alert[regions][]" value={province_to_region(@tender.organization_province)} />
+              <input type="hidden" name="alert[order_types][]" value={@tender.order_type} />
+              <button
+                type="submit"
+                class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+              >
+                <.icon name="hero-bell" class="size-4" /> Utwórz podobny alert
+              </button>
+            </form>
           <% end %>
         </div>
       </div>

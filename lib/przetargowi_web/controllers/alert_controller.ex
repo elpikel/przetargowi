@@ -4,34 +4,39 @@ defmodule PrzetargowiWeb.AlertController do
   alias Przetargowi.Alerts
   alias Przetargowi.Payments
 
-  plug :require_can_create_alert when action in [:new, :create]
+  plug :require_can_create_alert when action in [:create]
 
   def index(conn, _params) do
     user = conn.assigns.current_scope.user
     alerts = Alerts.list_user_alerts(user.id)
     is_premium = Payments.has_alerts_access?(user.id)
-    can_create = is_premium or Alerts.can_create_free_alert?(user.id)
 
-    render(conn, :index, alerts: alerts, is_premium: is_premium, can_create: can_create)
-  end
-
-  def new(conn, params) do
-    user = conn.assigns.current_scope.user
-    is_premium = Payments.has_alerts_access?(user.id)
-
-    render(conn, :new,
-      is_premium: is_premium,
-      keywords: params["keywords"] || "",
-      regions: params["regions"] || [],
-      order_types: params["order_types"] || []
-    )
+    render(conn, :index, alerts: alerts, is_premium: is_premium)
   end
 
   def create(conn, %{"alert" => alert_params}) do
     user = conn.assigns.current_scope.user
     is_premium = Payments.has_alerts_access?(user.id)
 
-    attrs = Map.put(alert_params, "user_id", user.id)
+    # Transform form params to match changeset expectations
+    regions = alert_params["regions"] || []
+    order_types = alert_params["order_types"] || []
+    keywords = alert_params["keywords"]
+
+    attrs =
+      if is_premium do
+        %{
+          "user_id" => user.id,
+          "region" => List.first(regions),
+          "keyword" => keywords
+        }
+      else
+        %{
+          "user_id" => user.id,
+          "region" => List.first(regions),
+          "tender_category" => List.first(order_types)
+        }
+      end
 
     result =
       if is_premium do
@@ -43,13 +48,13 @@ defmodule PrzetargowiWeb.AlertController do
     case result do
       {:ok, _alert} ->
         conn
-        |> put_flash(:info, "Alert został utworzony pomyślnie!")
-        |> redirect(to: ~p"/alerty")
+        |> put_flash(:info, "Alert został utworzony!")
+        |> redirect(to: ~p"/przetargi")
 
       {:error, _changeset} ->
         conn
-        |> put_flash(:error, "Nie udało się utworzyć alertu. Sprawdź wymagane pola.")
-        |> redirect(to: ~p"/alerty/nowy")
+        |> put_flash(:error, "Nie udało się utworzyć alertu.")
+        |> redirect(to: ~p"/przetargi")
     end
   end
 
@@ -82,7 +87,7 @@ defmodule PrzetargowiWeb.AlertController do
         :error,
         "Osiągnąłeś limit darmowych alertów. Wybierz plan Alerty lub Razem, aby tworzyć więcej."
       )
-      |> redirect(to: ~p"/alerty")
+      |> redirect(to: ~p"/przetargi")
       |> halt()
     end
   end

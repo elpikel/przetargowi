@@ -61,6 +61,8 @@ defmodule Przetargowi.Tenders do
     * `:regions` - list of regions to filter by (or single region string for backwards compatibility)
     * `:order_types` - list of order types (Delivery, Services, Works) or single string
     * `:notice_type` - filter by notice type (default: ContractNotice)
+    * `:deadline_from` - filter tenders with deadline on or after this date (Date)
+    * `:deadline_to` - filter tenders with deadline on or before this date (Date)
     * `:page` - page number (default: 1)
     * `:per_page` - results per page (default: 20)
   """
@@ -68,15 +70,33 @@ defmodule Przetargowi.Tenders do
     query = Keyword.get(opts, :query)
     regions = normalize_to_list(Keyword.get(opts, :regions))
     order_types = normalize_to_list(Keyword.get(opts, :order_types))
+    deadline_from = Keyword.get(opts, :deadline_from)
+    deadline_to = Keyword.get(opts, :deadline_to)
     page = Keyword.get(opts, :page, 1)
     per_page = Keyword.get(opts, :per_page, 20)
 
     offset = (page - 1) * per_page
 
+    # Default: only show future tenders unless deadline_from is specified
+    min_deadline =
+      if deadline_from do
+        DateTime.new!(deadline_from, ~T[00:00:00], "Etc/UTC")
+      else
+        DateTime.utc_now()
+      end
+
     base_query =
       TenderNotice
       |> from(as: :tender_notice)
-      |> where([tender_notice: tn], tn.submitting_offers_date >= ^DateTime.utc_now())
+      |> where([tender_notice: tn], tn.submitting_offers_date >= ^min_deadline)
+
+    base_query =
+      if deadline_to do
+        max_deadline = DateTime.new!(deadline_to, ~T[23:59:59], "Etc/UTC")
+        where(base_query, [tender_notice: tn], tn.submitting_offers_date <= ^max_deadline)
+      else
+        base_query
+      end
 
     base_query =
       if query && query != "" do

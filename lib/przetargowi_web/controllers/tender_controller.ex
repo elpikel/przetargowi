@@ -1,6 +1,8 @@
 defmodule PrzetargowiWeb.TenderController do
   use PrzetargowiWeb, :controller
 
+  alias Przetargowi.Alerts
+  alias Przetargowi.Payments
   alias Przetargowi.Tenders
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
@@ -10,16 +12,23 @@ defmodule PrzetargowiWeb.TenderController do
 
     regions = params["regions"] || []
     order_types = params["order_types"] || []
+    deadline_from = parse_date(params["deadline_from"])
+    deadline_to = parse_date(params["deadline_to"])
 
     search_opts = [
       query: params["q"],
       regions: regions,
       order_types: order_types,
+      deadline_from: deadline_from,
+      deadline_to: deadline_to,
       page: page,
       per_page: 20
     ]
 
     result = Tenders.search_tender_notices(search_opts)
+
+    # Check if user can create alerts
+    {can_create_alert, is_premium} = get_alert_permissions(conn)
 
     conn
     |> assign(:page_title, "Przetargi publiczne")
@@ -35,7 +44,11 @@ defmodule PrzetargowiWeb.TenderController do
       total_pages: result.total_pages,
       query: params["q"] || "",
       regions: regions,
-      order_types: order_types
+      order_types: order_types,
+      deadline_from: params["deadline_from"] || "",
+      deadline_to: params["deadline_to"] || "",
+      can_create_alert: can_create_alert,
+      is_premium: is_premium
     )
   end
 
@@ -69,17 +82,24 @@ defmodule PrzetargowiWeb.TenderController do
 
   defp show_region(conn, region, params) do
     page = parse_page(params["page"])
+    deadline_from = parse_date(params["deadline_from"])
+    deadline_to = parse_date(params["deadline_to"])
 
     search_opts = [
       query: params["q"],
       regions: [region],
       order_types: params["order_types"] || [],
+      deadline_from: deadline_from,
+      deadline_to: deadline_to,
       page: page,
       per_page: 20
     ]
 
     result = Tenders.search_tender_notices(search_opts)
     region_name = Map.get(@region_names, region, region)
+
+    # Check if user can create alerts
+    {can_create_alert, is_premium} = get_alert_permissions(conn)
 
     conn
     |> assign(:page_title, "Przetargi #{region_name}")
@@ -95,7 +115,11 @@ defmodule PrzetargowiWeb.TenderController do
       total_pages: result.total_pages,
       query: params["q"] || "",
       regions: [region],
-      order_types: params["order_types"] || []
+      order_types: params["order_types"] || [],
+      deadline_from: params["deadline_from"] || "",
+      deadline_to: params["deadline_to"] || "",
+      can_create_alert: can_create_alert,
+      is_premium: is_premium
     )
   end
 
@@ -162,4 +186,29 @@ defmodule PrzetargowiWeb.TenderController do
   end
 
   defp parse_page(_), do: 1
+
+  defp parse_date(nil), do: nil
+  defp parse_date(""), do: nil
+
+  defp parse_date(date_string) when is_binary(date_string) do
+    case Date.from_iso8601(date_string) do
+      {:ok, date} -> date
+      _ -> nil
+    end
+  end
+
+  defp parse_date(_), do: nil
+
+  defp get_alert_permissions(conn) do
+    case conn.assigns[:current_scope] do
+      nil ->
+        {false, false}
+
+      scope ->
+        user = scope.user
+        is_premium = Payments.has_alerts_access?(user.id)
+        can_create = is_premium or Alerts.can_create_free_alert?(user.id)
+        {can_create, is_premium}
+    end
+  end
 end
