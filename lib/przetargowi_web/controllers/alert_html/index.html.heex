@@ -1,0 +1,67 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Twoje alerty</h1>
+    <a href={~p"/alerty/nowy"} class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+      + Nowy alert
+    </a>
+  </div>
+
+  <p class="text-gray-600 mb-8">
+    Otrzymuj codzienne powiadomienia o nowych przetargach pasujących do Twoich kryteriów.
+  </p>
+
+  <%= if @alerts == [] do %>
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+      <p class="text-gray-500 mb-4">Nie masz jeszcze żadnych alertów.</p>
+      <a href={~p"/alerty/nowy"} class="text-blue-600 hover:underline">
+        Utwórz swój pierwszy alert →
+      </a>
+    </div>
+  <% else %>
+    <div class="space-y-4">
+      <%= for alert <- @alerts do %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">Alert przetargowy</h3>
+              <div class="text-sm text-gray-600 space-y-1">
+                <%= if alert.rules["region"] || alert.rules[:region] do %>
+                  <p>
+                    <span class="font-medium">Region:</span>
+                    <%= format_region(alert.rules["region"] || alert.rules[:region]) %>
+                  </p>
+                <% end %>
+                <%= if alert.rules["tender_category"] || alert.rules[:tender_category] do %>
+                  <p>
+                    <span class="font-medium">Kategoria:</span>
+                    <%= format_category(alert.rules["tender_category"] || alert.rules[:tender_category]) %>
+                  </p>
+                <% end %>
+                <%= if alert.rules["keywords"] || alert.rules[:keywords] do %>
+                  <p>
+                    <span class="font-medium">Słowa kluczowe:</span>
+                    <%= Enum.join(alert.rules["keywords"] || alert.rules[:keywords] || [], ", ") %>
+                  </p>
+                <% end %>
+              </div>
+            </div>
+            <.link
+              href={~p"/alerty/#{alert.id}"}
+              method="delete"
+              data-confirm="Czy na pewno chcesz usunąć ten alert?"
+              class="text-red-600 hover:text-red-800"
+            >
+              Usuń
+            </.link>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="mt-8 text-center">
+    <a href={~p"/ustawienia"} class="text-gray-500 hover:text-gray-700 text-sm">
+      ← Wróć do ustawień
+    </a>
+  </div>
+</div>

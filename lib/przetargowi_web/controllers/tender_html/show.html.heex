@@ -1,0 +1,407 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Back Link -->
+    <div class="mb-6">
+      <a href={~p"/przetargi"} class="text-primary hover:underline inline-flex items-center gap-1 text-sm">
+        <.icon name="hero-arrow-left" class="size-4" />
+        Powrót do listy przetargów
+      </a>
+    </div>
+
+    <!-- Status Banner -->
+    <%= if @is_expired do %>
+      <div class="mb-6 bg-error/10 border border-error/20 p-4 rounded-xl flex items-center gap-3">
+        <.icon name="hero-exclamation-triangle" class="size-5 text-error flex-shrink-0" />
+        <p class="text-sm text-error">
+          Ten przetarg jest już nieaktualny. Termin składania ofert minął.
+        </p>
+      </div>
+    <% else %>
+      <div class="mb-6 bg-success/10 border border-success/20 p-4 rounded-xl flex items-center gap-3">
+        <.icon name="hero-check-circle" class="size-5 text-success flex-shrink-0" />
+        <p class="text-sm text-success">
+          Aktywne ogłoszenie - termin składania ofert: <strong><%= format_datetime(@tender.submitting_offers_date) %></strong>
+          <%= if days = days_until_deadline(@tender.submitting_offers_date) do %>
+            (<%= days %>)
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Title Card -->
+        <div class="card-base p-6">
+          <h1 class="text-2xl font-bold text-base-content mb-4">
+            <%= @tender.order_object %>
+          </h1>
+
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
+              <%= format_order_type(@tender.order_type) %>
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-base-300 text-base-content/70">
+              <%= @tender.bzp_number %>
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent">
+              <%= format_notice_type(@tender.notice_type) %>
+            </span>
+            <%= if @related_contract_notice do %>
+              <a
+                href={~p"/przetargi/#{@related_contract_notice.object_id}"}
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors gap-1"
+              >
+                <.icon name="hero-link" class="size-3" />
+                Zobacz ogłoszenie o zamówieniu
+              </a>
+            <% end %>
+          </div>
+
+          <%= if @tender.numer_referencyjny do %>
+            <p class="text-sm text-base-content/60">
+              Numer referencyjny: <span class="text-base-content"><%= @tender.numer_referencyjny %></span>
+            </p>
+          <% end %>
+        </div>
+
+        <!-- Buyer Info -->
+        <div class="card-base p-6">
+          <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+            <.icon name="hero-building-office-2" class="size-5 text-primary" />
+            Zamawiający
+          </h2>
+
+          <div class="space-y-3 text-base-content/70">
+            <p class="text-base-content font-medium text-lg"><%= @tender.organization_name %></p>
+
+            <%= if @tender.organization_street do %>
+              <p><%= @tender.organization_street %></p>
+            <% end %>
+
+            <p>
+              <%= @tender.organization_postal_code %>
+              <%= @tender.organization_city %>,
+              <%= format_province_name(@tender.organization_province) %>
+            </p>
+
+            <%= if @tender.organization_national_id do %>
+              <p>
+                <span class="text-base-content/50">NIP:</span>
+                <%= @tender.organization_national_id %>
+              </p>
+            <% end %>
+
+            <%= if @tender.organization_regon do %>
+              <p>
+                <span class="text-base-content/50">REGON:</span>
+                <%= @tender.organization_regon %>
+              </p>
+            <% end %>
+
+            <div class="flex flex-wrap gap-4 pt-2">
+              <%= if @tender.organization_email do %>
+                <a href={"mailto:#{@tender.organization_email}"} class="text-primary hover:underline flex items-center gap-1">
+                  <.icon name="hero-envelope" class="size-4" />
+                  <%= @tender.organization_email %>
+                </a>
+              <% end %>
+
+              <%= if @tender.organization_www do %>
+                <a href={@tender.organization_www} target="_blank" rel="noopener" class="text-primary hover:underline flex items-center gap-1">
+                  <.icon name="hero-globe-alt" class="size-4" />
+                  Strona WWW
+                </a>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <%= if @tender.opis_przedmiotu do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-document-text" class="size-5 text-primary" />
+              Opis przedmiotu zamówienia
+            </h2>
+            <div class="prose prose-invert max-w-none text-base-content/70 whitespace-pre-wrap">
+              <%= @tender.opis_przedmiotu %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Participation Conditions -->
+        <%= if @tender.warunki_udzialu do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-clipboard-document-check" class="size-5 text-primary" />
+              Warunki udziału w postępowaniu
+            </h2>
+            <div class="prose prose-invert max-w-none text-base-content/70 whitespace-pre-wrap">
+              <%= @tender.warunki_udzialu %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Evaluation Criteria -->
+        <%= if @tender.kryteria && length(@tender.kryteria) > 0 do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-scale" class="size-5 text-primary" />
+              Kryteria oceny ofert
+            </h2>
+            <div class="space-y-3">
+              <%= for kryterium <- @tender.kryteria do %>
+                <div class="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
+                  <span class="text-base-content"><%= kryterium["name"] || kryterium[:name] %></span>
+                  <span class="font-semibold text-primary"><%= kryterium["weight"] || kryterium[:weight] %>%</span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Wadium -->
+        <%= if @tender.wadium do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-banknotes" class="size-5 text-primary" />
+              Wadium
+            </h2>
+            <p class="text-base-content/70"><%= @tender.wadium %></p>
+            <%= if @tender.wadium_amount do %>
+              <p class="mt-2 text-lg font-semibold text-base-content">
+                Kwota: <%= format_value(@tender.wadium_amount) %>
+              </p>
+            <% end %>
+          </div>
+        <% end %>
+
+        <!-- Contractors (if any) -->
+        <%= if @tender.contractors && length(@tender.contractors) > 0 do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-user-group" class="size-5 text-primary" />
+              Wykonawcy
+            </h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-base-300">
+                    <th class="text-left py-3 px-2 text-base-content/60 font-medium">Nazwa</th>
+                    <th class="text-left py-3 px-2 text-base-content/60 font-medium">Miasto</th>
+                    <th class="text-left py-3 px-2 text-base-content/60 font-medium">NIP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= for contractor <- @tender.contractors do %>
+                    <tr class="border-b border-base-300/50">
+                      <td class="py-3 px-2 text-base-content"><%= contractor.contractor_name %></td>
+                      <td class="py-3 px-2 text-base-content/70"><%= contractor.contractor_city %></td>
+                      <td class="py-3 px-2 text-base-content/70"><%= contractor.contractor_national_id || "-" %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Contract Details (if any) -->
+        <%= if @tender.contractors_contract_details && length(@tender.contractors_contract_details) > 0 do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-document-check" class="size-5 text-primary" />
+              Szczegóły kontraktów
+            </h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-base-300">
+                    <th class="text-left py-3 px-2 text-base-content/60 font-medium">Część</th>
+                    <th class="text-left py-3 px-2 text-base-content/60 font-medium">Wykonawca</th>
+                    <th class="text-left py-3 px-2 text-base-content/60 font-medium">Status</th>
+                    <th class="text-right py-3 px-2 text-base-content/60 font-medium">Cena oferty</th>
+                    <th class="text-right py-3 px-2 text-base-content/60 font-medium">Wartość umowy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= for detail <- @tender.contractors_contract_details do %>
+                    <tr class="border-b border-base-300/50">
+                      <td class="py-3 px-2 text-base-content"><%= detail.part || "-" %></td>
+                      <td class="py-3 px-2 text-base-content">
+                        <%= detail.contractor_name || "-" %>
+                        <%= if detail.contractor_city do %>
+                          <span class="text-base-content/50">(<%= detail.contractor_city %>)</span>
+                        <% end %>
+                      </td>
+                      <td class="py-3 px-2">
+                        <%= if detail.status == :contract_signed do %>
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success">
+                            Umowa podpisana
+                          </span>
+                        <% else %>
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-error/10 text-error">
+                            Unieważniono
+                          </span>
+                        <% end %>
+                      </td>
+                      <td class="py-3 px-2 text-right text-base-content/70">
+                        <%= if detail.winning_price, do: format_value(detail.winning_price), else: "-" %>
+                      </td>
+                      <td class="py-3 px-2 text-right font-medium text-base-content">
+                        <%= if detail.contract_value, do: format_value(detail.contract_value), else: "-" %>
+                      </td>
+                    </tr>
+                    <%= if detail.cancellation_reason do %>
+                      <tr class="border-b border-base-300/50 bg-error/5">
+                        <td colspan="5" class="py-2 px-2 text-sm text-error/80">
+                          Powód unieważnienia: <%= detail.cancellation_reason %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Key Info Card -->
+        <div class="card-base p-6">
+          <h3 class="text-lg font-semibold text-base-content mb-4">Informacje kluczowe</h3>
+
+          <dl class="space-y-4">
+            <div>
+              <dt class="text-sm text-base-content/50">Data publikacji</dt>
+              <dd class="text-base-content font-medium"><%= format_date(@tender.publication_date) %></dd>
+            </div>
+
+            <div>
+              <dt class="text-sm text-base-content/50">Termin składania ofert</dt>
+              <dd class={[
+                "font-medium",
+                @is_expired && "text-error",
+                not @is_expired && "text-success"
+              ]}>
+                <%= format_datetime(@tender.submitting_offers_date) %>
+              </dd>
+            </div>
+
+            <%= if @tender.estimated_value do %>
+              <div>
+                <dt class="text-sm text-base-content/50">Wartość szacunkowa</dt>
+                <dd class="text-base-content font-medium text-lg"><%= format_value(@tender.estimated_value) %></dd>
+              </div>
+            <% end %>
+
+            <%= if @tender.total_contract_value do %>
+              <div>
+                <dt class="text-sm text-base-content/50">Wartość umowy</dt>
+                <dd class="text-base-content font-medium text-lg"><%= format_value(@tender.total_contract_value) %></dd>
+              </div>
+            <% end %>
+
+            <div>
+              <dt class="text-sm text-base-content/50">Rodzaj zamawiającego</dt>
+              <dd class="text-base-content"><%= format_client_type(@tender.client_type) %></dd>
+            </div>
+
+            <div>
+              <dt class="text-sm text-base-content/50">Próg unijny</dt>
+              <dd class="text-base-content">
+                <%= if @tender.is_tender_amount_below_eu do %>
+                  <span class="text-base-content/70">Poniżej progów UE</span>
+                <% else %>
+                  <span class="text-primary">Powyżej progów UE</span>
+                <% end %>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- CPV Codes -->
+        <%= if (@tender.cpv_codes && length(@tender.cpv_codes) > 0) || @tender.cpv_main do %>
+          <div class="card-base p-6">
+            <h3 class="text-lg font-semibold text-base-content mb-4">Kody CPV</h3>
+
+            <%= if @tender.cpv_main do %>
+              <div class="mb-3">
+                <span class="text-xs text-base-content/50 block mb-1">Główny</span>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-primary/10 text-primary">
+                  <%= @tender.cpv_main %>
+                </span>
+              </div>
+            <% end %>
+
+            <div class="flex flex-wrap gap-2">
+              <%= for cpv <- (@tender.cpv_codes || []) ++ (@tender.cpv_additional || []) |> Enum.uniq() do %>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-base-300 text-base-content/70">
+                  <%= cpv %>
+                </span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Additional Values -->
+        <%= if @tender.estimated_values && length(@tender.estimated_values) > 1 do %>
+          <div class="card-base p-6">
+            <h3 class="text-lg font-semibold text-base-content mb-4">Wartości szacunkowe (części)</h3>
+            <ul class="space-y-2">
+              <%= for {value, idx} <- Enum.with_index(@tender.estimated_values, 1) do %>
+                <li class="flex justify-between text-sm">
+                  <span class="text-base-content/60">Część <%= idx %></span>
+                  <span class="text-base-content font-medium"><%= format_value(value) %></span>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <!-- Contract Execution Period -->
+        <%= if @tender.okres_realizacji_from || @tender.okres_realizacji_to || @tender.okres_realizacji_raw do %>
+          <div class="card-base p-6">
+            <h3 class="text-lg font-semibold text-base-content mb-4">Okres realizacji</h3>
+            <%= cond do %>
+              <% @tender.okres_realizacji_from && @tender.okres_realizacji_to -> %>
+                <p class="text-base-content">
+                  <%= format_date(@tender.okres_realizacji_from) %> - <%= format_date(@tender.okres_realizacji_to) %>
+                </p>
+              <% @tender.okres_realizacji_raw -> %>
+                <p class="text-base-content"><%= @tender.okres_realizacji_raw %></p>
+              <% true -> %>
+                <p class="text-base-content/60">-</p>
+            <% end %>
+          </div>
+        <% end %>
+
+        <!-- Actions -->
+        <div class="card-base p-4 space-y-3">
+          <a
+            href={"https://ezamowienia.gov.pl/mo-client-board/bzp/notice-details/#{@tender.object_id}"}
+            target="_blank"
+            rel="noopener"
+            class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+          >
+            <.icon name="hero-arrow-top-right-on-square" class="size-4" />
+            Zobacz w BZP
+          </a>
+
+          <%= if @current_scope do %>
+            <a
+              href={~p"/alerty/nowy?regions[]=#{province_to_region(@tender.organization_province)}&order_types[]=#{@tender.order_type}"}
+              class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+            >
+              <.icon name="hero-bell" class="size-4" />
+              Utwórz podobny alert
+            </a>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

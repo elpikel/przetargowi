@@ -30,9 +30,11 @@ defmodule Przetargowi.Stripe.Client do
   Options:
   - customer_id: Use existing Stripe customer (preserves saved payment methods)
   - customer_email: Create new customer or find by email (if customer_id not provided)
+  - plan_type: "alert", "wyszukiwarka", or "razem" (default: "razem")
   """
   def create_checkout_session(params) do
-    price_id = get_price_id()
+    plan_type = params[:plan_type] || "razem"
+    price_id = get_price_id(plan_type)
 
     checkout_params = %{
       mode: :subscription,
@@ -57,7 +59,7 @@ defmodule Przetargowi.Stripe.Client do
 
     case Stripe.Checkout.Session.create(checkout_params) do
       {:ok, session} ->
-        Logger.info("Stripe checkout session created: id=#{session.id}")
+        Logger.info("Stripe checkout session created: id=#{session.id}, plan_type=#{plan_type}")
         {:ok, %{session_id: session.id, checkout_url: session.url}}
 
       {:error, %Stripe.Error{} = error} ->
@@ -173,9 +175,14 @@ defmodule Przetargowi.Stripe.Client do
   # Configuration
   # ============================================================================
 
-  defp get_price_id do
-    :przetargowi
-    |> Application.get_env(:stripe, [])
-    |> Keyword.get(:price_id)
+  defp get_price_id(plan_type) do
+    stripe_config = Application.get_env(:przetargowi, :stripe, [])
+
+    case plan_type do
+      "alert" -> Keyword.get(stripe_config, :price_id_alert)
+      "wyszukiwarka" -> Keyword.get(stripe_config, :price_id_wyszukiwarka)
+      "razem" -> Keyword.get(stripe_config, :price_id_razem)
+      _ -> Keyword.get(stripe_config, :price_id_razem)
+    end
   end
 end

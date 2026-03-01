@@ -11,12 +11,14 @@ defmodule Przetargowi.Payments.Subscription do
   alias Przetargowi.Payments.PaymentTransaction
 
   @statuses ~w(pending active cancelled expired failed)
+  @plan_types ~w(alert wyszukiwarka razem)
   @max_retry_count 3
 
   schema "subscriptions" do
     field :stripe_subscription_id, :string
     field :stripe_customer_id, :string
     field :status, :string, default: "pending"
+    field :plan_type, :string, default: "razem"
     field :current_period_start, :utc_datetime
     field :current_period_end, :utc_datetime
     field :cancelled_at, :utc_datetime
@@ -38,8 +40,9 @@ defmodule Przetargowi.Payments.Subscription do
   """
   def create_changeset(subscription \\ %__MODULE__{}, attrs) do
     subscription
-    |> cast(attrs, [:user_id, :amount, :currency, :metadata])
-    |> validate_required([:user_id])
+    |> cast(attrs, [:user_id, :amount, :currency, :metadata, :plan_type])
+    |> validate_required([:user_id, :plan_type])
+    |> validate_inclusion(:plan_type, @plan_types)
     |> unique_constraint(:user_id)
     |> put_change(:status, "pending")
   end
@@ -170,4 +173,21 @@ defmodule Przetargowi.Payments.Subscription do
   Returns the maximum retry count.
   """
   def max_retry_count, do: @max_retry_count
+
+  @doc """
+  Returns all valid plan types.
+  """
+  def plan_types, do: @plan_types
+
+  @doc """
+  Checks if the subscription has alert access.
+  """
+  def has_alerts?(%__MODULE__{plan_type: plan_type}) when plan_type in ["alert", "razem"], do: true
+  def has_alerts?(_), do: false
+
+  @doc """
+  Checks if the subscription has search access.
+  """
+  def has_search?(%__MODULE__{plan_type: plan_type}) when plan_type in ["wyszukiwarka", "razem"], do: true
+  def has_search?(_), do: false
 end

@@ -1,0 +1,47 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-4">
+        <%= @report.title %>
+      </h1>
+
+      <div class="flex flex-wrap gap-4 text-sm text-base-content/60">
+        <span>📅 <%= format_report_date(@report.report_month) %></span>
+        <%= if @report.region do %>
+          <span>📍 <%= format_region_name(@report.region) %></span>
+        <% end %>
+        <%= if @report.order_type do %>
+          <span>📋 <%= format_order_type(@report.order_type) %></span>
+        <% end %>
+      </div>
+    </header>
+
+    <div class="card-base p-8">
+      <section class="mb-8">
+        <h2 class="text-xl font-semibold text-base-content mb-4">Wprowadzenie</h2>
+        <div class="prose prose-invert max-w-none text-base-content/70">
+          <%= raw(@report.introduction_html) %>
+        </div>
+      </section>
+
+      <section class="mb-8">
+        <h2 class="text-xl font-semibold text-base-content mb-4">Analiza</h2>
+        <div class="prose prose-invert max-w-none text-base-content/70">
+          <%= raw(@report.analysis_html) %>
+        </div>
+      </section>
+
+      <%= if @report.upsell_html do %>
+        <section class="bg-primary/10 rounded-lg p-6 mt-8">
+          <%= raw(@report.upsell_html) %>
+        </section>
+      <% end %>
+    </div>
+
+    <div class="mt-8">
+      <a href={~p"/raporty"} class="text-primary hover:underline">
+        ← Powrót do listy raportów
+      </a>
+    </div>
+  </article>
+</Layouts.app>

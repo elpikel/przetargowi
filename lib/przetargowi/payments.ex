@@ -13,8 +13,21 @@ defmodule Przetargowi.Payments do
 
   require Logger
 
-  @subscription_amount Decimal.new("39.00")
   @subscription_currency "PLN"
+
+  # Plan amounts
+  @plan_amounts %{
+    "alert" => Decimal.new("29.00"),
+    "wyszukiwarka" => Decimal.new("29.00"),
+    "razem" => Decimal.new("49.00")
+  }
+
+  # Plan names for display
+  @plan_names %{
+    "alert" => "Alerty",
+    "wyszukiwarka" => "Wyszukiwarka",
+    "razem" => "Razem"
+  }
 
   # Get the Stripe client module (real or mock based on config)
   defp stripe_client do
@@ -106,8 +119,13 @@ defmodule Przetargowi.Payments do
   @doc """
   Initiates a new subscription by creating a Stripe Checkout Session.
   Returns {:ok, %{redirect_url: url, subscription: subscription}} on success.
+
+  Options:
+  - plan_type: "alert", "wyszukiwarka", or "razem" (default: "razem")
   """
-  def create_subscription(user, callbacks) do
+  def create_subscription(user, callbacks, opts \\ []) do
+    plan_type = Keyword.get(opts, :plan_type, "razem")
+
     # Check if user already has a subscription
     case get_user_subscription(user.id) do
       %Subscription{status: "active"} ->
@@ -123,7 +141,8 @@ defmodule Przetargowi.Payments do
         # Create new subscription record
         subscription_attrs = %{
           user_id: user.id,
-          amount: @subscription_amount,
+          plan_type: plan_type,
+          amount: plan_amount(plan_type),
           currency: @subscription_currency
         }
 
@@ -149,9 +168,11 @@ defmodule Przetargowi.Payments do
     params = %{
       success_url: callbacks.success_url,
       cancel_url: callbacks.error_url,
+      plan_type: subscription.plan_type,
       metadata: %{
         user_id: to_string(user.id),
-        subscription_id: to_string(subscription.id)
+        subscription_id: to_string(subscription.id),
+        plan_type: subscription.plan_type
       }
     }
 
@@ -443,13 +464,15 @@ defmodule Przetargowi.Payments do
   # ============================================================================
 
   defp create_initial_transaction(subscription, event) do
+    plan_name = plan_name(subscription.plan_type)
+
     attrs = %{
       subscription_id: subscription.id,
       user_id: subscription.user_id,
       type: "initial",
-      amount: event[:amount] || @subscription_amount,
+      amount: event[:amount] || subscription.amount,
       currency: @subscription_currency,
-      stripe_description: "Przetargowi Premium - initial payment",
+      stripe_description: "Przetargowi #{plan_name} - initial payment",
       stripe_payment_intent_id: event[:payment_intent_id]
     }
 
@@ -462,13 +485,15 @@ defmodule Przetargowi.Payments do
   end
 
   defp create_renewal_transaction_from_webhook(subscription, event) do
+    plan_name = plan_name(subscription.plan_type)
+
     attrs = %{
       subscription_id: subscription.id,
       user_id: subscription.user_id,
       type: "renewal",
       amount: event[:amount] || subscription.amount,
       currency: subscription.currency,
-      stripe_description: "Przetargowi Premium - renewal",
+      stripe_description: "Przetargowi #{plan_name} - renewal",
       stripe_payment_intent_id: event[:payment_intent_id]
     }
 
@@ -531,12 +556,47 @@ defmodule Przetargowi.Payments do
   # ============================================================================
 
   @doc """
-  Returns the subscription amount.
+  Returns the subscription amount for a given plan type.
   """
-  def subscription_amount, do: @subscription_amount
+  def plan_amount(plan_type), do: Map.get(@plan_amounts, plan_type, @plan_amounts["razem"])
+
+  @doc """
+  Returns the plan name for display.
+  """
+  def plan_name(plan_type), do: Map.get(@plan_names, plan_type, "Razem")
+
+  @doc """
+  Returns all plan amounts.
+  """
+  def plan_amounts, do: @plan_amounts
+
+  @doc """
+  Returns all plan names.
+  """
+  def plan_names, do: @plan_names
 
   @doc """
   Returns the subscription currency.
   """
   def subscription_currency, do: @subscription_currency
+
+  @doc """
+  Checks if a user has access to alerts feature.
+  """
+  def has_alerts_access?(user_id) do
+    case get_user_subscription(user_id) do
+      nil -> false
+      subscription -> Subscription.active?(subscription) and Subscription.has_alerts?(subscription)
+    end
+  end
+
+  @doc """
+  Checks if a user has access to search feature.
+  """
+  def has_search_access?(user_id) do
+    case get_user_subscription(user_id) do
+      nil -> false
+      subscription -> Subscription.active?(subscription) and Subscription.has_search?(subscription)
+    end
+  end
 end

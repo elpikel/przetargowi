@@ -3,56 +3,22 @@
   <section class="py-24 lg:py-32 hero-gradient relative overflow-hidden">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="max-w-3xl mx-auto text-center">
-<h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-gradient">
-          Znajdź orzeczenie,<br />którego szukasz
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-gradient">
+          Twój asystent<br />zamówień publicznych
         </h1>
         <p class="text-lg sm:text-xl text-base-content/70 mb-12 leading-relaxed max-w-2xl mx-auto">
-          Przeszukuj orzeczenia KIO, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
-          Opisz problem — znajdziemy odpowiednie precedensy.
+          Monitoruj przetargi, otrzymuj alerty o nowych zamówieniach i przeszukuj orzecznictwo KIO.
+          Wszystko w jednym miejscu.
         </p>
 
-        <!-- Search -->
-        <form action="/szukaj" method="get" class="max-w-2xl mx-auto">
-          <div class="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              name="q"
-              class="search-input flex-1 px-5 py-4 rounded-xl text-base"
-              placeholder="np. wykluczenie wykonawcy, rażąco niska cena..."
-            />
-            <button type="submit" class="btn-gold px-8 py-4 rounded-xl font-semibold whitespace-nowrap">
-              Szukaj
-            </button>
-          </div>
-
-          <!-- Source filters -->
-          <div class="flex flex-wrap justify-center gap-3 mt-6">
-            <label class="cursor-pointer">
-              <input type="checkbox" name="sources[]" value="KIO" checked class="peer sr-only" />
-              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary transition-all hover:border-primary/50">
-                KIO
-              </span>
-            </label>
-            <label class="cursor-pointer">
-              <input type="checkbox" name="sources[]" value="SO" checked class="peer sr-only" />
-              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-accent transition-all hover:border-accent/50">
-                Sąd Okręgowy
-              </span>
-            </label>
-            <label class="cursor-pointer">
-              <input type="checkbox" name="sources[]" value="SA" checked class="peer sr-only" />
-              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-secondary peer-checked:bg-secondary/10 peer-checked:text-secondary transition-all hover:border-secondary/50">
-                Sąd Apelacyjny
-              </span>
-            </label>
-            <label class="cursor-pointer">
-              <input type="checkbox" name="sources[]" value="SN" checked class="peer sr-only" />
-              <span class="inline-block px-4 py-2 text-sm font-medium rounded-lg border-2 border-base-300 text-base-content/60 peer-checked:border-info peer-checked:bg-info/10 peer-checked:text-info transition-all hover:border-info/50">
-                Sąd Najwyższy
-              </span>
-            </label>
-          </div>
-        </form>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href={~p"/przetargi"} class="btn-gold px-8 py-4 rounded-xl font-semibold">
+            Przeglądaj przetargi
+          </a>
+          <a href={~p"/szukaj"} class="btn-outline px-8 py-4 rounded-xl font-semibold">
+            Szukaj orzeczeń
+          </a>
+        </div>
 
         <%= unless @current_scope do %>
           <p class="text-sm text-base-content/50 mt-8">
@@ -61,7 +27,124 @@
         <% end %>
       </div>
     </div>
+  </section>
 
+  <!-- Features -->
+  <section class="py-20 lg:py-24">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <div class="flex justify-center mb-4">
+          <div class="decorative-line"></div>
+        </div>
+        <h2 class="text-3xl lg:text-4xl font-bold text-base-content mb-4">
+          Co oferujemy?
+        </h2>
+        <p class="text-base-content/60 max-w-xl mx-auto">
+          Kompleksowe narzędzia dla uczestników rynku zamówień publicznych
+        </p>
+      </div>
+
+      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Feature 1: Przetargi -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-document-magnifying-glass" class="size-8 text-primary" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Wyszukiwarka przetargów</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Przeszukuj aktualne ogłoszenia z Biuletynu Zamówień Publicznych.
+            Filtruj po regionie, rodzaju zamówienia i słowach kluczowych.
+          </p>
+          <a href={~p"/przetargi"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
+            Przeglądaj przetargi
+            <.icon name="hero-arrow-right" class="size-4" />
+          </a>
+        </div>
+
+        <!-- Feature 2: Alerty -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10 flex items-center justify-center">
+            <.icon name="hero-bell-alert" class="size-8 text-secondary" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Alerty przetargowe</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Otrzymuj codzienne powiadomienia o nowych przetargach pasujących do Twoich kryteriów.
+            Nigdy nie przegap interesującego zamówienia.
+          </p>
+          <%= if @current_scope do %>
+            <a href={~p"/alerty"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
+              Zarządzaj alertami
+              <.icon name="hero-arrow-right" class="size-4" />
+            </a>
+          <% else %>
+            <a href={~p"/rejestracja"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
+              Załóż konto
+              <.icon name="hero-arrow-right" class="size-4" />
+            </a>
+          <% end %>
+        </div>
+
+        <!-- Feature 3: Orzecznictwo -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <.icon name="hero-scale" class="size-8 text-accent" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Orzecznictwo KIO</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Przeszukuj orzeczenia Krajowej Izby Odwoławczej, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
+            Znajdź precedensy do swojej sprawy.
+          </p>
+          <a href={~p"/szukaj"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
+            Szukaj orzeczeń
+            <.icon name="hero-arrow-right" class="size-4" />
+          </a>
+        </div>
+
+        <!-- Feature 4: Raporty -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-info/10 flex items-center justify-center">
+            <.icon name="hero-chart-bar" class="size-8 text-info" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Raporty rynkowe</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Comiesięczne analizy rynku zamówień publicznych z podziałem na regiony i kategorie.
+            Śledź trendy i planuj strategię.
+          </p>
+          <a href={~p"/raporty"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
+            Zobacz raporty
+            <.icon name="hero-arrow-right" class="size-4" />
+          </a>
+        </div>
+
+        <!-- Feature 5: Filtry -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-success/10 flex items-center justify-center">
+            <.icon name="hero-funnel" class="size-8 text-success" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Zaawansowane filtry</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Filtruj przetargi po województwie, rodzaju zamówienia, wartości szacunkowej i terminie składania ofert.
+            Oszczędź czas na przeglądaniu.
+          </p>
+          <a href={~p"/przetargi"} class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium">
+            Wypróbuj filtry
+            <.icon name="hero-arrow-right" class="size-4" />
+          </a>
+        </div>
+
+        <!-- Feature 6: Aktualizacje -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/10 flex items-center justify-center">
+            <.icon name="hero-arrow-path" class="size-8 text-warning" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Codzienne aktualizacje</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Dane pobierane codziennie z oficjalnych źródeł.
+            Zawsze masz dostęp do najnowszych ogłoszeń i orzeczeń.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- Pricing -->
@@ -79,76 +162,165 @@
         </p>
       </div>
 
-      <div class="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
         <!-- Free -->
-        <div class="pricing-card p-8">
+        <div class="pricing-card p-6">
           <h3 class="text-xl font-semibold text-base-content mb-2">Darmowy</h3>
-          <p class="text-sm text-base-content/60 mb-6">Idealne na początek</p>
-          <div class="mb-8">
-            <span class="text-4xl font-bold text-base-content">0 zł</span>
+          <p class="text-sm text-base-content/60 mb-4">Na początek</p>
+          <div class="mb-6">
+            <span class="text-3xl font-bold text-base-content">0 zł</span>
           </div>
-          <ul class="space-y-4 mb-8">
-            <li class="flex items-center gap-3 text-base-content/70">
-              <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+          <ul class="space-y-3 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-4 text-success flex-shrink-0" />
               <span>3 wyszukiwania</span>
             </li>
-            <li class="flex items-center gap-3 text-base-content/70">
-              <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
-              <span>Wszystkie źródła</span>
-            </li>
-            <li class="flex items-center gap-3 text-base-content/70">
-              <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+            <li class="flex items-center gap-2 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-4 text-success flex-shrink-0" />
               <span>Podgląd meritum</span>
             </li>
+            <li class="flex items-center gap-2 text-base-content/40">
+              <.icon name="hero-x-circle-solid" class="size-4 flex-shrink-0" />
+              <span>Alerty przetargowe</span>
+            </li>
           </ul>
-          <a href="/szukaj" class="btn-outline block w-full py-3 text-center rounded-xl">
+          <a href="/szukaj" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
             Wypróbuj
           </a>
         </div>
 
-        <!-- Pro -->
-        <div class="pricing-card pricing-card-featured p-8 text-primary-content relative">
-          <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-            <span class="px-4 py-1.5 bg-secondary text-secondary-content text-sm font-semibold rounded-full shadow-lg">
-              Polecany
-            </span>
+        <!-- Alerty -->
+        <div class="pricing-card p-6">
+          <h3 class="text-xl font-semibold text-base-content mb-2">Alerty</h3>
+          <p class="text-sm text-base-content/60 mb-4">Powiadomienia</p>
+          <div class="mb-6">
+            <span class="text-3xl font-bold text-base-content">29 zł</span>
+            <span class="text-base-content/60 text-sm">/mies.</span>
           </div>
-          <h3 class="text-xl font-semibold mb-2">Profesjonalny</h3>
-          <p class="text-sm text-primary-content/70 mb-6">Dla profesjonalistów</p>
-          <div class="mb-8">
-            <span class="text-4xl font-bold">39 zł</span>
-            <span class="text-primary-content/70">/mies.</span>
-          </div>
-          <ul class="space-y-4 mb-8">
-            <li class="flex items-center gap-3 text-primary-content/90">
-              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-              <span>Nielimitowane wyszukiwania</span>
+          <ul class="space-y-3 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-4 text-success flex-shrink-0" />
+              <span>Nieograniczone alerty</span>
             </li>
-            <li class="flex items-center gap-3 text-primary-content/90">
-              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-              <span>Pełna treść orzeczeń</span>
+            <li class="flex items-center gap-2 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-4 text-success flex-shrink-0" />
+              <span>Codzienne powiadomienia</span>
             </li>
-            <li class="flex items-center gap-3 text-primary-content/90">
-              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-              <span>Historia wyszukiwań</span>
-            </li>
-            <li class="flex items-center gap-3 text-primary-content/90">
-              <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-              <span>Wsparcie priorytetowe</span>
+            <li class="flex items-center gap-2 text-base-content/40">
+              <.icon name="hero-x-circle-solid" class="size-4 flex-shrink-0" />
+              <span>Pełna wyszukiwarka</span>
             </li>
           </ul>
           <%= if @current_scope do %>
-            <a href="/ustawienia" class="btn-gold block w-full py-3 text-center rounded-xl">
-              Aktywuj Pro
+            <a href="/subskrypcja/nowa" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+              Wybierz
             </a>
           <% else %>
-            <a href="/rejestracja?plan=pro" class="btn-gold block w-full py-3 text-center rounded-xl">
+            <a href="/rejestracja" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+              Wybierz
+            </a>
+          <% end %>
+        </div>
+
+        <!-- Orzeczenia -->
+        <div class="pricing-card p-6">
+          <h3 class="text-xl font-semibold text-base-content mb-2">Orzeczenia</h3>
+          <p class="text-sm text-base-content/60 mb-4">Pełny dostęp</p>
+          <div class="mb-6">
+            <span class="text-3xl font-bold text-base-content">29 zł</span>
+            <span class="text-base-content/60 text-sm">/mies.</span>
+          </div>
+          <ul class="space-y-3 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-4 text-success flex-shrink-0" />
+              <span>Nielimitowane wyszukiwania</span>
+            </li>
+            <li class="flex items-center gap-2 text-base-content/70">
+              <.icon name="hero-check-circle-solid" class="size-4 text-success flex-shrink-0" />
+              <span>Pełna treść orzeczeń</span>
+            </li>
+            <li class="flex items-center gap-2 text-base-content/40">
+              <.icon name="hero-x-circle-solid" class="size-4 flex-shrink-0" />
+              <span>Alerty przetargowe</span>
+            </li>
+          </ul>
+          <%= if @current_scope do %>
+            <a href="/subskrypcja/nowa" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+              Wybierz
+            </a>
+          <% else %>
+            <a href="/rejestracja" class="btn-outline block w-full py-2.5 text-center rounded-xl text-sm">
+              Wybierz
+            </a>
+          <% end %>
+        </div>
+
+        <!-- Razem (Featured) -->
+        <div class="pricing-card pricing-card-featured p-6 text-primary-content relative">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span class="px-3 py-1 bg-secondary text-secondary-content text-xs font-semibold rounded-full shadow-lg whitespace-nowrap">
+              Najlepsza oferta
+            </span>
+          </div>
+          <h3 class="text-xl font-semibold mb-2 mt-2">Razem</h3>
+          <p class="text-sm text-primary-content/70 mb-4">Wszystko w jednym</p>
+          <div class="mb-6">
+            <span class="text-3xl font-bold">49 zł</span>
+            <span class="text-primary-content/70 text-sm">/mies.</span>
+          </div>
+          <ul class="space-y-3 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-4 text-secondary flex-shrink-0" />
+              <span>Nielimitowane wyszukiwania</span>
+            </li>
+            <li class="flex items-center gap-2 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-4 text-secondary flex-shrink-0" />
+              <span>Pełna treść orzeczeń</span>
+            </li>
+            <li class="flex items-center gap-2 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-4 text-secondary flex-shrink-0" />
+              <span>Nieograniczone alerty</span>
+            </li>
+            <li class="flex items-center gap-2 text-primary-content/90">
+              <.icon name="hero-check-circle-solid" class="size-4 text-secondary flex-shrink-0" />
+              <span>Codzienne powiadomienia</span>
+            </li>
+          </ul>
+          <%= if @current_scope do %>
+            <a href="/subskrypcja/nowa" class="btn-gold block w-full py-2.5 text-center rounded-xl text-sm">
+              Wybierz
+            </a>
+          <% else %>
+            <a href="/rejestracja" class="btn-gold block w-full py-2.5 text-center rounded-xl text-sm">
               Rozpocznij
             </a>
           <% end %>
+          <p class="text-xs text-primary-content/60 text-center mt-3">
+            Oszczędzasz 9 zł/mies.
+          </p>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- CTA -->
+  <section class="py-20 lg:py-24 bg-base-200/50">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-3xl lg:text-4xl font-bold text-base-content mb-6">
+        Gotowy, by zacząć?
+      </h2>
+      <p class="text-lg text-base-content/60 mb-8">
+        Załóż darmowe konto i zacznij monitorować przetargi już dziś.
+      </p>
+      <%= if @current_scope do %>
+        <a href={~p"/przetargi"} class="btn-gold px-8 py-4 rounded-xl font-semibold inline-block">
+          Przeglądaj przetargi
+        </a>
+      <% else %>
+        <a href={~p"/rejestracja"} class="btn-gold px-8 py-4 rounded-xl font-semibold inline-block">
+          Załóż darmowe konto
+        </a>
+      <% end %>
+    </div>
+  </section>
 </Layouts.app>

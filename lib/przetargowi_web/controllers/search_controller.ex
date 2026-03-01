@@ -218,7 +218,7 @@ defmodule PrzetargowiWeb.SearchController do
   defp has_premium_access?(conn) do
     case conn.assigns[:current_scope] do
       %{user: %{id: user_id}} when not is_nil(user_id) ->
-        Payments.subscription_active?(user_id)
+        Payments.has_search_access?(user_id)
 
       _ ->
         false

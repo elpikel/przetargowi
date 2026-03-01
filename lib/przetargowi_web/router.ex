@@ -27,6 +27,14 @@ defmodule PrzetargowiWeb.Router do
     get "/kontakt", StaticPageController, :contact
     get "/regulamin", StaticPageController, :terms
     get "/polityka-prywatnosci", StaticPageController, :privacy
+
+    # Tenders (BZP)
+    get "/przetargi", TenderController, :index
+    get "/przetargi/:id", TenderController, :show
+
+    # Reports
+    get "/raporty", ReportController, :index
+    get "/raporty/:slug", ReportController, :show
   end
 
   scope "/", PrzetargowiWeb do
@@ -86,6 +94,12 @@ defmodule PrzetargowiWeb.Router do
     post "/subskrypcja/wznow", SubscriptionController, :reactivate
     get "/subskrypcja/sukces", SubscriptionController, :payment_success
     get "/subskrypcja/blad", SubscriptionController, :payment_error
+
+    # Alerts
+    get "/alerty", AlertController, :index
+    get "/alerty/nowy", AlertController, :new
+    post "/alerty", AlertController, :create
+    delete "/alerty/:id", AlertController, :delete
   end
 
   # Webhook endpoints (no CSRF protection)

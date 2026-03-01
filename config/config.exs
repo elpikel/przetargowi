@@ -76,12 +76,18 @@ config :phoenix, :json_library, Jason
 # Configure Oban
 config :przetargowi, Oban,
   repo: Przetargowi.Repo,
-  queues: [default: 10, uzp_sync: 2, embeddings: 1],
+  queues: [default: 10, uzp_sync: 2, embeddings: 1, tenders: 2],
   plugins: [
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
      crontab: [
-       {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}}
+       {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}},
+       # Fetch tenders daily at 7 AM
+       {"0 7 * * *", Przetargowi.Workers.FetchTendersNotices, args: %{days: 1}},
+       # Generate monthly reports on 1st of each month at 2 AM
+       {"0 2 1 * *", Przetargowi.Workers.GenerateMonthlyReports, args: %{}},
+       # Send alerts daily at 8 AM
+       {"0 8 * * *", Przetargowi.Workers.SendAlerts, args: %{}}
      ]}
   ]
 

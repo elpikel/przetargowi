@@ -35,6 +35,12 @@ defmodule PrzetargowiWeb.Layouts do
                 <a href="/szukaj" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
                   Wyszukiwarka
                 </a>
+                <a href="/przetargi" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                  Przetargi
+                </a>
+                <a href="/raporty" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
+                  Raporty
+                </a>
                 <a href="/#cennik" class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
                   Cennik
                 </a>
@@ -90,6 +96,8 @@ defmodule PrzetargowiWeb.Layouts do
               <h4 class="font-semibold text-primary-content mb-5 text-sm uppercase tracking-wider">Produkt</h4>
               <ul class="space-y-3">
                 <li><a href="/szukaj">Wyszukiwarka</a></li>
+                <li><a href="/przetargi">Przetargi</a></li>
+                <li><a href="/raporty">Raporty</a></li>
                 <li><a href="/#cennik">Cennik</a></li>
               </ul>
             </div>

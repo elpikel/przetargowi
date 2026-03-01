@@ -17,12 +17,13 @@ defmodule PrzetargowiWeb.SubscriptionController do
     render(conn, :show,
       subscription: subscription,
       transactions: transactions,
-      subscription_amount: Payments.subscription_amount()
+      plan_amounts: Payments.plan_amounts(),
+      plan_names: Payments.plan_names()
     )
   end
 
   @doc """
-  Shows the new subscription form / upgrade page.
+  Shows the new subscription form / upgrade page with three plan options.
   """
   def new(conn, _params) do
     user = conn.assigns.current_scope.user
@@ -31,10 +32,13 @@ defmodule PrzetargowiWeb.SubscriptionController do
     # If user already has an active subscription, redirect to show
     if subscription && Payments.Subscription.active?(subscription) do
       conn
-      |> put_flash(:info, "Masz już aktywną subskrypcję Premium.")
+      |> put_flash(:info, "Masz już aktywną subskrypcję.")
       |> redirect(to: ~p"/subskrypcja")
     else
-      render(conn, :new, subscription_amount: Payments.subscription_amount())
+      render(conn, :new,
+        plan_amounts: Payments.plan_amounts(),
+        plan_names: Payments.plan_names()
+      )
     end
   end
 
@@ -42,8 +46,16 @@ defmodule PrzetargowiWeb.SubscriptionController do
   Creates a new subscription by initiating Stripe checkout.
   Redirects user to Stripe Checkout page.
   """
-  def create(conn, _params) do
+  def create(conn, params) do
     user = conn.assigns.current_scope.user
+    plan_type = get_in(params, ["plan_type"]) || "razem"
+
+    # Validate plan type
+    unless plan_type in ["alert", "wyszukiwarka", "razem"] do
+      conn
+      |> put_flash(:error, "Nieprawidłowy typ planu.")
+      |> redirect(to: ~p"/subskrypcja/nowa")
+    end
 
     callbacks = %{
       success_url: url(~p"/subskrypcja/sukces"),
@@ -51,13 +63,13 @@ defmodule PrzetargowiWeb.SubscriptionController do
       notification_url: url(~p"/webhooks/stripe")
     }
 
-    case Payments.create_subscription(user, callbacks) do
+    case Payments.create_subscription(user, callbacks, plan_type: plan_type) do
       {:ok, %{redirect_url: redirect_url}} ->
         redirect(conn, external: redirect_url)
 
       {:error, :already_subscribed} ->
         conn
-        |> put_flash(:info, "Masz już aktywną subskrypcję Premium.")
+        |> put_flash(:info, "Masz już aktywną subskrypcję.")
         |> redirect(to: ~p"/subskrypcja")
 
       {:error, reason} ->

@@ -1,49 +1,148 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="mx-auto max-w-lg py-16">
-    <div class="text-center mb-8">
-      <h1 class="text-2xl font-bold text-gradient mb-2">Aktywuj Premium</h1>
-      <p class="text-base-content/60">Uzyskaj pełny dostęp do wszystkich funkcji</p>
+  <div class="mx-auto max-w-5xl py-16 px-4">
+    <div class="text-center mb-12">
+      <h1 class="text-3xl font-bold text-gradient mb-2">Wybierz swój plan</h1>
+      <p class="text-base-content/60">Wybierz plan dopasowany do Twoich potrzeb</p>
     </div>
 
-    <div class="pricing-card pricing-card-featured p-8 text-primary-content">
-      <div class="text-center mb-6">
-        <h3 class="text-xl font-semibold mb-2">Plan Profesjonalny</h3>
-        <div class="mb-4">
-          <span class="text-4xl font-bold">{@subscription_amount} zł</span>
-          <span class="text-primary-content/70">/mies.</span>
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Plan: Alerty -->
+      <div class="bg-base-100 rounded-xl border border-base-300 p-6 flex flex-col">
+        <div class="text-center mb-6">
+          <h3 class="text-xl font-semibold mb-2">Alerty</h3>
+          <div class="mb-4">
+            <span class="text-4xl font-bold">{@plan_amounts["alert"]} zł</span>
+            <span class="text-base-content/60">/mies.</span>
+          </div>
         </div>
+
+        <ul class="space-y-3 mb-8 flex-grow">
+          <li class="flex items-center gap-3 text-base-content/80">
+            <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+            <span>Nieograniczone alerty przetargowe</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/80">
+            <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+            <span>Codzienne powiadomienia email</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/80">
+            <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+            <span>Filtry: region, kategoria, słowa kluczowe</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/40">
+            <.icon name="hero-x-circle-solid" class="size-5 flex-shrink-0" />
+            <span>Nielimitowane wyszukiwania</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/40">
+            <.icon name="hero-x-circle-solid" class="size-5 flex-shrink-0" />
+            <span>Pełna treść orzeczeń</span>
+          </li>
+        </ul>
+
+        <form action={~p"/subskrypcja"} method="post">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <input type="hidden" name="plan_type" value="alert" />
+          <button type="submit" class="btn btn-outline w-full py-3 rounded-xl font-semibold">
+            Wybierz plan
+          </button>
+        </form>
       </div>
 
-      <ul class="space-y-4 mb-8">
-        <li class="flex items-center gap-3 text-primary-content/90">
-          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-          <span>Nielimitowane wyszukiwania</span>
-        </li>
-        <li class="flex items-center gap-3 text-primary-content/90">
-          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-          <span>Pełna treść orzeczeń</span>
-        </li>
-        <li class="flex items-center gap-3 text-primary-content/90">
-          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-          <span>Historia wyszukiwań</span>
-        </li>
-        <li class="flex items-center gap-3 text-primary-content/90">
-          <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
-          <span>Wsparcie priorytetowe</span>
-        </li>
-      </ul>
+      <!-- Plan: Razem (Featured) -->
+      <div class="pricing-card pricing-card-featured p-6 text-primary-content flex flex-col relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span class="bg-secondary text-secondary-content px-4 py-1 rounded-full text-sm font-semibold">
+            Najlepsza oferta
+          </span>
+        </div>
 
-      <form action={~p"/subskrypcja"} method="post">
-        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-        <button type="submit" class="btn-gold w-full py-3 rounded-xl font-semibold">
-          Przejdź do płatności
-        </button>
-      </form>
+        <div class="text-center mb-6 mt-4">
+          <h3 class="text-xl font-semibold mb-2">Razem</h3>
+          <div class="mb-4">
+            <span class="text-4xl font-bold">{@plan_amounts["razem"]} zł</span>
+            <span class="text-primary-content/70">/mies.</span>
+          </div>
+          <p class="text-sm text-primary-content/70">Oszczedzasz 9 zł miesiecznie</p>
+        </div>
 
-      <p class="text-center text-sm text-primary-content/60 mt-4">
-        Płatność obsługiwana przez Stripe. Możesz anulować w dowolnym momencie.
-      </p>
+        <ul class="space-y-3 mb-8 flex-grow">
+          <li class="flex items-center gap-3 text-primary-content/90">
+            <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+            <span>Nieograniczone alerty przetargowe</span>
+          </li>
+          <li class="flex items-center gap-3 text-primary-content/90">
+            <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+            <span>Codzienne powiadomienia email</span>
+          </li>
+          <li class="flex items-center gap-3 text-primary-content/90">
+            <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+            <span>Filtry: region, kategoria, słowa kluczowe</span>
+          </li>
+          <li class="flex items-center gap-3 text-primary-content/90">
+            <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+            <span>Nielimitowane wyszukiwania</span>
+          </li>
+          <li class="flex items-center gap-3 text-primary-content/90">
+            <.icon name="hero-check-circle-solid" class="size-5 text-secondary flex-shrink-0" />
+            <span>Pełna treść orzeczeń</span>
+          </li>
+        </ul>
+
+        <form action={~p"/subskrypcja"} method="post">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <input type="hidden" name="plan_type" value="razem" />
+          <button type="submit" class="btn-gold w-full py-3 rounded-xl font-semibold">
+            Wybierz plan
+          </button>
+        </form>
+      </div>
+
+      <!-- Plan: Wyszukiwarka -->
+      <div class="bg-base-100 rounded-xl border border-base-300 p-6 flex flex-col">
+        <div class="text-center mb-6">
+          <h3 class="text-xl font-semibold mb-2">Wyszukiwarka</h3>
+          <div class="mb-4">
+            <span class="text-4xl font-bold">{@plan_amounts["wyszukiwarka"]} zł</span>
+            <span class="text-base-content/60">/mies.</span>
+          </div>
+        </div>
+
+        <ul class="space-y-3 mb-8 flex-grow">
+          <li class="flex items-center gap-3 text-base-content/40">
+            <.icon name="hero-x-circle-solid" class="size-5 flex-shrink-0" />
+            <span>Nieograniczone alerty przetargowe</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/40">
+            <.icon name="hero-x-circle-solid" class="size-5 flex-shrink-0" />
+            <span>Codzienne powiadomienia email</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/40">
+            <.icon name="hero-x-circle-solid" class="size-5 flex-shrink-0" />
+            <span>Filtry: region, kategoria, słowa kluczowe</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/80">
+            <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+            <span>Nielimitowane wyszukiwania</span>
+          </li>
+          <li class="flex items-center gap-3 text-base-content/80">
+            <.icon name="hero-check-circle-solid" class="size-5 text-success flex-shrink-0" />
+            <span>Pełna treść orzeczeń</span>
+          </li>
+        </ul>
+
+        <form action={~p"/subskrypcja"} method="post">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <input type="hidden" name="plan_type" value="wyszukiwarka" />
+          <button type="submit" class="btn btn-outline w-full py-3 rounded-xl font-semibold">
+            Wybierz plan
+          </button>
+        </form>
+      </div>
     </div>
+
+    <p class="text-center text-sm text-base-content/60 mt-8">
+      Płatność obsługiwana przez Stripe. Możesz anulować w dowolnym momencie.
+    </p>
 
     <div class="text-center mt-6">
       <a href={~p"/ustawienia"} class="text-sm text-base-content/60 hover:text-base-content">
