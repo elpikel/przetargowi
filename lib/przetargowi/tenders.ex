@@ -273,4 +273,16 @@ defmodule Przetargowi.Tenders do
 
     {success_count, failed}
   end
+
+  @doc """
+  Returns all tender notice slugs and updated_at for sitemap generation.
+  Streams results to handle large datasets efficiently.
+  """
+  def stream_sitemap_entries do
+    TenderNotice
+    |> select([t], %{slug: t.slug, updated_at: t.updated_at})
+    |> where([t], not is_nil(t.slug))
+    |> order_by(desc: :updated_at)
+    |> Repo.stream()
+  end
 end

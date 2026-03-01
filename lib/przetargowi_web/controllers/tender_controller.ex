@@ -22,6 +22,12 @@ defmodule PrzetargowiWeb.TenderController do
     result = Tenders.search_tender_notices(search_opts)
 
     conn
+    |> assign(:page_title, "Przetargi publiczne")
+    |> assign(
+      :meta_description,
+      "Aktualne przetargi publiczne z Biuletynu Zamówień Publicznych. Przeglądaj #{result.total_count} aktywnych ogłoszeń."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/przetargi")
     |> render(:index,
       notices: result.notices,
       total_count: result.total_count,
@@ -42,6 +48,25 @@ defmodule PrzetargowiWeb.TenderController do
     end
   end
 
+  @region_names %{
+    "dolnoslaskie" => "dolnośląskie",
+    "kujawsko-pomorskie" => "kujawsko-pomorskie",
+    "lubelskie" => "lubelskie",
+    "lubuskie" => "lubuskie",
+    "lodzkie" => "łódzkie",
+    "malopolskie" => "małopolskie",
+    "mazowieckie" => "mazowieckie",
+    "opolskie" => "opolskie",
+    "podkarpackie" => "podkarpackie",
+    "podlaskie" => "podlaskie",
+    "pomorskie" => "pomorskie",
+    "slaskie" => "śląskie",
+    "swietokrzyskie" => "świętokrzyskie",
+    "warminsko-mazurskie" => "warmińsko-mazurskie",
+    "wielkopolskie" => "wielkopolskie",
+    "zachodniopomorskie" => "zachodniopomorskie"
+  }
+
   defp show_region(conn, region, params) do
     page = parse_page(params["page"])
 
@@ -54,8 +79,15 @@ defmodule PrzetargowiWeb.TenderController do
     ]
 
     result = Tenders.search_tender_notices(search_opts)
+    region_name = Map.get(@region_names, region, region)
 
     conn
+    |> assign(:page_title, "Przetargi #{region_name}")
+    |> assign(
+      :meta_description,
+      "Przetargi publiczne w województwie #{region_name}. #{result.total_count} aktywnych ogłoszeń z BZP."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/przetargi/#{region}")
     |> render(:index,
       notices: result.notices,
       total_count: result.total_count,
@@ -88,12 +120,36 @@ defmodule PrzetargowiWeb.TenderController do
             nil
           end
 
-        render(conn, :show,
+        canonical_url = "https://przetargowi.pl/przetargi/#{tender.slug}"
+        page_title = truncate_title(tender.order_object)
+        meta_description = build_tender_meta_description(tender)
+
+        conn
+        |> assign(:page_title, page_title)
+        |> assign(:meta_description, meta_description)
+        |> assign(:canonical_url, canonical_url)
+        |> assign(:og_url, canonical_url)
+        |> render(:show,
           tender: tender,
           is_expired: is_expired,
           related_contract_notice: related_contract_notice
         )
     end
+  end
+
+  defp truncate_title(nil), do: "Przetarg"
+
+  defp truncate_title(title) when byte_size(title) > 60 do
+    String.slice(title, 0, 57) <> "..."
+  end
+
+  defp truncate_title(title), do: title
+
+  defp build_tender_meta_description(tender) do
+    base = "Przetarg: #{truncate_title(tender.order_object)}"
+    org = if tender.organization_name, do: " | #{tender.organization_name}", else: ""
+    city = if tender.organization_city, do: ", #{tender.organization_city}", else: ""
+    String.slice(base <> org <> city, 0, 160)
   end
 
   defp parse_page(nil), do: 1

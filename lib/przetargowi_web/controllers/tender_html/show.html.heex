@@ -1,4 +1,25 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
+  <script type="application/ld+json">
+    <%= raw(Jason.encode!(%{
+      "@context" => "https://schema.org",
+      "@type" => "GovernmentService",
+      "name" => @tender.order_object,
+      "description" => @tender.opis_przedmiotu || @tender.order_object,
+      "serviceType" => "PublicTender",
+      "provider" => %{
+        "@type" => "GovernmentOrganization",
+        "name" => @tender.organization_name,
+        "address" => %{
+          "@type" => "PostalAddress",
+          "addressLocality" => @tender.organization_city,
+          "addressRegion" => @tender.organization_province,
+          "addressCountry" => "PL"
+        }
+      },
+      "url" => "https://przetargowi.pl/przetargi/#{@tender.slug}",
+      "identifier" => @tender.bzp_number
+    })) %>
+  </script>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <!-- Back Link -->
     <div class="mb-6">

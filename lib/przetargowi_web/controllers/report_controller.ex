@@ -21,6 +21,12 @@ defmodule PrzetargowiWeb.ReportController do
     result = Reports.list_tender_reports(search_opts)
 
     conn
+    |> assign(:page_title, "Raporty przetargowe")
+    |> assign(
+      :meta_description,
+      "Analizy i raporty rynku zamówień publicznych w Polsce. Statystyki przetargów według regionów i branż."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/raporty")
     |> render(:index,
       reports: result.reports,
       total_count: result.total_count,
@@ -39,6 +45,25 @@ defmodule PrzetargowiWeb.ReportController do
     end
   end
 
+  @region_names %{
+    "dolnoslaskie" => "dolnośląskie",
+    "kujawsko-pomorskie" => "kujawsko-pomorskie",
+    "lubelskie" => "lubelskie",
+    "lubuskie" => "lubuskie",
+    "lodzkie" => "łódzkie",
+    "malopolskie" => "małopolskie",
+    "mazowieckie" => "mazowieckie",
+    "opolskie" => "opolskie",
+    "podkarpackie" => "podkarpackie",
+    "podlaskie" => "podlaskie",
+    "pomorskie" => "pomorskie",
+    "slaskie" => "śląskie",
+    "swietokrzyskie" => "świętokrzyskie",
+    "warminsko-mazurskie" => "warmińsko-mazurskie",
+    "wielkopolskie" => "wielkopolskie",
+    "zachodniopomorskie" => "zachodniopomorskie"
+  }
+
   defp show_region(conn, region, params) do
     page = parse_page(params["page"])
 
@@ -48,9 +73,16 @@ defmodule PrzetargowiWeb.ReportController do
     ]
 
     result = Reports.list_tender_reports_by_region(region, search_opts)
+    region_name = Map.get(@region_names, region, region)
 
     conn
     |> assign(:region, region)
+    |> assign(:page_title, "Raporty #{region_name}")
+    |> assign(
+      :meta_description,
+      "Raporty i analizy przetargów w województwie #{region_name}."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/raporty/#{region}")
     |> render(:index,
       reports: result.reports,
       total_count: result.total_count,
@@ -69,7 +101,14 @@ defmodule PrzetargowiWeb.ReportController do
         |> render(:"404")
 
       report ->
-        render(conn, :show, report: report)
+        canonical_url = "https://przetargowi.pl/raporty/#{report.slug}"
+
+        conn
+        |> assign(:page_title, report.title)
+        |> assign(:meta_description, report.meta_description || "Raport: #{report.title}")
+        |> assign(:canonical_url, canonical_url)
+        |> assign(:og_url, canonical_url)
+        |> render(:show, report: report)
     end
   end
 

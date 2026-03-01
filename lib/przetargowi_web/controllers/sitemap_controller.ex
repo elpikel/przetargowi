@@ -2,9 +2,12 @@ defmodule PrzetargowiWeb.SitemapController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.Judgements
+  alias Przetargowi.Tenders
   alias Przetargowi.Repo
 
   @base_url "https://przetargowi.pl"
+
+  @regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
   def index(conn, _params) do
     conn
@@ -16,11 +19,18 @@ defmodule PrzetargowiWeb.SitemapController do
     static_urls = [
       %{loc: @base_url, priority: "1.0", changefreq: "daily"},
       %{loc: "#{@base_url}/szukaj", priority: "0.9", changefreq: "daily"},
+      %{loc: "#{@base_url}/przetargi", priority: "0.9", changefreq: "daily"},
+      %{loc: "#{@base_url}/raporty", priority: "0.7", changefreq: "weekly"},
       %{loc: "#{@base_url}/o-nas", priority: "0.5", changefreq: "monthly"},
       %{loc: "#{@base_url}/kontakt", priority: "0.5", changefreq: "monthly"},
       %{loc: "#{@base_url}/regulamin", priority: "0.3", changefreq: "yearly"},
       %{loc: "#{@base_url}/polityka-prywatnosci", priority: "0.3", changefreq: "yearly"}
     ]
+
+    region_urls =
+      Enum.map(@regions, fn region ->
+        %{loc: "#{@base_url}/przetargi/#{region}", priority: "0.7", changefreq: "daily"}
+      end)
 
     judgement_urls =
       Repo.transaction(fn ->
@@ -36,7 +46,21 @@ defmodule PrzetargowiWeb.SitemapController do
       end)
       |> elem(1)
 
-    urls = static_urls ++ judgement_urls
+    tender_urls =
+      Repo.transaction(fn ->
+        Tenders.stream_sitemap_entries()
+        |> Enum.map(fn entry ->
+          %{
+            loc: "#{@base_url}/przetargi/#{entry.slug}",
+            lastmod: format_date(entry.updated_at),
+            priority: "0.7",
+            changefreq: "weekly"
+          }
+        end)
+      end)
+      |> elem(1)
+
+    urls = static_urls ++ region_urls ++ judgement_urls ++ tender_urls
 
     """
     <?xml version="1.0" encoding="UTF-8"?>
