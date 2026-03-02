@@ -8,8 +8,7 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
   """
   use Oban.Worker,
     queue: :tenders,
-    max_attempts: 3,
-    unique: [period: 3600]
+    max_attempts: 3
 
   alias Przetargowi.Bzp.Client, as: BZPClient
   alias Przetargowi.Tenders
