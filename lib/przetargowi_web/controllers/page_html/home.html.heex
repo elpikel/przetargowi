@@ -331,28 +331,4 @@
       </div>
     </div>
   </section>
-  
-<!-- CTA -->
-  <section class="py-20 lg:py-24 bg-base-200/50">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h2 class="text-3xl lg:text-4xl font-bold text-base-content mb-6">
-        Gotowy, by zacząć?
-      </h2>
-      <p class="text-lg text-base-content/60 mb-8">
-        Załóż darmowe konto i zacznij monitorować przetargi już dziś.
-      </p>
-      <%= if @current_scope do %>
-        <a href={~p"/przetargi"} class="btn-gold px-8 py-4 rounded-xl font-semibold inline-block">
-          Przeglądaj przetargi
-        </a>
-      <% else %>
-        <a
-          href={~p"/rejestracja"}
-          class="btn-gold px-8 py-4 rounded-xl font-semibold inline-block"
-        >
-          Załóż darmowe konto
-        </a>
-      <% end %>
-    </div>
-  </section>
 </Layouts.app>

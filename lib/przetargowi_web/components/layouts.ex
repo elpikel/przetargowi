@@ -96,9 +96,82 @@ defmodule PrzetargowiWeb.Layouts do
                   Rozpocznij
                 </a>
               <% end %>
-              <button class="md:hidden p-2 text-base-content/60 hover:text-base-content transition-colors">
+              <button
+                id="mobile-menu-button"
+                class="md:hidden p-2 text-base-content/60 hover:text-base-content transition-colors"
+                onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+                aria-label="Menu"
+              >
                 <.icon name="hero-bars-3" class="size-5" />
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-base-300 bg-base-100">
+          <div class="px-4 py-4 space-y-3">
+            <%= unless @hide_nav do %>
+              <a
+                href="/szukaj"
+                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+              >
+                Orzeczenia
+              </a>
+              <a
+                href="/przetargi"
+                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+              >
+                Przetargi
+              </a>
+              <a
+                href="/raporty"
+                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+              >
+                Raporty
+              </a>
+              <a
+                href="/#cennik"
+                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+              >
+                Cennik
+              </a>
+            <% end %>
+            <div class="pt-3 border-t border-base-300">
+              <%= if @current_scope do %>
+                <a
+                  href="/alerty"
+                  class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+                >
+                  Alerty
+                </a>
+                <a
+                  href="/ustawienia"
+                  class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+                >
+                  Ustawienia
+                </a>
+                <.link
+                  href="/wyloguj"
+                  method="delete"
+                  class="block text-sm font-medium text-error hover:text-error/80 py-2"
+                >
+                  Wyloguj
+                </.link>
+              <% else %>
+                <a
+                  href="/logowanie"
+                  class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+                >
+                  Zaloguj się
+                </a>
+                <a
+                  href="/rejestracja"
+                  class="block text-sm font-medium text-primary hover:text-primary/80 py-2"
+                >
+                  Rozpocznij
+                </a>
+              <% end %>
             </div>
           </div>
         </div>
