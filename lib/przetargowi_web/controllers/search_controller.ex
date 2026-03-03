@@ -57,7 +57,10 @@ defmodule PrzetargowiWeb.SearchController do
     canonical_url = build_canonical_url(query, filters)
 
     conn
-    |> assign(:page_title, if(query != "", do: "Orzeczenia KIO: #{query}", else: "Orzeczenia KIO"))
+    |> assign(
+      :page_title,
+      if(query != "", do: "Orzeczenia KIO: #{query}", else: "Orzeczenia KIO")
+    )
     |> assign(:meta_description, build_search_meta_description(query, filters))
     |> assign(:canonical_url, canonical_url)
     |> assign(:og_url, canonical_url)

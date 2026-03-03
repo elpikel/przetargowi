@@ -178,14 +178,39 @@
             <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
               <.icon name="hero-scale" class="size-5 text-primary" /> Kryteria oceny ofert
             </h2>
-            <div class="space-y-3">
-              <%= for kryterium <- @tender.kryteria do %>
-                <div class="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
-                  <span class="text-base-content">{kryterium["name"] || kryterium[:name]}</span>
-                  <span class="font-semibold text-primary">
-                    {kryterium["weight"] || kryterium[:weight]}%
-                  </span>
-                </div>
+            <% grouped_kryteria = group_kryteria_by_part(@tender.kryteria) %>
+            <div class="space-y-4">
+              <%= for {part, criteria} <- grouped_kryteria do %>
+                <%= if part do %>
+                  <div class="mb-2">
+                    <h3 class="text-sm font-medium text-base-content/60 mb-2">Część {part}</h3>
+                    <div class="space-y-2">
+                      <%= for kryterium <- criteria do %>
+                        <div class="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
+                          <span class="text-base-content">
+                            {kryterium["name"] || kryterium[:name]}
+                          </span>
+                          <span class="font-semibold text-primary">
+                            {kryterium["weight"] || kryterium[:weight]}%
+                          </span>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                <% else %>
+                  <div class="space-y-2">
+                    <%= for kryterium <- criteria do %>
+                      <div class="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
+                        <span class="text-base-content">
+                          {kryterium["name"] || kryterium[:name]}
+                        </span>
+                        <span class="font-semibold text-primary">
+                          {kryterium["weight"] || kryterium[:weight]}%
+                        </span>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
               <% end %>
             </div>
           </div>
@@ -226,7 +251,7 @@
             </div>
           </div>
         <% end %>
-
+        
 <!-- Wadium -->
         <%= if @tender.wadium do %>
           <div class="card-base p-6">
@@ -492,7 +517,11 @@
           <%= if @current_scope do %>
             <form action={~p"/alerty"} method="post">
               <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-              <input type="hidden" name="alert[regions][]" value={province_to_region(@tender.organization_province)} />
+              <input
+                type="hidden"
+                name="alert[regions][]"
+                value={province_to_region(@tender.organization_province)}
+              />
               <input type="hidden" name="alert[order_types][]" value={@tender.order_type} />
               <button
                 type="submit"

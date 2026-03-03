@@ -6,12 +6,14 @@
         Przeszukuj bazę orzeczeń Krajowej Izby Odwoławczej
       </p>
     </div>
-
-    <!-- Search Form -->
+    
+<!-- Search Form -->
     <form action="/szukaj" method="get" class="card-base p-6 mb-8">
       <!-- Search mode toggle -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-base-content/70 mb-2">Tryb wyszukiwania</label>
+        <label class="block text-sm font-medium text-base-content/70 mb-2">
+          Tryb wyszukiwania
+        </label>
         <div class="inline-flex rounded-lg bg-base-200 p-1">
           <a
             href={"/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
@@ -56,10 +58,12 @@
             class="search-input w-full px-4 py-3 rounded-lg"
           />
         </div>
-
-        <!-- Document Type -->
+        
+<!-- Document Type -->
         <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">Rodzaj dokumentu</label>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Rodzaj dokumentu
+          </label>
           <select
             name="document_type"
             class="search-input w-full px-4 py-3 rounded-lg appearance-none"
@@ -70,10 +74,12 @@
             <% end %>
           </select>
         </div>
-
-        <!-- Issuing Authority -->
+        
+<!-- Issuing Authority -->
         <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">Organ wydający</label>
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Organ wydający
+          </label>
           <select
             name="issuing_authority"
             class="search-input w-full px-4 py-3 rounded-lg appearance-none"
@@ -87,8 +93,8 @@
           </select>
         </div>
       </div>
-
-      <!-- Second Row of Filters -->
+      
+<!-- Second Row of Filters -->
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
         <!-- Resolution Method -->
         <div>
@@ -107,8 +113,8 @@
             <% end %>
           </select>
         </div>
-
-        <!-- Procedure Type -->
+        
+<!-- Procedure Type -->
         <div>
           <label class="block text-sm font-medium text-base-content/70 mb-2">
             Tryb postępowania
@@ -125,8 +131,8 @@
             <% end %>
           </select>
         </div>
-
-        <!-- Date From -->
+        
+<!-- Date From -->
         <div>
           <label class="block text-sm font-medium text-base-content/70 mb-2">Data od</label>
           <input
@@ -136,8 +142,8 @@
             class="search-input w-full px-4 py-3 rounded-lg"
           />
         </div>
-
-        <!-- Date To -->
+        
+<!-- Date To -->
         <div>
           <label class="block text-sm font-medium text-base-content/70 mb-2">Data do</label>
           <input
@@ -162,8 +168,8 @@
         </div>
       </div>
     </form>
-
-    <!-- Results Count -->
+    
+<!-- Results Count -->
     <div class="mb-6">
       <p class="text-base-content/60">
         <%= if @query != "" do %>
@@ -174,8 +180,8 @@
         <% end %>
       </p>
     </div>
-
-    <!-- Error States -->
+    
+<!-- Error States -->
     <%= if @semantic_error do %>
       <div class="card-base p-12 text-center">
         <.icon name="hero-exclamation-triangle" class="size-12 text-error mx-auto mb-4" />
@@ -294,8 +300,8 @@
           <% end %>
         </div>
       <% end %>
-
-      <!-- Pagination -->
+      
+<!-- Pagination -->
       <%= if @total_pages > 1 do %>
         <div class="mt-8 flex justify-center">
           <nav class="flex items-center space-x-2">

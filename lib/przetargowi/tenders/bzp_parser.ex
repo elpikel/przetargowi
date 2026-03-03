@@ -10,7 +10,8 @@ defmodule Przetargowi.Tenders.BzpParser do
   @type criterion :: %{
           name: String.t(),
           weight: integer(),
-          kind: String.t() | nil
+          kind: String.t() | nil,
+          part: integer() | nil
         }
 
   @type parsed_tender :: %{
@@ -146,12 +147,18 @@ defmodule Przetargowi.Tenders.BzpParser do
     # Find all h3 elements, then walk through them looking for criterion patterns
     all_h3s = Floki.find(doc, "h3")
 
+    # State: {criteria_list, current_kind, current_part}
     all_h3s
     |> Enum.with_index()
-    |> Enum.reduce({[], nil}, fn {h3, idx}, {criteria, current_kind} ->
+    |> Enum.reduce({[], nil, nil}, fn {h3, idx}, {criteria, current_kind, current_part} ->
       text = h3 |> Floki.text() |> clean_text()
 
       cond do
+        # Check for "Część N" pattern to track current part
+        String.match?(text, ~r/Część\s+(\d+)/iu) ->
+          part_num = extract_part_number(text)
+          {criteria, current_kind, part_num}
+
         # "4.3.4.) Rodzaj kryterium:" — sets the kind for the next criterion
         String.contains?(text, "4.3.4.)") ->
           kind =
@@ -169,7 +176,7 @@ defmodule Przetargowi.Tenders.BzpParser do
               kind
             end
 
-          {criteria, kind}
+          {criteria, kind, current_part}
 
         # "4.3.5.) Nazwa kryterium:" — extract name
         String.contains?(text, "4.3.5.)") ->
@@ -178,10 +185,11 @@ defmodule Przetargowi.Tenders.BzpParser do
           criterion = %{
             name: name,
             weight: nil,
-            kind: current_kind
+            kind: current_kind,
+            part: current_part
           }
 
-          {criteria ++ [criterion], current_kind}
+          {criteria ++ [criterion], current_kind, current_part}
 
         # "4.3.6.) Waga:" — extract weight and attach to last criterion
         String.contains?(text, "4.3.6.)") ->
@@ -200,13 +208,20 @@ defmodule Przetargowi.Tenders.BzpParser do
             end
 
           # Reset kind after full criterion is parsed
-          {criteria, nil}
+          {criteria, nil, current_part}
 
         true ->
-          {criteria, current_kind}
+          {criteria, current_kind, current_part}
       end
     end)
     |> elem(0)
+  end
+
+  defp extract_part_number(text) do
+    case Regex.run(~r/Część\s+(\d+)/iu, text) do
+      [_, num] -> String.to_integer(num)
+      _ -> nil
+    end
   end
 
   # ---------------------------------------------------------------------------

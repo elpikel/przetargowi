@@ -167,8 +167,17 @@ defmodule PrzetargowiWeb.TenderHTML do
     params = if query && query != "", do: [{"q", query} | params], else: params
     params = params ++ Enum.map(regions, &{"regions[]", &1})
     params = params ++ Enum.map(order_types, &{"order_types[]", &1})
-    params = if deadline_from && deadline_from != "", do: [{"deadline_from", deadline_from} | params], else: params
-    params = if deadline_to && deadline_to != "", do: [{"deadline_to", deadline_to} | params], else: params
+
+    params =
+      if deadline_from && deadline_from != "",
+        do: [{"deadline_from", deadline_from} | params],
+        else: params
+
+    params =
+      if deadline_to && deadline_to != "",
+        do: [{"deadline_to", deadline_to} | params],
+        else: params
+
     params = [{"page", page} | params]
     params
   end
@@ -230,4 +239,17 @@ defmodule PrzetargowiWeb.TenderHTML do
       _ -> "hero-document"
     end
   end
+
+  @doc """
+  Groups criteria by their part number.
+  Returns a list of tuples {part_number, criteria_list} sorted by part number.
+  Criteria without a part are grouped under nil.
+  """
+  def group_kryteria_by_part(kryteria) when is_list(kryteria) do
+    kryteria
+    |> Enum.group_by(fn k -> k["part"] || k[:part] end)
+    |> Enum.sort_by(fn {part, _} -> part || 0 end)
+  end
+
+  def group_kryteria_by_part(_), do: []
 end

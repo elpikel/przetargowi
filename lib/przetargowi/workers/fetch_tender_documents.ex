@@ -53,9 +53,7 @@ defmodule Przetargowi.Workers.FetchTenderDocuments do
         {success_count, failed} = Tenders.upsert_tender_documents(documents)
 
         if length(failed) > 0 do
-          Logger.warning(
-            "Failed to upsert #{length(failed)} documents for tender #{tender_id}"
-          )
+          Logger.warning("Failed to upsert #{length(failed)} documents for tender #{tender_id}")
         else
           Logger.debug("Successfully upserted #{success_count} documents for tender #{tender_id}")
         end

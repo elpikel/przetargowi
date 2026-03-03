@@ -107,8 +107,8 @@ defmodule PrzetargowiWeb.Layouts do
             </div>
           </div>
         </div>
-
-        <!-- Mobile menu -->
+        
+    <!-- Mobile menu -->
         <div id="mobile-menu" class="hidden md:hidden border-t border-base-300 bg-base-100">
           <div class="px-4 py-4 space-y-3">
             <%= unless @hide_nav do %>
