@@ -83,7 +83,7 @@ config :przetargowi, Oban,
      crontab: [
        {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}},
        # Fetch tenders daily at 7 AM
-       {"0 7 * * *", Przetargowi.Workers.FetchTendersNotices, args: %{days: 365}},
+       {"0 7 * * *", Przetargowi.Workers.FetchTendersNotices, args: %{days: 60}},
        # Generate monthly reports on 1st of each month at 2 AM
        {"0 2 1 * *", Przetargowi.Workers.GenerateMonthlyReports, args: %{}},
        # Send alerts daily at 8 AM
