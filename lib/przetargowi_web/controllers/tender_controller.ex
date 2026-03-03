@@ -144,6 +144,14 @@ defmodule PrzetargowiWeb.TenderController do
             nil
           end
 
+        # Get documents for this tender
+        documents =
+          if tender.tender_id do
+            Tenders.get_documents_by_tender_id(tender.tender_id)
+          else
+            []
+          end
+
         canonical_url = "https://przetargowi.pl/przetargi/#{tender.slug}"
         page_title = truncate_title(tender.order_object)
         meta_description = build_tender_meta_description(tender)
@@ -156,7 +164,8 @@ defmodule PrzetargowiWeb.TenderController do
         |> render(:show,
           tender: tender,
           is_expired: is_expired,
-          related_contract_notice: related_contract_notice
+          related_contract_notice: related_contract_notice,
+          documents: documents
         )
     end
   end

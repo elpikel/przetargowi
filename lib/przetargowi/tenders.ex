@@ -7,6 +7,7 @@ defmodule Przetargowi.Tenders do
 
   alias Przetargowi.Repo
   alias Przetargowi.Tenders.BzpParser
+  alias Przetargowi.Tenders.TenderDocument
   alias Przetargowi.Tenders.TenderNotice
 
   require Logger
@@ -304,5 +305,78 @@ defmodule Przetargowi.Tenders do
     |> where([t], not is_nil(t.slug))
     |> order_by(desc: :updated_at)
     |> Repo.stream()
+  end
+
+  # Document functions
+
+  @doc """
+  Gets all documents for a tender by tender_id.
+  """
+  def get_documents_by_tender_id(tender_id) do
+    TenderDocument
+    |> from(as: :document)
+    |> where([document: d], d.tender_id == ^tender_id)
+    |> where([document: d], d.state == "Published")
+    |> order_by([document: d], asc: d.published_date)
+    |> Repo.all()
+  end
+
+  @doc """
+  Upserts a single tender document. Updates on conflict.
+  """
+  def upsert_tender_document(attrs) do
+    %TenderDocument{}
+    |> TenderDocument.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: :replace_all,
+      conflict_target: [:object_id]
+    )
+  end
+
+  @doc """
+  Upserts multiple tender documents in bulk.
+  Returns `{success_count, failed_list}`.
+  """
+  def upsert_tender_documents(documents_attrs) when is_list(documents_attrs) do
+    results =
+      Enum.map(documents_attrs, fn attrs ->
+        case upsert_tender_document(attrs) do
+          {:ok, document} ->
+            {:ok, document}
+
+          {:error, changeset} ->
+            Logger.error(
+              "Failed to upsert tender document #{inspect(attrs[:object_id])}: #{inspect(changeset)}"
+            )
+
+            {:error, attrs, changeset}
+        end
+      end)
+
+    success_count = Enum.count(results, &match?({:ok, _}, &1))
+    failed = Enum.filter(results, &match?({:error, _, _}, &1))
+
+    {success_count, failed}
+  end
+
+  @doc """
+  Gets tender IDs that don't have any documents yet.
+  Used by the document fetching worker.
+  """
+  def get_tender_ids_without_documents(limit \\ 100) do
+    subquery =
+      TenderDocument
+      |> select([d], d.tender_id)
+      |> distinct(true)
+
+    TenderNotice
+    |> from(as: :tender_notice)
+    |> where([tender_notice: tn], tn.notice_type == "ContractNotice")
+    |> where([tender_notice: tn], tn.tender_id not in subquery(subquery))
+    |> where([tender_notice: tn], not is_nil(tn.tender_id))
+    |> select([tender_notice: tn], tn.tender_id)
+    |> order_by([tender_notice: tn], desc: tn.publication_date)
+    |> limit(^limit)
+    |> Repo.all()
   end
 end

@@ -205,4 +205,29 @@ defmodule PrzetargowiWeb.TenderHTML do
 
     Map.get(province_map, province_code, "")
   end
+
+  def document_icon(nil), do: "hero-document"
+
+  def document_icon(file_name) when is_binary(file_name) do
+    extension =
+      file_name
+      |> String.downcase()
+      |> Path.extname()
+
+    case extension do
+      ".pdf" -> "hero-document-text"
+      ".doc" -> "hero-document-text"
+      ".docx" -> "hero-document-text"
+      ".xls" -> "hero-table-cells"
+      ".xlsx" -> "hero-table-cells"
+      ".zip" -> "hero-archive-box"
+      ".7z" -> "hero-archive-box"
+      ".rar" -> "hero-archive-box"
+      ".jpg" -> "hero-photo"
+      ".jpeg" -> "hero-photo"
+      ".png" -> "hero-photo"
+      ".gif" -> "hero-photo"
+      _ -> "hero-document"
+    end
+  end
 end

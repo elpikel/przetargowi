@@ -14,6 +14,7 @@ defmodule Przetargowi.Bzp.Client do
   alias Przetargowi.Tenders.TenderNoticeParser
 
   @base_url "https://ezamowienia.gov.pl/mo-board/api/v1/notice"
+  @documents_url "https://ezamowienia.gov.pl/mp-readmodels/api/Search/GetTenderDocuments"
   @default_page_size 100
   @timeout 30_000
   @retry_attempts 3
@@ -240,4 +241,86 @@ defmodule Przetargowi.Bzp.Client do
     # Another form
     |> String.replace(<<0x00>>, "")
   end
+
+  # Document fetching
+
+  @doc """
+  Fetches documents for a tender by its tender_id.
+
+  ## Example
+
+      BzpClient.fetch_tender_documents("ocds-148610-f17cf8c0-3ddf-4a06-b833-ae35139671e8")
+  """
+  def fetch_tender_documents(tender_id) do
+    Logger.info("BZP API: Fetching documents for tender #{tender_id}")
+
+    case make_documents_request(tender_id) do
+      {:ok, documents} -> {:ok, parse_documents(documents, tender_id)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp make_documents_request(tender_id, attempt \\ 1) do
+    case Req.get(@documents_url,
+           params: %{"tenderId" => tender_id},
+           headers: [
+             {"Accept", "application/json"},
+             {"User-Agent", "Przetargowi/1.0"}
+           ],
+           receive_timeout: @timeout,
+           connect_options: [
+             transport_opts: [
+               verify: :verify_none
+             ]
+           ]
+         ) do
+      {:ok, %{status: 200, body: body}} when is_list(body) ->
+        {:ok, body}
+
+      {:ok, %{status: 200, body: body}} when is_binary(body) ->
+        case Jason.decode(body) do
+          {:ok, decoded} -> {:ok, decoded}
+          {:error, _} -> {:error, :invalid_json}
+        end
+
+      {:ok, %{status: status, body: error_body}} ->
+        Logger.warning("Documents API: Status #{status}, body: #{inspect(error_body)}")
+
+        if attempt < @retry_attempts do
+          Process.sleep(@retry_delay * attempt)
+          make_documents_request(tender_id, attempt + 1)
+        else
+          {:error, {:http_error, status}}
+        end
+
+      {:error, reason} ->
+        Logger.warning("Documents API: Request failed: #{inspect(reason)}")
+
+        if attempt < @retry_attempts do
+          Process.sleep(@retry_delay * attempt)
+          make_documents_request(tender_id, attempt + 1)
+        else
+          {:error, reason}
+        end
+    end
+  end
+
+  defp parse_documents(documents, tender_id) when is_list(documents) do
+    Enum.map(documents, fn doc ->
+      %{
+        object_id: doc["objectId"],
+        tender_id: tender_id,
+        name: sanitize_html(doc["name"]),
+        file_name: sanitize_html(doc["fileName"]),
+        url: doc["url"],
+        state: doc["tenderDocumentState"],
+        create_date: doc["createDate"],
+        published_date: doc["publishedDate"],
+        delete_date: doc["deleteDate"],
+        delete_reason: sanitize_html(doc["deleteReason"])
+      }
+    end)
+  end
+
+  defp parse_documents(_, _), do: []
 end

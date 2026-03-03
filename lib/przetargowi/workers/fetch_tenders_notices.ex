@@ -2,6 +2,7 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
   @moduledoc """
   Oban worker for fetching tenders notices from BZP API.
   Runs daily to fetch new and updated tenders notices.
+  Also fetches documents for ContractNotice tenders.
 
   ## Arguments
   - `days` - Number of days back to fetch tenders notices from (defaults to 1)
@@ -70,6 +71,11 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
           raise "Failed to upsert #{length(failed)} tender notices"
         end
 
+        # Fetch documents for ContractNotice tenders
+        if notice_type == "ContractNotice" do
+          fetch_documents_for_tenders(tenders)
+        end
+
         last_tender = List.last(tenders)
         next_object_id = last_tender.object_id
 
@@ -83,6 +89,37 @@ defmodule Przetargowi.Workers.FetchTendersNotices do
       {:error, reason} ->
         Logger.error("BZP API: Error: #{inspect(reason)}")
         {:error, reason}
+    end
+  end
+
+  defp fetch_documents_for_tenders(tenders) do
+    Enum.each(tenders, fn tender ->
+      if tender.tender_id do
+        fetch_and_store_documents(tender.tender_id)
+        # Rate limiting
+        Process.sleep(100)
+      end
+    end)
+  end
+
+  defp fetch_and_store_documents(tender_id) do
+    case BZPClient.fetch_tender_documents(tender_id) do
+      {:ok, []} ->
+        :ok
+
+      {:ok, documents} ->
+        Logger.info("Found #{length(documents)} documents for tender #{tender_id}")
+        {_success_count, failed} = Tenders.upsert_tender_documents(documents)
+
+        if length(failed) > 0 do
+          Logger.warning("Failed to upsert #{length(failed)} documents for tender #{tender_id}")
+        end
+
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to fetch documents for tender #{tender_id}: #{inspect(reason)}")
+        :ok
     end
   end
 end

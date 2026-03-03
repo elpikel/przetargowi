@@ -191,6 +191,42 @@
           </div>
         <% end %>
         
+<!-- Documents -->
+        <%= if @documents && length(@documents) > 0 do %>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <.icon name="hero-paper-clip" class="size-5 text-primary" /> Dokumenty zamówienia
+            </h2>
+            <div class="space-y-3">
+              <%= for doc <- @documents do %>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noopener"
+                  class="flex items-start gap-3 p-3 bg-base-200/50 rounded-lg hover:bg-base-200 transition-colors group"
+                >
+                  <div class="flex-shrink-0 mt-0.5">
+                    <.icon
+                      name={document_icon(doc.file_name)}
+                      class="size-5 text-primary group-hover:text-primary/80"
+                    />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-base-content font-medium group-hover:text-primary transition-colors">
+                      {doc.name}
+                    </p>
+                    <p class="text-sm text-base-content/60 truncate">{doc.file_name}</p>
+                  </div>
+                  <.icon
+                    name="hero-arrow-top-right-on-square"
+                    class="size-4 text-base-content/40 flex-shrink-0 mt-1"
+                  />
+                </a>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
 <!-- Wadium -->
         <%= if @tender.wadium do %>
           <div class="card-base p-6">
