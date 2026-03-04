@@ -553,33 +553,45 @@ defmodule Przetargowi.Reports.ReportGenerator do
       end
 
     """
-    <h3>Trendy publikacji</h3>
-    <p>Wykres poniżej przedstawia tygodniowy rozkład publikacji przetargów w analizowanym miesiącu.</p>
-    <div class="graph-container">
-    #{graphs["tender_count_trend"] || ""}
-    </div>
+    <section class="report-section">
+      <h3>Trendy publikacji</h3>
+      <p>Wykres poniżej przedstawia tygodniowy rozkład publikacji przetargów w analizowanym miesiącu.</p>
+      <div class="graph-container">
+      #{graphs["tender_count_trend"] || ""}
+      </div>
+    </section>
 
-    <h3>Przetargi rozstrzygnięte</h3>
-    <p>W analizowanym okresie <strong>rozstrzygnięto #{closed_count} przetargów</strong>
-    o łącznej wartości kontraktowej <strong>#{total_contract_value}</strong>.
-    Średnia wartość rozstrzygniętego kontraktu wyniosła <strong>#{avg_contract_value}</strong>.</p>
+    <section class="report-section">
+      <h3>Przetargi rozstrzygnięte</h3>
+      <p>W analizowanym okresie <strong>rozstrzygnięto #{closed_count} przetargów</strong>
+      o łącznej wartości kontraktowej <strong>#{total_contract_value}</strong>.
+      Średnia wartość rozstrzygniętego kontraktu wyniosła <strong>#{avg_contract_value}</strong>.</p>
 
-    <p>Łączna szacowana wartość wszystkich ogłoszonych przetargów wyniosła <strong>#{total_estimated_value}</strong>.</p>
+      <p>Łączna szacowana wartość wszystkich ogłoszonych przetargów wyniosła <strong>#{total_estimated_value}</strong>.</p>
+    </section>
 
-    <h3>Aktywność wykonawców</h3>
-    <p>W przetargach wzięło udział łącznie <strong>#{total_contractors} unikalnych wykonawców</strong>.</p>
-    #{top_contractors_html}
+    <section class="report-section">
+      <h3>Aktywność wykonawców</h3>
+      <p>W przetargach wzięło udział łącznie <strong>#{total_contractors} unikalnych wykonawców</strong>.</p>
+      #{top_contractors_html}
+    </section>
 
-    <h3>Aktywność zamawiających</h3>
-    #{top_org_html}
+    <section class="report-section">
+      <h3>Aktywność zamawiających</h3>
+      #{top_org_html}
+    </section>
 
-    <h3>Rozkład geograficzny</h3>
-    #{top_cities_html}
+    <section class="report-section">
+      <h3>Rozkład geograficzny</h3>
+      #{top_cities_html}
+    </section>
 
-    <h3>Rozkład wartości przetargów</h3>
-    <div class="graph-container">
-    #{graphs["value_distribution"] || ""}
-    </div>
+    <section class="report-section">
+      <h3>Rozkład wartości przetargów</h3>
+      <div class="graph-container">
+      #{graphs["value_distribution"] || ""}
+      </div>
+    </section>
     """
   end
 
