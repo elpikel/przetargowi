@@ -183,14 +183,17 @@
               <%= for {part, criteria} <- grouped_kryteria do %>
                 <%= if part do %>
                   <div class="mb-2">
-                    <h3 class="text-sm font-medium text-base-content/60 mb-2">Część {part}</h3>
+                    <p class="text-sm font-semibold text-base-content/70 mb-2">Część {part}</p>
                     <div class="space-y-2">
                       <%= for kryterium <- criteria do %>
-                        <div class="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
+                        <div
+                          class="flex items-center justify-between p-3 rounded-lg"
+                          style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
+                        >
                           <span class="text-base-content">
                             {kryterium["name"] || kryterium[:name]}
                           </span>
-                          <span class="font-semibold text-primary">
+                          <span class="font-semibold" style="color: #c9a227;">
                             {kryterium["weight"] || kryterium[:weight]}%
                           </span>
                         </div>
@@ -200,11 +203,14 @@
                 <% else %>
                   <div class="space-y-2">
                     <%= for kryterium <- criteria do %>
-                      <div class="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
+                      <div
+                        class="flex items-center justify-between p-3 rounded-lg"
+                        style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
+                      >
                         <span class="text-base-content">
                           {kryterium["name"] || kryterium[:name]}
                         </span>
-                        <span class="font-semibold text-primary">
+                        <span class="font-semibold" style="color: #c9a227;">
                           {kryterium["weight"] || kryterium[:weight]}%
                         </span>
                       </div>
@@ -228,23 +234,28 @@
                   href={doc.url}
                   target="_blank"
                   rel="noopener"
-                  class="flex items-start gap-3 p-3 bg-base-200/50 rounded-lg hover:bg-base-200 transition-colors group"
+                  class="flex items-start gap-3 p-3 rounded-lg transition-all group"
+                  style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
+                  onmouseover="this.style.background='rgba(201, 162, 39, 0.18)'; this.style.borderColor='rgba(201, 162, 39, 0.4)';"
+                  onmouseout="this.style.background='rgba(201, 162, 39, 0.1)'; this.style.borderColor='rgba(201, 162, 39, 0.25)';"
                 >
                   <div class="flex-shrink-0 mt-0.5">
                     <.icon
                       name={document_icon(doc.file_name)}
-                      class="size-5 text-primary group-hover:text-primary/80"
+                      class="size-5"
+                      style="color: #c9a227;"
                     />
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-base-content font-medium group-hover:text-primary transition-colors">
+                    <p class="text-base-content font-medium transition-colors">
                       {doc.name}
                     </p>
                     <p class="text-sm text-base-content/60 truncate">{doc.file_name}</p>
                   </div>
                   <.icon
                     name="hero-arrow-top-right-on-square"
-                    class="size-4 text-base-content/40 flex-shrink-0 mt-1"
+                    class="size-4 flex-shrink-0 mt-1"
+                    style="color: #c9a227;"
                   />
                 </a>
               <% end %>

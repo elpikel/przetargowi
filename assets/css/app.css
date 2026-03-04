@@ -542,3 +542,23 @@ h1, h2, h3, .font-display {
   border-radius: 1.25rem;
   box-shadow: 0 4px 12px rgba(10, 22, 40, 0.08);
 }
+
+/* ===== Criteria & Documents Items ===== */
+
+.item-gold {
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  border-radius: 0.5rem;
+}
+
+.item-gold-interactive {
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.item-gold-interactive:hover {
+  background: rgba(201, 162, 39, 0.18);
+  border-color: rgba(201, 162, 39, 0.4);
+}
