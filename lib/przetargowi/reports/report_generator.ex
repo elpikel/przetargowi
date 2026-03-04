@@ -334,18 +334,40 @@ defmodule Przetargowi.Reports.ReportGenerator do
     end)
   end
 
+  defp get_tender_value(tender) do
+    cond do
+      tender.estimated_value != nil &&
+          Decimal.compare(tender.estimated_value, Decimal.new(0)) == :gt ->
+        tender.estimated_value
+
+      tender.total_contract_value != nil &&
+          Decimal.compare(tender.total_contract_value, Decimal.new(0)) == :gt ->
+        tender.total_contract_value
+
+      true ->
+        nil
+    end
+  end
+
   defp count_in_range(tenders, min, :infinity) do
     Enum.count(tenders, fn t ->
-      t.estimated_value != nil &&
-        Decimal.compare(t.estimated_value, Decimal.new(min)) in [:gt, :eq]
+      case get_tender_value(t) do
+        nil -> false
+        value -> Decimal.compare(value, Decimal.new(min)) in [:gt, :eq]
+      end
     end)
   end
 
   defp count_in_range(tenders, min, max) do
     Enum.count(tenders, fn t ->
-      t.estimated_value != nil &&
-        Decimal.compare(t.estimated_value, Decimal.new(min)) in [:gt, :eq] &&
-        Decimal.compare(t.estimated_value, Decimal.new(max)) == :lt
+      case get_tender_value(t) do
+        nil ->
+          false
+
+        value ->
+          Decimal.compare(value, Decimal.new(min)) in [:gt, :eq] &&
+            Decimal.compare(value, Decimal.new(max)) == :lt
+      end
     end)
   end
 

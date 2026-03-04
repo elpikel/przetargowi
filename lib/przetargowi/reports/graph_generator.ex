@@ -34,6 +34,7 @@ defmodule Przetargowi.Reports.GraphGenerator do
     bar_width = 40
     gap = 10
     chart_height = 200
+    top_padding = 20
 
     bars =
       weekly_data
@@ -42,12 +43,12 @@ defmodule Przetargowi.Reports.GraphGenerator do
         count = data["count"]
         height = if max_count > 0, do: trunc(count / max_count * chart_height), else: 0
         x = index * (bar_width + gap)
-        y = chart_height - height
+        y = top_padding + chart_height - height
 
         """
         <rect x="#{x}" y="#{y}" width="#{bar_width}" height="#{height}"
               fill="#3b82f6" rx="2"/>
-        <text x="#{x + bar_width / 2}" y="#{chart_height + 15}"
+        <text x="#{x + bar_width / 2}" y="#{top_padding + chart_height + 15}"
               text-anchor="middle" font-size="12" fill="#6b7280">Tydz. #{data["week"]}</text>
         <text x="#{x + bar_width / 2}" y="#{y - 5}"
               text-anchor="middle" font-size="11" fill="#1f2937" font-weight="600">#{count}</text>
@@ -57,7 +58,7 @@ defmodule Przetargowi.Reports.GraphGenerator do
     width = length(weekly_data) * (bar_width + gap)
 
     """
-    <svg width="#{width}" height="#{chart_height + 30}" xmlns="http://www.w3.org/2000/svg">
+    <svg width="#{width}" height="#{top_padding + chart_height + 30}" xmlns="http://www.w3.org/2000/svg">
       <title>Liczba przetargów w poszczególnych tygodniach</title>
       #{bars}
     </svg>
