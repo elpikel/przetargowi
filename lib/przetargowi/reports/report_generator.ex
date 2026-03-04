@@ -594,7 +594,7 @@ defmodule Przetargowi.Reports.ReportGenerator do
         <li>Monitorować <strong>konkurencję</strong> i aktywność zamawiających</li>
       </ul>
       <p class="cta">
-        <a href="/register" class="cta-button">Rozpocznij za darmo →</a>
+        <a href="/rejestracja" class="cta-button">Rozpocznij za darmo →</a>
       </p>
     </div>
     """
