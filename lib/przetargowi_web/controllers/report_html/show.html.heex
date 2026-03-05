@@ -1,47 +1,58 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <header class="mb-8">
-      <h1 class="text-3xl font-bold text-base-content mb-4">
-        {@report.title}
-      </h1>
+  <article class="report-page">
+    <header class="report-header">
+      <div class="report-header-content">
+        <a href={~p"/raporty"} class="report-back-link">
+          <.icon name="hero-arrow-left" class="size-4" />
+          <span>Wszystkie raporty</span>
+        </a>
 
-      <div class="flex flex-wrap gap-4 text-sm text-base-content/60">
-        <span>📅 {format_report_date(@report.report_month)}</span>
-        <%= if @report.region do %>
-          <span>📍 {format_region_name(@report.region)}</span>
-        <% end %>
-        <%= if @report.order_type do %>
-          <span>📋 {format_order_type(@report.order_type)}</span>
-        <% end %>
+        <h1 class="report-title">{@report.title}</h1>
+
+        <div class="report-meta">
+          <span class="report-meta-item">
+            <.icon name="hero-calendar" class="size-4" />
+            {format_report_date(@report.report_month)}
+          </span>
+          <%= if @report.region do %>
+            <span class="report-meta-item">
+              <.icon name="hero-map-pin" class="size-4" />
+              {format_region_name(@report.region)}
+            </span>
+          <% end %>
+          <%= if @report.order_type do %>
+            <span class="report-meta-item">
+              <.icon name="hero-tag" class="size-4" />
+              {format_order_type(@report.order_type)}
+            </span>
+          <% end %>
+        </div>
       </div>
     </header>
 
-    <div class="card-base p-8">
-      <section class="mb-8">
-        <h2 class="text-xl font-semibold text-base-content mb-4">Wprowadzenie</h2>
-        <div class="prose prose-invert max-w-none text-base-content/70">
+    <div class="report-body">
+      <section class="report-intro">
+        <div class="report-intro-content">
           {raw(@report.introduction_html)}
         </div>
       </section>
 
-      <section class="mb-8">
-        <h2 class="text-xl font-semibold text-base-content mb-4">Analiza</h2>
-        <div class="prose prose-invert max-w-none text-base-content/70">
-          {raw(@report.analysis_html)}
-        </div>
-      </section>
+      <div class="report-main">
+        {raw(@report.analysis_html)}
+      </div>
 
       <%= if @report.upsell_html do %>
-        <section class="bg-primary/10 rounded-lg p-6 mt-8">
+        <aside class="report-upsell-section">
           {raw(@report.upsell_html)}
-        </section>
+        </aside>
       <% end %>
     </div>
 
-    <div class="mt-8">
-      <a href={~p"/raporty"} class="text-primary hover:underline">
-        ← Powrót do listy raportów
+    <footer class="report-footer">
+      <a href={~p"/raporty"} class="report-footer-link">
+        <.icon name="hero-arrow-left" class="size-4" />
+        <span>Powrót do listy raportów</span>
       </a>
-    </div>
+    </footer>
   </article>
 </Layouts.app>

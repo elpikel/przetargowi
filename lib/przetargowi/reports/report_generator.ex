@@ -501,6 +501,7 @@ defmodule Przetargowi.Reports.ReportGenerator do
   end
 
   defp generate_analysis(_report_type, _region, _order_type, stats, _trends, graphs) do
+    total_tenders = stats.summary["total_tenders"]
     closed_count = stats.summary["closed_tenders"]
 
     total_contract_value =
@@ -512,6 +513,7 @@ defmodule Przetargowi.Reports.ReportGenerator do
       stats.summary["total_estimated_value"] |> Decimal.new() |> format_currency()
 
     total_contractors = stats.summary["total_contractors"]
+    active_organizations = stats.summary["active_organizations"]
 
     top_org_html =
       if length(stats.details["top_organizations"]) > 0 do
@@ -520,18 +522,24 @@ defmodule Przetargowi.Reports.ReportGenerator do
           |> Enum.take(10)
           |> Enum.with_index(1)
           |> Enum.map_join("\n", fn {org, index} ->
-            "<li><strong>#{index}. #{org["name"]}</strong> - #{org["count"]} ogłoszeń</li>"
+            """
+            <div class="report-ranking-item">
+              <span class="report-ranking-position">#{index}</span>
+              <div class="report-ranking-content">
+                <span class="report-ranking-name">#{org["name"]}</span>
+                <span class="report-ranking-value">#{org["count"]} ogłoszeń</span>
+              </div>
+            </div>
+            """
           end)
 
         """
-        <p>W analizowanym okresie przetargi ogłosiło łącznie <strong>#{stats.summary["active_organizations"]} jednostek zamawiających</strong>.
-        Poniżej przedstawiamy najbardziej aktywnych zamawiających:</p>
-        <ol class="top-contractors-list">
+        <div class="report-ranking-list">
         #{orgs_list}
-        </ol>
+        </div>
         """
       else
-        ""
+        "<p class=\"report-empty-state\">Brak danych o zamawiających</p>"
       end
 
     top_cities_html =
@@ -541,17 +549,24 @@ defmodule Przetargowi.Reports.ReportGenerator do
           |> Enum.take(5)
           |> Enum.with_index(1)
           |> Enum.map_join("\n", fn {city, index} ->
-            "<li><strong>#{index}. #{city["city"]}</strong> - #{city["count"]} ogłoszeń</li>"
+            """
+            <div class="report-ranking-item">
+              <span class="report-ranking-position">#{index}</span>
+              <div class="report-ranking-content">
+                <span class="report-ranking-name">#{city["city"]}</span>
+                <span class="report-ranking-value">#{city["count"]} ogłoszeń</span>
+              </div>
+            </div>
+            """
           end)
 
         """
-        <p>Najwięcej przetargów opublikowano w następujących miastach:</p>
-        <ol class="top-contractors-list">
+        <div class="report-ranking-list">
         #{cities_list}
-        </ol>
+        </div>
         """
       else
-        ""
+        "<p class=\"report-empty-state\">Brak danych o miastach</p>"
       end
 
     top_contractors_html =
@@ -561,57 +576,110 @@ defmodule Przetargowi.Reports.ReportGenerator do
           |> Enum.take(10)
           |> Enum.with_index(1)
           |> Enum.map_join("\n", fn {contractor, index} ->
-            "<li><strong>#{index}. #{contractor["name"]}</strong> - #{contractor["count"]} kontraktów</li>"
+            """
+            <div class="report-ranking-item">
+              <span class="report-ranking-position">#{index}</span>
+              <div class="report-ranking-content">
+                <span class="report-ranking-name">#{contractor["name"]}</span>
+                <span class="report-ranking-value">#{contractor["count"]} kontraktów</span>
+              </div>
+            </div>
+            """
           end)
 
         """
-        <p>Najbardziej aktywni wykonawcy w analizowanym okresie:</p>
-        <ol class="top-contractors-list">
+        <div class="report-ranking-list">
         #{contractors_list}
-        </ol>
+        </div>
         """
       else
-        ""
+        "<p class=\"report-empty-state\">Brak danych o wykonawcach</p>"
       end
 
     """
+    <div class="report-stats-grid">
+      <div class="report-stat-card">
+        <span class="report-stat-value">#{total_tenders}</span>
+        <span class="report-stat-label">Ogłoszeń</span>
+      </div>
+      <div class="report-stat-card">
+        <span class="report-stat-value">#{closed_count}</span>
+        <span class="report-stat-label">Rozstrzygniętych</span>
+      </div>
+      <div class="report-stat-card">
+        <span class="report-stat-value">#{active_organizations}</span>
+        <span class="report-stat-label">Zamawiających</span>
+      </div>
+      <div class="report-stat-card">
+        <span class="report-stat-value">#{total_contractors}</span>
+        <span class="report-stat-label">Wykonawców</span>
+      </div>
+    </div>
+
     <section class="report-section">
-      <h3>Trendy publikacji</h3>
-      <p>Wykres poniżej przedstawia tygodniowy rozkład publikacji przetargów w analizowanym miesiącu.</p>
-      <div class="graph-container">
-      #{graphs["tender_count_trend"] || ""}
+      <h3 class="report-section-title">
+        <span class="report-section-icon">📈</span>
+        Trendy publikacji
+      </h3>
+      <p class="report-section-desc">Tygodniowy rozkład publikacji przetargów w analizowanym miesiącu.</p>
+      <div class="report-chart-container">
+        #{graphs["tender_count_trend"] || ""}
       </div>
     </section>
 
     <section class="report-section">
-      <h3>Przetargi rozstrzygnięte</h3>
-      <p>W analizowanym okresie <strong>rozstrzygnięto #{closed_count} przetargów</strong>
-      o łącznej wartości kontraktowej <strong>#{total_contract_value}</strong>.
-      Średnia wartość rozstrzygniętego kontraktu wyniosła <strong>#{avg_contract_value}</strong>.</p>
-
-      <p>Łączna szacowana wartość wszystkich ogłoszonych przetargów wyniosła <strong>#{total_estimated_value}</strong>.</p>
+      <h3 class="report-section-title">
+        <span class="report-section-icon">💰</span>
+        Wartości kontraktów
+      </h3>
+      <div class="report-values-grid">
+        <div class="report-value-card report-value-card-primary">
+          <span class="report-value-label">Łączna wartość kontraktów</span>
+          <span class="report-value-amount">#{total_contract_value}</span>
+        </div>
+        <div class="report-value-card">
+          <span class="report-value-label">Średnia wartość kontraktu</span>
+          <span class="report-value-amount">#{avg_contract_value}</span>
+        </div>
+        <div class="report-value-card">
+          <span class="report-value-label">Szacowana wartość ogłoszeń</span>
+          <span class="report-value-amount">#{total_estimated_value}</span>
+        </div>
+      </div>
     </section>
 
     <section class="report-section">
-      <h3>Aktywność wykonawców</h3>
-      <p>W przetargach wzięło udział łącznie <strong>#{total_contractors} unikalnych wykonawców</strong>.</p>
-      #{top_contractors_html}
+      <h3 class="report-section-title">
+        <span class="report-section-icon">🏢</span>
+        Najaktywniejsze podmioty
+      </h3>
+      <div class="report-columns">
+        <div class="report-column">
+          <h4 class="report-subsection-title">Zamawiający</h4>
+          #{top_org_html}
+        </div>
+        <div class="report-column">
+          <h4 class="report-subsection-title">Wykonawcy</h4>
+          #{top_contractors_html}
+        </div>
+      </div>
     </section>
 
     <section class="report-section">
-      <h3>Aktywność zamawiających</h3>
-      #{top_org_html}
-    </section>
-
-    <section class="report-section">
-      <h3>Rozkład geograficzny</h3>
+      <h3 class="report-section-title">
+        <span class="report-section-icon">📍</span>
+        Rozkład geograficzny
+      </h3>
       #{top_cities_html}
     </section>
 
     <section class="report-section">
-      <h3>Rozkład wartości przetargów</h3>
-      <div class="graph-container">
-      #{graphs["value_distribution"] || ""}
+      <h3 class="report-section-title">
+        <span class="report-section-icon">📊</span>
+        Rozkład wartości przetargów
+      </h3>
+      <div class="report-chart-container">
+        #{graphs["value_distribution"] || ""}
       </div>
     </section>
     """

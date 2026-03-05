@@ -563,11 +563,169 @@ h1, h2, h3, .font-display {
   border-color: rgba(201, 162, 39, 0.4);
 }
 
+/* ===== Report Page Layout ===== */
+
+.report-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.report-header {
+  padding: 3rem 0 2rem;
+  border-bottom: 1px solid #f3e4c3;
+  margin-bottom: 2rem;
+}
+
+.report-header-content {
+  max-width: 100%;
+}
+
+.report-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2d527d;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s ease;
+}
+
+.report-back-link:hover {
+  color: #12233d;
+}
+
+.report-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: #0a1628;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.report-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: rgba(10, 22, 40, 0.6);
+}
+
+.report-body {
+  padding: 2rem 0;
+}
+
+.report-intro {
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.08), rgba(201, 162, 39, 0.02));
+  border-left: 4px solid #c9a227;
+  border-radius: 0 1rem 1rem 0;
+  padding: 1.5rem 2rem;
+  margin-bottom: 3rem;
+}
+
+.report-intro-content {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: #0a1628;
+}
+
+.report-intro-content p {
+  margin-bottom: 0.75rem;
+}
+
+.report-intro-content p:last-child {
+  margin-bottom: 0;
+}
+
+.report-intro-content strong {
+  color: #12233d;
+  font-weight: 600;
+}
+
+.report-main {
+  padding: 0;
+}
+
+.report-footer {
+  padding: 2rem 0 4rem;
+  border-top: 1px solid #f3e4c3;
+  margin-top: 3rem;
+}
+
+.report-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2d527d;
+  font-size: 0.9375rem;
+  transition: color 0.2s ease;
+}
+
+.report-footer-link:hover {
+  color: #12233d;
+}
+
+/* ===== Report Stats Grid ===== */
+
+.report-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 640px) {
+  .report-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.report-stat-card {
+  background: #fefcf8;
+  border: 1px solid #f3e4c3;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.report-stat-card:hover {
+  border-color: rgba(201, 162, 39, 0.4);
+  box-shadow: 0 4px 12px rgba(10, 22, 40, 0.08);
+}
+
+.report-stat-value {
+  display: block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #c9a227 0%, #b8922a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+}
+
+.report-stat-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: rgba(10, 22, 40, 0.6);
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
 /* ===== Report Sections ===== */
 
 .report-section {
   margin-bottom: 3rem;
-  padding-bottom: 2rem;
+  padding-bottom: 2.5rem;
   border-bottom: 1px solid #f3e4c3;
 }
 
@@ -577,10 +735,281 @@ h1, h2, h3, .font-display {
   padding-bottom: 0;
 }
 
-.report-section h3 {
+.report-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #0a1628;
   margin-bottom: 1rem;
 }
 
-.upsell-content h3 {
+.report-section-icon {
+  font-size: 1.25rem;
+}
+
+.report-section-desc {
+  color: rgba(10, 22, 40, 0.7);
+  font-size: 0.9375rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-subsection-title {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #12233d;
   margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f3e4c3;
+}
+
+/* ===== Report Chart Container ===== */
+
+.report-chart-container {
+  background: #fefcf8;
+  border: 1px solid #f3e4c3;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.report-chart-container svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ===== Report Values Grid ===== */
+
+.report-values-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .report-values-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.report-value-card {
+  background: #fefcf8;
+  border: 1px solid #f3e4c3;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.report-value-card:hover {
+  border-color: rgba(201, 162, 39, 0.3);
+}
+
+.report-value-card-primary {
+  background: linear-gradient(135deg, #12233d 0%, #1a3052 100%);
+  border-color: #234168;
+}
+
+.report-value-card-primary .report-value-label {
+  color: rgba(253, 248, 237, 0.7);
+}
+
+.report-value-card-primary .report-value-amount {
+  color: #c9a227;
+}
+
+.report-value-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: rgba(10, 22, 40, 0.6);
+  margin-bottom: 0.5rem;
+}
+
+.report-value-amount {
+  display: block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0a1628;
+}
+
+/* ===== Report Columns Layout ===== */
+
+.report-columns {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .report-columns {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.report-column {
+  min-width: 0;
+}
+
+/* ===== Report Ranking List ===== */
+
+.report-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fefcf8;
+  border: 1px solid #f3e4c3;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.report-ranking-item:hover {
+  border-color: rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.03);
+}
+
+.report-ranking-position {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #12233d 0%, #1a3052 100%);
+  color: #fefcf8;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.report-ranking-item:nth-child(1) .report-ranking-position {
+  background: linear-gradient(135deg, #c9a227 0%, #b8922a 100%);
+  color: #0a1628;
+}
+
+.report-ranking-item:nth-child(2) .report-ranking-position {
+  background: linear-gradient(135deg, #a8a8a8 0%, #8a8a8a 100%);
+}
+
+.report-ranking-item:nth-child(3) .report-ranking-position {
+  background: linear-gradient(135deg, #cd7f32 0%, #b5702e 100%);
+}
+
+.report-ranking-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.report-ranking-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0a1628;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-ranking-value {
+  font-size: 0.8125rem;
+  color: rgba(10, 22, 40, 0.6);
+}
+
+/* ===== Report Empty State ===== */
+
+.report-empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(10, 22, 40, 0.5);
+  font-style: italic;
+}
+
+.report-no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+  color: rgba(10, 22, 40, 0.5);
+  font-size: 0.9375rem;
+}
+
+/* ===== Report Upsell Section ===== */
+
+.report-upsell-section {
+  margin-top: 3rem;
+}
+
+.report-upsell-section .upsell-content {
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.12), rgba(201, 162, 39, 0.04));
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+}
+
+.report-upsell-section .upsell-content h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0a1628;
+  margin-bottom: 1rem;
+}
+
+.report-upsell-section .upsell-content > p {
+  color: rgba(10, 22, 40, 0.7);
+  margin-bottom: 1rem;
+}
+
+.report-upsell-section .upsell-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.report-upsell-section .upsell-content ul li {
+  position: relative;
+  padding: 0.5rem 0 0.5rem 1.75rem;
+  color: rgba(10, 22, 40, 0.8);
+}
+
+.report-upsell-section .upsell-content ul li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.report-upsell-section .upsell-content .cta {
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+
+.report-upsell-section .upsell-content .cta-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #c9a227 0%, #b8922a 100%);
+  color: #0a1628;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.875rem 2rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
+  text-decoration: none;
+}
+
+.report-upsell-section .upsell-content .cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(201, 162, 39, 0.4);
 }
