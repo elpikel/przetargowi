@@ -16,13 +16,12 @@ defmodule Przetargowi.Profiles do
   end
 
   @doc """
-  Gets a company profile by user ID.
-  Returns nil if not found.
+  Lists all company profiles for a user.
   """
-  def get_profile_by_user(user_id) do
+  def list_profiles_by_user(user_id) do
     CompanyProfile
     |> where([p], p.user_id == ^user_id)
-    |> Repo.one()
+    |> Repo.all()
   end
 
   @doc """

@@ -19,17 +19,28 @@ defmodule Przetargowi.ProfilesTest do
     end
   end
 
-  describe "get_profile_by_user/1" do
-    test "returns profile by user_id" do
+  describe "list_profiles_by_user/1" do
+    test "returns profiles for user" do
       user = user_fixture()
       profile = profile_fixture(user: user)
-      assert %CompanyProfile{id: id} = Profiles.get_profile_by_user(user.id)
+      assert [%CompanyProfile{id: id}] = Profiles.list_profiles_by_user(user.id)
       assert id == profile.id
     end
 
-    test "returns nil when user has no profile" do
+    test "returns empty list when user has no profiles" do
       user = user_fixture()
-      assert Profiles.get_profile_by_user(user.id) == nil
+      assert Profiles.list_profiles_by_user(user.id) == []
+    end
+
+    test "returns multiple profiles for same user" do
+      user = user_fixture()
+      profile1 = profile_fixture(user: user)
+      profile2 = profile_fixture(user: user)
+
+      profiles = Profiles.list_profiles_by_user(user.id)
+      assert length(profiles) == 2
+      assert Enum.any?(profiles, &(&1.id == profile1.id))
+      assert Enum.any?(profiles, &(&1.id == profile2.id))
     end
   end
 
@@ -60,14 +71,12 @@ defmodule Przetargowi.ProfilesTest do
       assert %{nip: ["has already been taken"]} = errors_on(changeset)
     end
 
-    test "enforces unique user_id" do
+    test "allows multiple profiles per user" do
       user = user_fixture()
-      _profile = profile_fixture(user: user)
+      _profile1 = profile_fixture(user: user)
 
-      # Use a different valid NIP
-      attrs = valid_profile_attributes(user_id: user.id, nip: "7811767696")
-      assert {:error, changeset} = Profiles.create_profile(attrs)
-      assert %{user_id: ["has already been taken"]} = errors_on(changeset)
+      attrs = valid_profile_attributes(user_id: user.id)
+      assert {:ok, _profile2} = Profiles.create_profile(attrs)
     end
   end
 

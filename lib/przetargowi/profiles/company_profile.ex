@@ -110,7 +110,6 @@ defmodule Przetargowi.Profiles.CompanyProfile do
     |> validate_inclusion(:legal_form, @legal_forms)
     |> validate_inclusion(:msp_status, @msp_statuses)
     |> unique_constraint(:nip)
-    |> unique_constraint(:user_id)
     |> foreign_key_constraint(:user_id)
   end
 
