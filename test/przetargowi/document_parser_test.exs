@@ -182,7 +182,12 @@ defmodule Przetargowi.DocumentParserTest do
       fields = DocumentParser.identify_fillable_fields(paragraphs)
 
       assert length(fields) == 3
-      assert Enum.any?(fields, &(&1.paragraph_index == 0 && &1.suggested_category == :company_name))
+
+      assert Enum.any?(
+               fields,
+               &(&1.paragraph_index == 0 && &1.suggested_category == :company_name)
+             )
+
       assert Enum.any?(fields, &(&1.paragraph_index == 1 && &1.suggested_category == :address))
       assert Enum.any?(fields, &(&1.paragraph_index == 3 && &1.suggested_category == :email))
     end

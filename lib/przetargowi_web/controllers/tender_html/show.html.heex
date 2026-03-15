@@ -258,6 +258,19 @@
                 </a>
               <% end %>
             </div>
+            <%= if has_fillable_documents?(@documents) do %>
+              <div class="mt-4 pt-4 border-t border-base-300">
+                <.link
+                  href={~p"/przetargi/#{@tender.slug}/wypelnij"}
+                  class="btn btn-primary btn-sm gap-2"
+                >
+                  <.icon name="hero-pencil-square" class="size-4" /> Wypełnij dokumenty
+                </.link>
+                <p class="text-xs text-base-content/50 mt-2">
+                  Automatycznie wypełnij formularze danymi Twojej firmy
+                </p>
+              </div>
+            <% end %>
           </div>
         <% end %>
         

@@ -17,6 +17,9 @@ defmodule Przetargowi.Tenders.TenderDocument do
     field :published_date, :utc_datetime
     field :delete_date, :utc_datetime
     field :delete_reason, :string
+    field :content, :binary
+    field :downloaded_at, :utc_datetime
+    field :download_error, :string
 
     timestamps()
   end
@@ -37,5 +40,13 @@ defmodule Przetargowi.Tenders.TenderDocument do
       :delete_reason
     ])
     |> validate_required([:object_id, :tender_id, :name, :file_name, :url])
+  end
+
+  @doc """
+  Changeset for updating document download status.
+  """
+  def download_changeset(document, attrs) do
+    document
+    |> cast(attrs, [:content, :downloaded_at, :download_error])
   end
 end

@@ -1,0 +1,100 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-display font-bold text-base-content">Profile firmy</h1>
+      <.link href={~p"/profil-firmy/nowy"} class="btn btn-primary">
+        <.icon name="hero-plus" class="size-4 mr-1" /> Dodaj profil
+      </.link>
+    </div>
+
+    <p class="text-base-content/60 mb-8">
+      Zarządzaj profilami firm do automatycznego wypełniania dokumentów przetargowych.
+    </p>
+
+    <%= if @profiles == [] do %>
+      <div class="card-elevated p-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <.icon name="hero-building-office-2" class="size-8 text-primary" />
+        </div>
+        <p class="text-base-content/60 mb-4">Nie masz jeszcze żadnych profili firmy.</p>
+        <p class="text-sm text-base-content/50 mb-6">
+          Dodaj profil firmy, aby móc automatycznie wypełniać dokumenty przetargowe.
+        </p>
+        <.link href={~p"/profil-firmy/nowy"} class="btn btn-primary">
+          <.icon name="hero-plus" class="size-4 mr-1" /> Dodaj pierwszy profil
+        </.link>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <%= for profile <- @profiles do %>
+          <div class="card-elevated p-6">
+            <div class="flex justify-between items-start">
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <.icon name="hero-building-office-2" class="size-6 text-primary" />
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-semibold text-base-content">{profile.company_name}</h3>
+                    <%= if profile.is_primary do %>
+                      <span class="badge badge-primary badge-sm">Domyślny</span>
+                    <% end %>
+                  </div>
+                  <div class="text-sm text-base-content/60 space-y-1">
+                    <p>
+                      <span class="font-medium text-base-content/80">NIP:</span>
+                      {profile.nip}
+                    </p>
+                    <p>
+                      <span class="font-medium text-base-content/80">Forma prawna:</span>
+                      {format_legal_form(profile.legal_form)}
+                    </p>
+                    <p>
+                      <span class="font-medium text-base-content/80">Adres:</span>
+                      {profile.street}, {profile.postal_code} {profile.city}
+                    </p>
+                    <p>
+                      <span class="font-medium text-base-content/80">Status MSP:</span>
+                      {format_msp_status(profile.msp_status)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <%= unless profile.is_primary do %>
+                  <.link
+                    href={~p"/profil-firmy/#{profile.id}/ustaw-domyslny"}
+                    method="post"
+                    class="text-primary hover:text-primary/80 text-sm font-medium"
+                  >
+                    Ustaw domyślny
+                  </.link>
+                <% end %>
+                <.link
+                  href={~p"/profil-firmy/#{profile.id}/edycja"}
+                  class="text-base-content/60 hover:text-base-content text-sm font-medium"
+                >
+                  Edytuj
+                </.link>
+                <.link
+                  href={~p"/profil-firmy/#{profile.id}"}
+                  method="delete"
+                  data-confirm="Czy na pewno chcesz usunąć ten profil?"
+                  class="text-error hover:text-error/80 text-sm font-medium"
+                >
+                  Usuń
+                </.link>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="mt-8 text-center">
+      <a href={~p"/przetargi"} class="text-base-content/50 hover:text-base-content/70 text-sm">
+        ← Wróć do przetargów
+      </a>
+    </div>
+  </div>
+</Layouts.app>

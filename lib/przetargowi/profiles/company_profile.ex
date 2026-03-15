@@ -44,6 +44,9 @@ defmodule Przetargowi.Profiles.CompanyProfile do
     field :bank_name, :string
     field :bank_account, :string
 
+    # Profile settings
+    field :is_primary, :boolean, default: false
+
     belongs_to :user, User
 
     timestamps(type: :utc_datetime)
@@ -84,7 +87,8 @@ defmodule Przetargowi.Profiles.CompanyProfile do
       :msp_status,
       :capital_group_members,
       :bank_name,
-      :bank_account
+      :bank_account,
+      :is_primary
     ])
     |> cast_embed(:representatives)
     |> validate_required([
@@ -106,7 +110,9 @@ defmodule Przetargowi.Profiles.CompanyProfile do
     |> validate_krs()
     |> validate_postal_code()
     |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/, message: "nieprawidłowy format email")
-    |> validate_format(:phone, ~r/^[+]?[\d\s\-()]{9,20}$/, message: "nieprawidłowy format telefonu")
+    |> validate_format(:phone, ~r/^[+]?[\d\s\-()]{9,20}$/,
+      message: "nieprawidłowy format telefonu"
+    )
     |> validate_inclusion(:legal_form, @legal_forms)
     |> validate_inclusion(:msp_status, @msp_statuses)
     |> unique_constraint(:nip)
@@ -137,7 +143,8 @@ defmodule Przetargowi.Profiles.CompanyProfile do
       :msp_status,
       :capital_group_members,
       :bank_name,
-      :bank_account
+      :bank_account,
+      :is_primary
     ])
     |> cast_embed(:representatives)
     |> validate_required([
@@ -158,7 +165,9 @@ defmodule Przetargowi.Profiles.CompanyProfile do
     |> validate_krs()
     |> validate_postal_code()
     |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/, message: "nieprawidłowy format email")
-    |> validate_format(:phone, ~r/^[+]?[\d\s\-()]{9,20}$/, message: "nieprawidłowy format telefonu")
+    |> validate_format(:phone, ~r/^[+]?[\d\s\-()]{9,20}$/,
+      message: "nieprawidłowy format telefonu"
+    )
     |> validate_inclusion(:legal_form, @legal_forms)
     |> validate_inclusion(:msp_status, @msp_statuses)
     |> unique_constraint(:nip)
@@ -303,5 +312,4 @@ defmodule Przetargowi.Profiles.CompanyProfile do
       message: "musi być w formacie XX-XXX"
     )
   end
-
 end

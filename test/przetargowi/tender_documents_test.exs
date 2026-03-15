@@ -14,7 +14,10 @@ defmodule Przetargowi.TenderDocumentsTest do
     end
 
     test "classifies oświadczenie art. 125" do
-      assert TenderDocuments.classify_document("Oświadczenie art. 125 ust. 1", "oswiadczenie.docx") ==
+      assert TenderDocuments.classify_document(
+               "Oświadczenie art. 125 ust. 1",
+               "oswiadczenie.docx"
+             ) ==
                :declaration_art125
 
       assert TenderDocuments.classify_document("Oświadczenie z art.125", "zal.docx") ==
@@ -58,7 +61,9 @@ defmodule Przetargowi.TenderDocumentsTest do
 
     test "classifies umowa" do
       assert TenderDocuments.classify_document("Wzór umowy", "umowa.pdf") == :contract_template
-      assert TenderDocuments.classify_document("Projekt umowy", "projekt.pdf") == :contract_template
+
+      assert TenderDocuments.classify_document("Projekt umowy", "projekt.pdf") ==
+               :contract_template
     end
 
     test "classifies zmiana/modyfikacja" do

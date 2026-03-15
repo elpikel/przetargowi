@@ -1,0 +1,134 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <.link
+        href={~p"/przetargi/#{@tender.slug}"}
+        class="text-base-content/50 hover:text-base-content/70 text-sm"
+      >
+        ← Wróć do przetargu
+      </.link>
+    </div>
+
+    <h1 class="text-2xl font-display font-bold text-base-content mb-2">Wypełnij dokumenty</h1>
+    <p class="text-base-content/60 mb-8 line-clamp-2">{@tender.order_object}</p>
+
+    <%= if @documents == [] do %>
+      <div class="card-elevated p-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-warning/10 flex items-center justify-center">
+          <.icon name="hero-document-text" class="size-8 text-warning" />
+        </div>
+        <p class="text-base-content/60 mb-4">Brak dokumentów do wypełnienia.</p>
+        <p class="text-sm text-base-content/50">
+          Ten przetarg nie zawiera dokumentów, które można automatycznie wypełnić (formularzy ofertowych, oświadczeń itp.).
+        </p>
+      </div>
+    <% else %>
+      <.form
+        for={%{}}
+        action={~p"/przetargi/#{@tender.slug}/wypelnij"}
+        method="post"
+        class="space-y-8"
+      >
+        <%!-- Profile Selection --%>
+        <div class="card-elevated p-6">
+          <h2 class="text-lg font-semibold text-base-content mb-4">Wybierz profil firmy</h2>
+          <div class="space-y-3">
+            <%= for profile <- @profiles do %>
+              <label class="flex items-start gap-3 p-4 rounded-lg border border-base-300 hover:border-primary cursor-pointer transition-colors">
+                <input
+                  type="radio"
+                  name="profile_id"
+                  value={profile.id}
+                  checked={profile.id == @selected_profile_id}
+                  class="radio radio-primary mt-1"
+                />
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-base-content">{profile.company_name}</span>
+                    <%= if profile.is_primary do %>
+                      <span class="badge badge-primary badge-sm">Domyślny</span>
+                    <% end %>
+                  </div>
+                  <div class="text-sm text-base-content/60 mt-1">
+                    NIP: {profile.nip} • {format_legal_form(profile.legal_form)}
+                  </div>
+                </div>
+              </label>
+            <% end %>
+          </div>
+          <div class="mt-4">
+            <.link
+              href={~p"/profil-firmy/nowy"}
+              class="text-primary hover:text-primary/80 text-sm"
+            >
+              + Dodaj nowy profil
+            </.link>
+          </div>
+        </div>
+
+        <%!-- Document Selection --%>
+        <div class="card-elevated p-6">
+          <h2 class="text-lg font-semibold text-base-content mb-4">
+            Wybierz dokumenty do wypełnienia
+          </h2>
+          <p class="text-sm text-base-content/60 mb-4">
+            Wybierz dokumenty, które chcesz automatycznie wypełnić danymi z profilu firmy.
+            Obsługiwane są pliki .doc i .docx.
+          </p>
+          <div class="space-y-3">
+            <%= for doc <- @documents do %>
+              <label class="flex items-start gap-3 p-4 rounded-lg border border-base-300 hover:border-primary cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  name="document_ids[]"
+                  value={doc.object_id}
+                  checked
+                  class="checkbox checkbox-primary mt-1"
+                />
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-base-content">{doc.name}</span>
+                    <span class={"badge badge-sm #{fillable_badge_class(doc.file_name)}"}>
+                      {document_type_badge(doc.file_name)}
+                    </span>
+                  </div>
+                  <div class="text-sm text-base-content/60 mt-1">
+                    {doc.file_name}
+                  </div>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <%!-- Info Box --%>
+        <div class="p-4 rounded-xl bg-info/10 border border-info/20">
+          <div class="flex items-start gap-3">
+            <.icon name="hero-information-circle" class="size-5 text-info flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-base-content/80">
+              <p class="font-medium mb-1">Jak to działa?</p>
+              <ul class="list-disc list-inside space-y-1 text-base-content/60">
+                <li>System pobierze wybrane dokumenty</li>
+                <li>Automatycznie wypełni pola z danymi firmy (NIP, adres, etc.)</li>
+                <li>Pobierzesz archiwum ZIP z wypełnionymi dokumentami</li>
+                <li>
+                  Sprawdź dokumenty przed wysłaniem - niektóre pola mogą wymagać ręcznego uzupełnienia
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <%!-- Submit Button --%>
+        <div class="flex justify-end gap-4">
+          <.link href={~p"/przetargi/#{@tender.slug}"} class="btn btn-ghost">
+            Anuluj
+          </.link>
+          <button type="submit" class="btn btn-primary">
+            <.icon name="hero-document-arrow-down" class="size-4 mr-2" /> Wypełnij i pobierz
+          </button>
+        </div>
+      </.form>
+    <% end %>
+  </div>
+</Layouts.app>

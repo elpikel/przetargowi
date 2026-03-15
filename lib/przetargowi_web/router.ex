@@ -99,6 +99,20 @@ defmodule PrzetargowiWeb.Router do
     get "/alerty", AlertController, :index
     post "/alerty", AlertController, :create
     delete "/alerty/:id", AlertController, :delete
+
+    # Company profiles
+    get "/profil-firmy", ProfileController, :index
+    get "/profil-firmy/nowy", ProfileController, :new
+    post "/profil-firmy", ProfileController, :create
+    get "/profil-firmy/:id/edycja", ProfileController, :edit
+    put "/profil-firmy/:id", ProfileController, :update
+    patch "/profil-firmy/:id", ProfileController, :update
+    delete "/profil-firmy/:id", ProfileController, :delete
+    post "/profil-firmy/:id/ustaw-domyslny", ProfileController, :set_primary
+
+    # Document filling
+    get "/przetargi/:slug/wypelnij", DocumentFillController, :show
+    post "/przetargi/:slug/wypelnij", DocumentFillController, :create
   end
 
   # Webhook endpoints (no CSRF protection)

@@ -252,4 +252,15 @@ defmodule PrzetargowiWeb.TenderHTML do
   end
 
   def group_kryteria_by_part(_), do: []
+
+  @doc """
+  Checks if any of the provided documents are fillable (.doc or .docx).
+  """
+  def has_fillable_documents?(documents) when is_list(documents) do
+    Enum.any?(documents, fn doc ->
+      Przetargowi.TenderDocuments.fillable?(doc.name, doc.file_name)
+    end)
+  end
+
+  def has_fillable_documents?(_), do: false
 end

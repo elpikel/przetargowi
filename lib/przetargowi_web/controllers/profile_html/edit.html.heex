@@ -1,0 +1,33 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <.link
+        href={~p"/profil-firmy"}
+        class="text-base-content/50 hover:text-base-content/70 text-sm"
+      >
+        ← Wróć do listy profili
+      </.link>
+    </div>
+
+    <h1 class="text-3xl font-display font-bold text-base-content mb-8">Edytuj profil firmy</h1>
+
+    <.form
+      :let={f}
+      for={@changeset}
+      action={~p"/profil-firmy/#{@profile.id}"}
+      method="put"
+      class="space-y-8"
+    >
+      <.profile_form form={f} />
+
+      <div class="flex justify-end gap-4">
+        <.link href={~p"/profil-firmy"} class="btn btn-ghost">
+          Anuluj
+        </.link>
+        <button type="submit" class="btn btn-primary">
+          Zapisz zmiany
+        </button>
+      </div>
+    </.form>
+  </div>
+</Layouts.app>

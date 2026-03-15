@@ -76,7 +76,7 @@ config :phoenix, :json_library, Jason
 # Configure Oban
 config :przetargowi, Oban,
   repo: Przetargowi.Repo,
-  queues: [default: 10, uzp_sync: 1, embeddings: 1, tenders: 1],
+  queues: [default: 10, uzp_sync: 1, embeddings: 1, tenders: 1, documents: 1],
   plugins: [
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
@@ -84,6 +84,8 @@ config :przetargowi, Oban,
        {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}},
        # Fetch tenders daily at 7 AM
        {"0 7 * * *", Przetargowi.Workers.FetchTendersNotices, args: %{days: 60}},
+       # Download tender documents at 7:30 AM (after tenders are fetched)
+       {"30 7 * * *", Przetargowi.Workers.DownloadTenderDocuments, args: %{limit: 100}},
        # Generate monthly reports on 1st of each month at 2 AM
        {"0 2 1 * *", Przetargowi.Workers.GenerateMonthlyReports, args: %{}},
        # Send alerts daily at 8 AM

@@ -379,4 +379,57 @@ defmodule Przetargowi.Tenders do
     |> limit(^limit)
     |> Repo.all()
   end
+
+  @doc """
+  Gets fillable documents that haven't been downloaded yet.
+  Used by the document download worker.
+  """
+  def get_documents_to_download(limit \\ 50) do
+    TenderDocument
+    |> from(as: :doc)
+    |> where([doc: d], is_nil(d.content) and is_nil(d.download_error))
+    |> where([doc: d], like(d.file_name, "%.docx") or like(d.file_name, "%.doc"))
+    |> order_by([doc: d], asc: d.inserted_at)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates a document with downloaded content.
+  """
+  def update_document_content(document, content) when is_binary(content) do
+    document
+    |> TenderDocument.download_changeset(%{
+      content: content,
+      downloaded_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      download_error: nil
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Marks a document download as failed.
+  """
+  def mark_document_download_failed(document, error) do
+    error_string =
+      case error do
+        e when is_binary(e) -> e
+        e when is_atom(e) -> Atom.to_string(e)
+        e -> inspect(e)
+      end
+
+    document
+    |> TenderDocument.download_changeset(%{
+      download_error: error_string,
+      downloaded_at: nil
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Gets a document by object_id.
+  """
+  def get_document(object_id) do
+    Repo.get(TenderDocument, object_id)
+  end
 end

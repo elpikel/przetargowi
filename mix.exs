@@ -71,6 +71,7 @@ defmodule Przetargowi.MixProject do
       {:floki, "~> 0.36"},
       {:pgvector, "~> 0.3"},
       {:mox, "~> 1.1", only: :test},
+      {:bypass, "~> 2.1", only: :test},
       {:stripity_stripe, "~> 3.2"}
     ]
   end

@@ -1,0 +1,382 @@
+<%!-- Identity Section --%>
+<div class="card-elevated p-6">
+  <h2 class="text-lg font-semibold text-base-content mb-4">Dane identyfikacyjne</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="md:col-span-2">
+      <label
+        for={@form[:company_name].id}
+        class="block text-sm font-medium text-base-content mb-2"
+      >
+        Nazwa firmy *
+      </label>
+      <input
+        type="text"
+        id={@form[:company_name].id}
+        name={@form[:company_name].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:company_name].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="Nazwa Sp. z o.o."
+      />
+      <%= for msg <- Enum.map(@form[:company_name].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label
+        for={@form[:company_short_name].id}
+        class="block text-sm font-medium text-base-content mb-2"
+      >
+        Nazwa skrócona
+      </label>
+      <input
+        type="text"
+        id={@form[:company_short_name].id}
+        name={@form[:company_short_name].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:company_short_name].value)}
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="Nazwa"
+      />
+    </div>
+
+    <div>
+      <label for={@form[:legal_form].id} class="block text-sm font-medium text-base-content mb-2">
+        Forma prawna *
+      </label>
+      <select
+        id={@form[:legal_form].id}
+        name={@form[:legal_form].name}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+      >
+        <option value="">Wybierz...</option>
+        <%= for {value, label} <- legal_form_options() do %>
+          <option value={value} selected={to_string(@form[:legal_form].value) == to_string(value)}>
+            {label}
+          </option>
+        <% end %>
+      </select>
+      <%= for msg <- Enum.map(@form[:legal_form].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:nip].id} class="block text-sm font-medium text-base-content mb-2">
+        NIP *
+      </label>
+      <input
+        type="text"
+        id={@form[:nip].id}
+        name={@form[:nip].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:nip].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="1234567890"
+      />
+      <%= for msg <- Enum.map(@form[:nip].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:regon].id} class="block text-sm font-medium text-base-content mb-2">
+        REGON *
+      </label>
+      <input
+        type="text"
+        id={@form[:regon].id}
+        name={@form[:regon].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:regon].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="123456789"
+      />
+      <%= for msg <- Enum.map(@form[:regon].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:krs].id} class="block text-sm font-medium text-base-content mb-2">
+        KRS
+      </label>
+      <input
+        type="text"
+        id={@form[:krs].id}
+        name={@form[:krs].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:krs].value)}
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="0000123456"
+      />
+      <%= for msg <- Enum.map(@form[:krs].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%!-- Address Section --%>
+<div class="card-elevated p-6">
+  <h2 class="text-lg font-semibold text-base-content mb-4">Adres siedziby</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="md:col-span-2">
+      <label for={@form[:street].id} class="block text-sm font-medium text-base-content mb-2">
+        Ulica i numer *
+      </label>
+      <input
+        type="text"
+        id={@form[:street].id}
+        name={@form[:street].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:street].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="ul. Przykładowa 1/2"
+      />
+      <%= for msg <- Enum.map(@form[:street].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:postal_code].id} class="block text-sm font-medium text-base-content mb-2">
+        Kod pocztowy *
+      </label>
+      <input
+        type="text"
+        id={@form[:postal_code].id}
+        name={@form[:postal_code].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:postal_code].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="00-001"
+      />
+      <%= for msg <- Enum.map(@form[:postal_code].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:city].id} class="block text-sm font-medium text-base-content mb-2">
+        Miejscowość *
+      </label>
+      <input
+        type="text"
+        id={@form[:city].id}
+        name={@form[:city].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:city].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="Warszawa"
+      />
+      <%= for msg <- Enum.map(@form[:city].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:voivodeship].id} class="block text-sm font-medium text-base-content mb-2">
+        Województwo *
+      </label>
+      <select
+        id={@form[:voivodeship].id}
+        name={@form[:voivodeship].name}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+      >
+        <option value="">Wybierz...</option>
+        <%= for {value, label} <- voivodeship_options() do %>
+          <option value={value} selected={@form[:voivodeship].value == value}>
+            {label}
+          </option>
+        <% end %>
+      </select>
+      <%= for msg <- Enum.map(@form[:voivodeship].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%!-- Contact Section --%>
+<div class="card-elevated p-6">
+  <h2 class="text-lg font-semibold text-base-content mb-4">Dane kontaktowe</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label for={@form[:email].id} class="block text-sm font-medium text-base-content mb-2">
+        E-mail *
+      </label>
+      <input
+        type="email"
+        id={@form[:email].id}
+        name={@form[:email].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:email].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="firma@example.com"
+      />
+      <%= for msg <- Enum.map(@form[:email].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:phone].id} class="block text-sm font-medium text-base-content mb-2">
+        Telefon *
+      </label>
+      <input
+        type="tel"
+        id={@form[:phone].id}
+        name={@form[:phone].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:phone].value)}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="+48 123 456 789"
+      />
+      <%= for msg <- Enum.map(@form[:phone].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:website].id} class="block text-sm font-medium text-base-content mb-2">
+        Strona WWW
+      </label>
+      <input
+        type="url"
+        id={@form[:website].id}
+        name={@form[:website].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:website].value)}
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="https://example.com"
+      />
+    </div>
+
+    <div>
+      <label
+        for={@form[:epuap_address].id}
+        class="block text-sm font-medium text-base-content mb-2"
+      >
+        Adres ePUAP
+      </label>
+      <input
+        type="text"
+        id={@form[:epuap_address].id}
+        name={@form[:epuap_address].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:epuap_address].value)}
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="/firma/SkrsytkaESP"
+      />
+    </div>
+  </div>
+</div>
+
+<%!-- Procurement Section --%>
+<div class="card-elevated p-6">
+  <h2 class="text-lg font-semibold text-base-content mb-4">Dane zamówień publicznych</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label for={@form[:msp_status].id} class="block text-sm font-medium text-base-content mb-2">
+        Status MSP *
+      </label>
+      <select
+        id={@form[:msp_status].id}
+        name={@form[:msp_status].name}
+        required
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+      >
+        <option value="">Wybierz...</option>
+        <%= for {value, label} <- msp_status_options() do %>
+          <option value={value} selected={to_string(@form[:msp_status].value) == to_string(value)}>
+            {label}
+          </option>
+        <% end %>
+      </select>
+      <%= for msg <- Enum.map(@form[:msp_status].errors, &translate_error/1) do %>
+        <p class="mt-1 text-sm text-error">{msg}</p>
+      <% end %>
+    </div>
+
+    <div>
+      <label for={@form[:bank_name].id} class="block text-sm font-medium text-base-content mb-2">
+        Nazwa banku
+      </label>
+      <input
+        type="text"
+        id={@form[:bank_name].id}
+        name={@form[:bank_name].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:bank_name].value)}
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="Bank S.A."
+      />
+    </div>
+
+    <div class="md:col-span-2">
+      <label
+        for={@form[:bank_account].id}
+        class="block text-sm font-medium text-base-content mb-2"
+      >
+        Numer rachunku bankowego
+      </label>
+      <input
+        type="text"
+        id={@form[:bank_account].id}
+        name={@form[:bank_account].name}
+        value={Phoenix.HTML.Form.normalize_value("text", @form[:bank_account].value)}
+        class="search-input w-full px-4 py-3 rounded-lg text-base"
+        placeholder="PL 00 0000 0000 0000 0000 0000 0000"
+      />
+    </div>
+  </div>
+</div>
+
+<%!-- Representatives Section --%>
+<div class="card-elevated p-6">
+  <h2 class="text-lg font-semibold text-base-content mb-4">Osoby reprezentujące</h2>
+  <p class="text-sm text-base-content/60 mb-4">
+    Osoby upoważnione do reprezentowania firmy w postępowaniach przetargowych.
+  </p>
+
+  <div id="representatives-container" class="space-y-4" phx-update="ignore">
+    <div class="representative-entry grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-base-200/50 rounded-lg">
+      <div>
+        <label class="block text-sm font-medium text-base-content mb-2">
+          Imię i nazwisko
+        </label>
+        <input
+          type="text"
+          name="company_profile[representatives][0][full_name]"
+          class="search-input w-full px-4 py-3 rounded-lg text-base"
+          placeholder="Jan Kowalski"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-base-content mb-2">
+          Stanowisko
+        </label>
+        <input
+          type="text"
+          name="company_profile[representatives][0][position]"
+          class="search-input w-full px-4 py-3 rounded-lg text-base"
+          placeholder="Prezes Zarządu"
+        />
+      </div>
+      <div class="flex items-end">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            name="company_profile[representatives][0][is_primary]"
+            value="true"
+            class="checkbox checkbox-primary"
+          />
+          <span class="text-sm">Główny przedstawiciel</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-xs text-base-content/50 mt-4">
+    Możesz dodać więcej przedstawicieli po utworzeniu profilu.
+  </p>
+</div>
