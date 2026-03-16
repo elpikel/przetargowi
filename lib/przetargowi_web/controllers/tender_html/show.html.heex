@@ -231,9 +231,7 @@
             <div class="space-y-3">
               <%= for doc <- @documents do %>
                 <a
-                  href={doc.url}
-                  target="_blank"
-                  rel="noopener"
+                  href={~p"/dokumenty/#{doc.object_id}"}
                   class="flex items-start gap-3 p-3 rounded-lg transition-all group"
                   style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
                   onmouseover="this.style.background='rgba(201, 162, 39, 0.18)'; this.style.borderColor='rgba(201, 162, 39, 0.4)';"
@@ -252,7 +250,7 @@
                     <p class="text-sm text-base-content/60 truncate">{doc.file_name}</p>
                   </div>
                   <.icon
-                    name="hero-arrow-top-right-on-square"
+                    name="hero-arrow-down-tray"
                     class="size-4 flex-shrink-0 mt-1 text-[#c9a227]"
                   />
                 </a>
@@ -260,15 +258,30 @@
             </div>
             <%= if has_fillable_documents?(@documents) do %>
               <div class="mt-4 pt-4 border-t border-base-300">
-                <.link
-                  href={~p"/przetargi/#{@tender.slug}/wypelnij"}
-                  class="btn btn-primary btn-sm gap-2"
-                >
-                  <.icon name="hero-pencil-square" class="size-4" /> Wypełnij dokumenty
-                </.link>
-                <p class="text-xs text-base-content/50 mt-2">
-                  Automatycznie wypełnij formularze danymi Twojej firmy
-                </p>
+                <%= if @current_scope do %>
+                  <.link
+                    href={~p"/przetargi/#{@tender.slug}/wypelnij"}
+                    class="btn btn-primary btn-sm gap-2"
+                  >
+                    <.icon name="hero-pencil-square" class="size-4" /> Wypełnij dokumenty
+                  </.link>
+                  <p class="text-xs text-base-content/50 mt-2">
+                    Automatycznie wypełnij formularze danymi Twojej firmy
+                  </p>
+                <% else %>
+                  <.link
+                    href={~p"/rejestracja"}
+                    class="btn btn-primary btn-sm gap-2"
+                  >
+                    <.icon name="hero-pencil-square" class="size-4" /> Wypełnij dokumenty
+                  </.link>
+                  <p class="text-xs text-base-content/50 mt-2">
+                    <.link href={~p"/rejestracja"} class="text-primary hover:underline">
+                      Zarejestruj się
+                    </.link>
+                    aby automatycznie wypełnić formularze danymi firmy
+                  </p>
+                <% end %>
               </div>
             <% end %>
           </div>

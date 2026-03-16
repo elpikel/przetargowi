@@ -560,7 +560,12 @@ defmodule Przetargowi.DocumentFillerTest do
       docx = DocxTestHelper.create_docx(["Test: [nip]"])
 
       docs = [
-        %{content: docx, file_name: "with_content.docx", name: "With Content", url: "https://x.com/1"},
+        %{
+          content: docx,
+          file_name: "with_content.docx",
+          name: "With Content",
+          url: "https://x.com/1"
+        },
         # This will fail because URL is fake
         %{content: nil, file_name: "no_content.docx", name: "No Content", url: "https://x.com/2"}
       ]

@@ -32,6 +32,9 @@ defmodule PrzetargowiWeb.Router do
     get "/przetargi", TenderController, :index
     get "/przetargi/:slug", TenderController, :show
 
+    # Document download
+    get "/dokumenty/:id", DocumentController, :download
+
     # Reports
     get "/raporty", ReportController, :index
     get "/raporty/:slug", ReportController, :show
