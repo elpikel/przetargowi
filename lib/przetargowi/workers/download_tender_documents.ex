@@ -1,7 +1,7 @@
 defmodule Przetargowi.Workers.DownloadTenderDocuments do
   @moduledoc """
   Oban worker for downloading tender document content from e-Zamówienia platform.
-  Downloads fillable documents (DOCX/DOC) and stores their binary content in the database.
+  Downloads all documents and stores their binary content in the database.
 
   ## Usage
 
@@ -77,14 +77,17 @@ defmodule Przetargowi.Workers.DownloadTenderDocuments do
 
     case Req.get(url, opts) do
       {:ok, %{status: 200, body: body}} when is_binary(body) ->
-        if String.starts_with?(body, "PK") do
-          {:ok, body}
-        else
-          if String.contains?(body, "<!doctype html>") or String.contains?(body, "<html") do
+        cond do
+          # Check for HTML response (SPA redirect or error page)
+          String.contains?(body, "<!doctype html>") or String.contains?(body, "<html") ->
             {:error, :spa_redirect}
-          else
-            {:error, :invalid_document_format}
-          end
+
+          # Valid binary content
+          byte_size(body) > 0 ->
+            {:ok, body}
+
+          true ->
+            {:error, :empty_response}
         end
 
       {:ok, %{status: status}} ->

@@ -388,7 +388,6 @@ defmodule Przetargowi.Tenders do
     TenderDocument
     |> from(as: :doc)
     |> where([doc: d], is_nil(d.content) and is_nil(d.download_error))
-    |> where([doc: d], like(d.file_name, "%.docx") or like(d.file_name, "%.doc"))
     |> order_by([doc: d], asc: d.inserted_at)
     |> limit(^limit)
     |> Repo.all()

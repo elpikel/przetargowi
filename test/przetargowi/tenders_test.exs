@@ -35,15 +35,16 @@ defmodule Przetargowi.TendersTest do
       assert hd(docs).object_id == doc_without.object_id
     end
 
-    test "only returns DOCX or DOC files" do
-      _pdf = tender_document_fixture(file_name: "document.pdf")
+    test "returns all file types" do
+      pdf = tender_document_fixture(file_name: "document.pdf")
       docx = tender_document_fixture(file_name: "formularz.docx")
       doc = tender_document_fixture(file_name: "oswiadczenie.doc")
 
       docs = Tenders.get_documents_to_download(10)
 
-      assert length(docs) == 2
+      assert length(docs) == 3
       object_ids = Enum.map(docs, & &1.object_id)
+      assert pdf.object_id in object_ids
       assert docx.object_id in object_ids
       assert doc.object_id in object_ids
     end
