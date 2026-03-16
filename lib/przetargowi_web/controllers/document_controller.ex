@@ -9,15 +9,6 @@ defmodule PrzetargowiWeb.DocumentController do
   """
   def download(conn, %{"id" => object_id}) do
     case Tenders.get_document(object_id) do
-      nil ->
-        conn
-        |> put_status(:not_found)
-        |> put_view(html: PrzetargowiWeb.ErrorHTML)
-        |> render(:"404")
-
-      %{content: nil, url: url} when not is_nil(url) ->
-        redirect(conn, external: url)
-
       %{content: content, file_name: file_name} when not is_nil(content) ->
         content_type = get_content_type(file_name)
 
@@ -28,9 +19,6 @@ defmodule PrzetargowiWeb.DocumentController do
           ~s(attachment; filename="#{file_name}")
         )
         |> send_resp(200, content)
-
-      %{url: url} when not is_nil(url) ->
-        redirect(conn, external: url)
 
       _ ->
         conn
