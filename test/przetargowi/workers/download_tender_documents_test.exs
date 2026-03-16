@@ -24,13 +24,13 @@ defmodule Przetargowi.Workers.DownloadTenderDocumentsTest do
       assert updated.download_error != nil
     end
 
-    test "respects limit argument" do
+    test "respects batch_size argument" do
       for i <- 1..5 do
         tender_document_fixture(file_name: "doc#{i}.docx")
       end
 
-      # With limit 2, only 2 documents should be processed
-      assert :ok = perform_job(DownloadTenderDocuments, %{"limit" => 2})
+      # With batch_size 2, only 2 documents should be processed per batch
+      assert :ok = perform_job(DownloadTenderDocuments, %{"batch_size" => 2})
 
       # Check that some documents still don't have errors (weren't processed)
       docs_without_error =

@@ -1,22 +1,22 @@
 defmodule Przetargowi.Workers.DownloadTenderDocuments do
   @moduledoc """
   Oban worker for downloading tender document content from e-Zamówienia platform.
-  Downloads all documents and stores their binary content in the database.
+  Downloads all pending documents and stores their binary content in the database.
+
+  Automatically schedules next batch until all documents are downloaded.
 
   ## Usage
 
-      # Download up to 50 documents
+      # Start downloading all pending documents
       Przetargowi.Workers.DownloadTenderDocuments.new(%{}) |> Oban.insert()
 
-      # Download with custom limit
-      Przetargowi.Workers.DownloadTenderDocuments.new(%{limit: 100}) |> Oban.insert()
-
-  ## Arguments
-  - `limit` - Number of documents to process per run (defaults to 50)
+      # Custom batch size (default 50)
+      Przetargowi.Workers.DownloadTenderDocuments.new(%{batch_size: 100}) |> Oban.insert()
   """
   use Oban.Worker,
     queue: :documents,
-    max_attempts: 3
+    max_attempts: 3,
+    unique: [period: 60]
 
   alias Przetargowi.Tenders
 
@@ -24,21 +24,35 @@ defmodule Przetargowi.Workers.DownloadTenderDocuments do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    limit = args["limit"] || 50
+    batch_size = args["batch_size"] || 50
 
-    Logger.info("Starting tender document download for up to #{limit} documents")
+    documents = Tenders.get_documents_to_download(batch_size)
+    count = length(documents)
 
-    documents = Tenders.get_documents_to_download(limit)
+    if count == 0 do
+      Logger.info("No documents to download, all synced")
+      :ok
+    else
+      Logger.info("Downloading #{count} documents...")
 
-    Logger.info("Found #{length(documents)} documents to download")
+      Enum.each(documents, fn document ->
+        download_and_store(document)
+        Process.sleep(500)
+      end)
 
-    Enum.each(documents, fn document ->
-      download_and_store(document)
-      # Rate limiting to be nice to the server
-      Process.sleep(500)
-    end)
+      # Schedule next batch if we had a full batch (more might be waiting)
+      if count == batch_size do
+        Logger.info("Scheduling next batch...")
 
-    :ok
+        %{batch_size: batch_size}
+        |> __MODULE__.new(schedule_in: 5)
+        |> Oban.insert()
+      else
+        Logger.info("All documents downloaded")
+      end
+
+      :ok
+    end
   end
 
   defp download_and_store(document) do
