@@ -1,0 +1,38 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-sm py-16">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gradient mb-2">Zapomniałeś hasła?</h1>
+      <p class="text-base-content/60">
+        Podaj adres e-mail, a wyślemy Ci link do zresetowania hasła.
+      </p>
+    </div>
+
+    <.form for={%{}} action={~p"/zapomnialem-hasla"} class="space-y-4">
+      <div>
+        <label for="user_email" class="block text-sm font-medium text-base-content mb-2">
+          Email
+        </label>
+        <input
+          type="email"
+          id="user_email"
+          name="user[email]"
+          autocomplete="email"
+          required
+          phx-mounted={JS.focus()}
+          class="search-input w-full px-4 py-3 rounded-lg text-base"
+          placeholder="twoj@email.pl"
+        />
+      </div>
+
+      <button type="submit" class="btn-primary-solid w-full px-6 py-3 rounded-lg font-medium">
+        Wyślij link do resetowania hasła
+      </button>
+    </.form>
+
+    <div class="mt-6 text-center">
+      <.link navigate={~p"/logowanie"} class="text-sm text-primary hover:underline">
+        Wróć do logowania
+      </.link>
+    </div>
+  </div>
+</Layouts.app>

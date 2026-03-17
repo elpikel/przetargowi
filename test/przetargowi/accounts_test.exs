@@ -394,4 +394,95 @@ defmodule Przetargowi.AccountsTest do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
     end
   end
+
+  describe "deliver_password_reset_instructions/2" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "sends token through notification", %{user: user} do
+      token =
+        extract_user_token(fn url ->
+          Accounts.deliver_password_reset_instructions(user, url)
+        end)
+
+      {:ok, token} = Base.url_decode64(token, padding: false)
+      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      assert user_token.user_id == user.id
+      assert user_token.sent_to == user.email
+      assert user_token.context == "reset_password"
+    end
+  end
+
+  describe "get_user_by_reset_password_token/1" do
+    setup do
+      user = user_fixture()
+
+      token =
+        extract_user_token(fn url ->
+          Accounts.deliver_password_reset_instructions(user, url)
+        end)
+
+      %{user: user, token: token}
+    end
+
+    test "returns user by token", %{user: user, token: token} do
+      assert reset_user = Accounts.get_user_by_reset_password_token(token)
+      assert reset_user.id == user.id
+    end
+
+    test "does not return user for invalid token" do
+      refute Accounts.get_user_by_reset_password_token("oops")
+    end
+
+    test "does not return user for expired token", %{token: token} do
+      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
+      refute Accounts.get_user_by_reset_password_token(token)
+    end
+  end
+
+  describe "reset_user_password/2" do
+    setup do
+      %{user: user_fixture() |> set_password()}
+    end
+
+    test "validates password", %{user: user} do
+      {:error, changeset} =
+        Accounts.reset_user_password(user, %{
+          password: "short",
+          password_confirmation: "another"
+        })
+
+      assert %{
+               password: ["should be at least 6 character(s)"],
+               password_confirmation: ["hasła nie są zgodne"]
+             } = errors_on(changeset)
+    end
+
+    test "validates maximum values for password for security", %{user: user} do
+      too_long = String.duplicate("db", 100)
+
+      {:error, changeset} =
+        Accounts.reset_user_password(user, %{password: too_long})
+
+      assert "should be at most 72 character(s)" in errors_on(changeset).password
+    end
+
+    test "updates the password", %{user: user} do
+      {:ok, updated_user} =
+        Accounts.reset_user_password(user, %{password: "new valid password"})
+
+      assert is_nil(updated_user.password)
+      assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
+    end
+
+    test "deletes all tokens for the given user", %{user: user} do
+      _ = Accounts.generate_user_session_token(user)
+
+      {:ok, _} =
+        Accounts.reset_user_password(user, %{password: "new valid password"})
+
+      refute Repo.get_by(UserToken, user_id: user.id)
+    end
+  end
 end

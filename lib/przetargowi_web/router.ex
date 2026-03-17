@@ -80,6 +80,12 @@ defmodule PrzetargowiWeb.Router do
     get "/rejestracja", UserRegistrationController, :new
     post "/rejestracja", UserRegistrationController, :create
     get "/rejestracja/potwierdz/:token", UserRegistrationController, :confirm
+
+    # Password reset
+    get "/zapomnialem-hasla", UserPasswordResetController, :new
+    post "/zapomnialem-hasla", UserPasswordResetController, :create
+    get "/resetuj-haslo/:token", UserPasswordResetController, :edit
+    put "/resetuj-haslo/:token", UserPasswordResetController, :update
   end
 
   scope "/", PrzetargowiWeb do

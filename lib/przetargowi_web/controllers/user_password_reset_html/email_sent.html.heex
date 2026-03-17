@@ -1,0 +1,18 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-sm py-16">
+    <div class="text-center">
+      <div class="mb-6">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10">
+          <.icon name="hero-envelope" class="size-8 text-success" />
+        </div>
+      </div>
+      <h1 class="text-2xl font-bold text-gradient mb-4">Sprawdź swoją skrzynkę</h1>
+      <p class="text-base-content/60 mb-8">
+        Jeśli adres e-mail istnieje w naszym systemie, wyślemy na niego instrukcje resetowania hasła.
+      </p>
+      <.link navigate={~p"/logowanie"} class="btn-primary-solid px-6 py-3 rounded-lg font-medium">
+        Wróć do logowania
+      </.link>
+    </div>
+  </div>
+</Layouts.app>

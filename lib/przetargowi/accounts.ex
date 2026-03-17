@@ -291,6 +291,54 @@ defmodule Przetargowi.Accounts do
   end
 
   @doc """
+  Delivers the password reset instructions to the given user.
+  """
+  def deliver_password_reset_instructions(%User{} = user, reset_url_fun)
+      when is_function(reset_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "reset_password")
+    Repo.insert!(user_token)
+    UserNotifier.deliver_password_reset_instructions(user, reset_url_fun.(encoded_token))
+  end
+
+  @doc """
+  Gets the user by reset password token.
+  """
+  def get_user_by_reset_password_token(token) do
+    with {:ok, query} <- UserToken.verify_reset_password_token_query(token),
+         %User{} = user <- Repo.one(query) do
+      user
+    else
+      _ -> nil
+    end
+  end
+
+  @doc """
+  Resets the user password.
+
+  ## Examples
+
+      iex> reset_user_password(user, %{password: "new password"})
+      {:ok, %User{}}
+
+      iex> reset_user_password(user, %{password: "short"})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def reset_user_password(user, attrs) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
+    |> Ecto.Multi.delete_all(
+      :tokens,
+      from(t in UserToken, where: t.user_id == ^user.id)
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{user: user}} -> {:ok, user}
+      {:error, :user, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  @doc """
   Confirms a user by the given token.
 
   If the token matches, the user account is marked as confirmed

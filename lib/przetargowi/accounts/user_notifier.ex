@@ -221,4 +221,40 @@ defmodule Przetargowi.Accounts.UserNotifier do
     html_body = email_layout(html_content, "Aktywuj konto", url)
     deliver(user.email, "Potwierdź swoje konto w Przetargowi", text_body, html_body)
   end
+
+  @doc """
+  Deliver instructions to reset password.
+  """
+  def deliver_password_reset_instructions(user, url) do
+    text_body = """
+    Cześć,
+
+    Otrzymaliśmy prośbę o zresetowanie hasła dla Twojego konta Przetargowi.
+
+    Aby ustawić nowe hasło, kliknij w poniższy link:
+    #{url}
+
+    Link jest ważny przez 1 godzinę.
+
+    Jeśli nie prosiłeś o reset hasła, zignoruj tę wiadomość.
+
+    Pozdrawiamy,
+    Zespół Przetargowi
+    """
+
+    html_content = """
+    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #0a1628;">
+      Reset hasła
+    </h1>
+    <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
+      Cześć,
+    </p>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #2a3a4a;">
+      Otrzymaliśmy prośbę o zresetowanie hasła dla Twojego konta. Kliknij przycisk poniżej, aby ustawić nowe hasło. Link jest ważny przez 1 godzinę.
+    </p>
+    """
+
+    html_body = email_layout(html_content, "Ustaw nowe hasło", url)
+    deliver(user.email, "Reset hasła w Przetargowi", text_body, html_body)
+  end
 end
