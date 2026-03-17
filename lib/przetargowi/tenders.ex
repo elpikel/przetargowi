@@ -431,4 +431,41 @@ defmodule Przetargowi.Tenders do
   def get_document(object_id) do
     Repo.get(TenderDocument, object_id)
   end
+
+  @doc """
+  Resets download errors for all failed documents so they can be retried.
+  Returns the number of documents reset.
+  """
+  def reset_failed_document_downloads do
+    {count, _} =
+      TenderDocument
+      |> from(as: :doc)
+      |> where([doc: d], not is_nil(d.download_error))
+      |> Repo.update_all(set: [download_error: nil, downloaded_at: nil])
+
+    count
+  end
+
+  @doc """
+  Returns count of documents by status.
+  """
+  def document_download_stats do
+    total =
+      TenderDocument
+      |> Repo.aggregate(:count)
+
+    downloaded =
+      TenderDocument
+      |> where([d], not is_nil(d.content))
+      |> Repo.aggregate(:count)
+
+    failed =
+      TenderDocument
+      |> where([d], not is_nil(d.download_error))
+      |> Repo.aggregate(:count)
+
+    pending = total - downloaded - failed
+
+    %{total: total, downloaded: downloaded, failed: failed, pending: pending}
+  end
 end
