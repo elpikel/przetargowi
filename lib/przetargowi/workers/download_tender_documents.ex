@@ -55,10 +55,14 @@ defmodule Przetargowi.Workers.DownloadTenderDocuments do
     end
   end
 
+  @download_base_url "https://ezamowienia.gov.pl/mp-client/tenderDocuments/download"
+
   defp download_and_store(document) do
     Logger.info("Downloading document #{document.object_id}: #{document.file_name}")
 
-    case download_document(document.url) do
+    download_url = "#{@download_base_url}/#{document.object_id}"
+
+    case download_document(download_url) do
       {:ok, content} ->
         case Tenders.update_document_content(document, content) do
           {:ok, _} ->
