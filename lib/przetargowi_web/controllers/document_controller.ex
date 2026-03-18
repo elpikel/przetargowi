@@ -20,6 +20,10 @@ defmodule PrzetargowiWeb.DocumentController do
         )
         |> send_resp(200, content)
 
+      %{url: url} when not is_nil(url) ->
+        # Content not downloaded yet, redirect to external URL
+        redirect(conn, external: url)
+
       _ ->
         conn
         |> put_status(:not_found)
