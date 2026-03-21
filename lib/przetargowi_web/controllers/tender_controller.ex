@@ -31,10 +31,10 @@ defmodule PrzetargowiWeb.TenderController do
     {can_create_alert, is_premium} = get_alert_permissions(conn)
 
     conn
-    |> assign(:page_title, "Przetargi publiczne")
+    |> assign(:page_title, "Aktualne przetargi publiczne — wyszukiwarka przetargów")
     |> assign(
       :meta_description,
-      "Aktualne przetargi publiczne z Biuletynu Zamówień Publicznych. Przeglądaj #{result.total_count} aktywnych ogłoszeń."
+      "Wyszukiwarka przetargów publicznych — #{result.total_count} aktualnych ogłoszeń o przetargach z BZP. Przeglądaj oferty przetargowe i składaj wnioski."
     )
     |> assign(:canonical_url, "https://przetargowi.pl/przetargi")
     |> render(:index,
@@ -133,7 +133,7 @@ defmodule PrzetargowiWeb.TenderController do
 
       tender ->
         is_expired =
-          tender.submitting_offers_date &&
+          tender.submitting_offers_date != nil &&
             DateTime.before?(tender.submitting_offers_date, DateTime.utc_now())
 
         # Get related contract notice if this is not a ContractNotice

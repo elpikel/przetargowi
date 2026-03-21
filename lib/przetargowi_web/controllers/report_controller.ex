@@ -24,9 +24,13 @@ defmodule PrzetargowiWeb.ReportController do
     |> assign(:page_title, "Raporty przetargowe")
     |> assign(
       :meta_description,
-      "Analizy i raporty rynku zamówień publicznych w Polsce. Statystyki przetargów według regionów i branż."
+      "#{result.total_count} raportów i analiz rynku zamówień publicznych w Polsce. Statystyki przetargów według regionów i branż."
     )
     |> assign(:canonical_url, "https://przetargowi.pl/raporty")
+    |> assign(:breadcrumbs, [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Raporty", url: "https://przetargowi.pl/raporty"}
+    ])
     |> render(:index,
       reports: result.reports,
       total_count: result.total_count,
@@ -80,9 +84,14 @@ defmodule PrzetargowiWeb.ReportController do
     |> assign(:page_title, "Raporty #{region_name}")
     |> assign(
       :meta_description,
-      "Raporty i analizy przetargów w województwie #{region_name}."
+      "#{result.total_count} raportów i analiz przetargów w województwie #{region_name}. Statystyki zamówień publicznych."
     )
     |> assign(:canonical_url, "https://przetargowi.pl/raporty/#{region}")
+    |> assign(:breadcrumbs, [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Raporty", url: "https://przetargowi.pl/raporty"},
+      %{name: "Woj. #{region_name}", url: "https://przetargowi.pl/raporty/#{region}"}
+    ])
     |> render(:index,
       reports: result.reports,
       total_count: result.total_count,
@@ -102,12 +111,17 @@ defmodule PrzetargowiWeb.ReportController do
 
       report ->
         canonical_url = "https://przetargowi.pl/raporty/#{report.slug}"
+        meta_description = build_report_meta_description(report)
 
         conn
         |> assign(:page_title, report.title)
-        |> assign(:meta_description, report.meta_description || "Raport: #{report.title}")
+        |> assign(:meta_description, meta_description)
         |> assign(:canonical_url, canonical_url)
         |> assign(:og_url, canonical_url)
+        |> assign(:og_image, report.cover_image_url)
+        |> assign(:og_type, "article")
+        |> assign(:breadcrumbs, build_report_breadcrumbs(report))
+        |> assign(:article_json_ld, build_article_json_ld(report, canonical_url))
         |> render(:show, report: report)
     end
   end
@@ -122,4 +136,87 @@ defmodule PrzetargowiWeb.ReportController do
   end
 
   defp parse_page(_), do: 1
+
+  defp build_report_meta_description(report) do
+    if report.meta_description do
+      report.meta_description
+    else
+      base = "Raport: #{report.title}"
+
+      region_part =
+        if report.region do
+          region_name = Map.get(@region_names, report.region, report.region)
+          " | Woj. #{region_name}"
+        else
+          ""
+        end
+
+      month_part =
+        if report.report_month do
+          " | #{format_month(report.report_month)}"
+        else
+          ""
+        end
+
+      String.slice(base <> region_part <> month_part, 0, 160)
+    end
+  end
+
+  defp format_month(date) do
+    months =
+      ~w(styczeń luty marzec kwiecień maj czerwiec lipiec sierpień wrzesień październik listopad grudzień)
+
+    month_name = Enum.at(months, date.month - 1)
+    "#{month_name} #{date.year}"
+  end
+
+  defp build_report_breadcrumbs(report) do
+    base = [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Raporty", url: "https://przetargowi.pl/raporty"}
+    ]
+
+    region_crumb =
+      if report.region do
+        region_name = Map.get(@region_names, report.region, report.region)
+
+        [
+          %{
+            name: "Woj. #{region_name}",
+            url: "https://przetargowi.pl/raporty/#{report.region}"
+          }
+        ]
+      else
+        []
+      end
+
+    base ++
+      region_crumb ++
+      [%{name: report.title, url: "https://przetargowi.pl/raporty/#{report.slug}"}]
+  end
+
+  defp build_article_json_ld(report, canonical_url) do
+    %{
+      "@context" => "https://schema.org",
+      "@type" => "Article",
+      "headline" => report.title,
+      "description" => report.meta_description || "Raport: #{report.title}",
+      "url" => canonical_url,
+      "datePublished" => Date.to_iso8601(report.inserted_at),
+      "dateModified" => Date.to_iso8601(report.updated_at),
+      "publisher" => %{
+        "@type" => "Organization",
+        "name" => "Przetargowi.pl",
+        "url" => "https://przetargowi.pl"
+      },
+      "author" => %{
+        "@type" => "Organization",
+        "name" => "Przetargowi.pl"
+      }
+    }
+    |> maybe_add_image(report.cover_image_url)
+  end
+
+  defp maybe_add_image(json_ld, nil), do: json_ld
+  defp maybe_add_image(json_ld, url), do: Map.put(json_ld, "image", url)
 end

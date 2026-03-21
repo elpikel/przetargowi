@@ -59,9 +59,12 @@ defmodule PrzetargowiWeb.SearchController do
     conn
     |> assign(
       :page_title,
-      if(query != "", do: "Orzeczenia KIO: #{query}", else: "Orzeczenia KIO")
+      if(query != "",
+        do: "Orzeczenia KIO: #{query}",
+        else: "Orzeczenia KIO — wyszukiwarka orzeczeń UZP"
+      )
     )
-    |> assign(:meta_description, build_search_meta_description(query, filters))
+    |> assign(:meta_description, build_search_meta_description(query, filters, total_count))
     |> assign(:canonical_url, canonical_url)
     |> assign(:og_url, canonical_url)
     |> assign(:query, query)
@@ -83,8 +86,11 @@ defmodule PrzetargowiWeb.SearchController do
     if query == "" do
       # No query for semantic search
       conn
-      |> assign(:page_title, "Orzeczenia KIO")
-      |> assign(:meta_description, "Wyszukaj podobne orzeczenia KIO używając AI.")
+      |> assign(:page_title, "Orzeczenia KIO — wyszukiwarka orzeczeń UZP")
+      |> assign(
+        :meta_description,
+        "Wyszukiwarka orzeczeń KIO z AI — znajdź podobne wyroki KIO i orzecznictwo zamówień publicznych."
+      )
       |> assign(:query, query)
       |> assign(:search_mode, "semantic")
       |> assign(:filters, filters)
@@ -244,8 +250,11 @@ defmodule PrzetargowiWeb.SearchController do
     filter_options = Judgements.get_filter_options()
 
     conn
-    |> assign(:page_title, "Orzeczenia KIO")
-    |> assign(:meta_description, "Wyszukaj orzeczenia KIO dotyczące zamówień publicznych.")
+    |> assign(:page_title, "Orzeczenia KIO — wyszukiwarka orzeczeń UZP")
+    |> assign(
+      :meta_description,
+      "Wyszukiwarka orzeczeń KIO i orzecznictwo zamówień publicznych — wyroki KIO, UZP."
+    )
     |> assign(:query, query)
     |> assign(:search_mode, search_mode)
     |> assign(:filters, filters)
@@ -312,8 +321,9 @@ defmodule PrzetargowiWeb.SearchController do
     if value != "", do: params ++ [{param_name, value}], else: params
   end
 
-  defp build_search_meta_description(query, filters) do
-    base = "Wyszukaj orzeczenia KIO dotyczące zamówień publicznych"
+  defp build_search_meta_description(query, filters, total_count) do
+    base =
+      "Wyszukiwarka orzeczeń KIO i orzecznictwo zamówień publicznych — wyroki KIO, UZP"
 
     cond do
       query != "" ->
@@ -323,7 +333,7 @@ defmodule PrzetargowiWeb.SearchController do
         "#{base}. Filtr: #{filters[:document_type]}"
 
       true ->
-        "#{base}."
+        "#{base}. Przeglądaj #{total_count} orzeczeń w bazie."
     end
   end
 end

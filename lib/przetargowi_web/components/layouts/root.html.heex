@@ -8,12 +8,12 @@
       name="description"
       content={
         assigns[:meta_description] ||
-          "Przetargowi — wyszukiwarka orzeczeń KIO, SO, SA i SN w sprawach zamówień publicznych."
+          "Przetargowi.pl — wyszukiwarka przetargów publicznych i orzeczeń KIO. Aktualne ogłoszenia o przetargach, wyroki KIO, orzecznictwo zamówień publicznych."
       }
     />
     <meta
       name="keywords"
-      content="orzeczenia KIO, zamówienia publiczne, przetargi, Sąd Okręgowy, Sąd Apelacyjny, Sąd Najwyższy"
+      content="przetargi, wyszukiwarka przetargów, orzecznictwo kio, aktualne przetargi, ogłoszenia o przetargach, oferty przetargowe, wyroki kio, uzp wyszukiwarka orzeczeń, orzecznictwo zamówienia publiczne, przetargi publiczne"
     />
     <meta name="robots" content="index, follow" />
     <meta property="og:title" content={assigns[:page_title] || "Przetargowi"} />
@@ -21,7 +21,10 @@
       property="og:description"
       content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."}
     />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={assigns[:og_type] || "website"} />
+    <%= if assigns[:og_image] do %>
+      <meta property="og:image" content={@og_image} />
+    <% end %>
     <meta property="og:locale" content="pl_PL" />
     <meta
       property="og:url"
@@ -74,6 +77,11 @@
             }
           end)
         })) %>
+      </script>
+    <% end %>
+    <%= if assigns[:article_json_ld] do %>
+      <script type="application/ld+json">
+        <%= raw(Jason.encode!(@article_json_ld)) %>
       </script>
     <% end %>
     <script defer data-domain="przetargowi.pl" data-api="/api/event" src="/js/stats.js">
