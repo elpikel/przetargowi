@@ -1,9 +1,10 @@
 defmodule PrzetargowiWeb.SearchController do
   use PrzetargowiWeb, :controller
 
-  alias Przetargowi.Judgements
   alias Przetargowi.Embeddings
+  alias Przetargowi.Judgements
   alias Przetargowi.Payments
+  alias Przetargowi.SearchLogs
 
   @per_page 10
   @max_searches_free 3
@@ -45,6 +46,17 @@ defmodule PrzetargowiWeb.SearchController do
       Judgements.search_judgements(query, limit: @per_page, offset: offset, filters: filters)
 
     total_count = Judgements.count_search_results(query, filters)
+
+    # Log search query
+    if query != "" do
+      SearchLogs.log_search(%{
+        query: query,
+        source: "kio",
+        filters: filters,
+        user_id: SearchLogs.get_user_id(conn)
+      })
+    end
+
     total_pages = ceil(total_count / @per_page)
 
     # Get filter options for dropdowns
@@ -114,6 +126,14 @@ defmodule PrzetargowiWeb.SearchController do
             |> transform_semantic_results()
             |> apply_filters_to_results(filters)
             |> Enum.take(@semantic_results_limit)
+
+          # Log semantic search query
+          SearchLogs.log_search(%{
+            query: query,
+            source: "kio",
+            filters: Map.put(filters, :mode, "semantic"),
+            user_id: SearchLogs.get_user_id(conn)
+          })
 
           conn
           |> assign(:page_title, "Orzeczenia KIO: #{query}")

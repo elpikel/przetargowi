@@ -5,6 +5,7 @@ defmodule PrzetargowiWeb.ReportController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.Reports
+  alias Przetargowi.SearchLogs
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
@@ -19,6 +20,16 @@ defmodule PrzetargowiWeb.ReportController do
     ]
 
     result = Reports.list_tender_reports(search_opts)
+
+    # Log search query
+    if query != "" do
+      SearchLogs.log_search(%{
+        query: query,
+        source: "reports",
+        filters: %{},
+        user_id: SearchLogs.get_user_id(conn)
+      })
+    end
 
     conn
     |> assign(:page_title, "Raporty przetargowe")

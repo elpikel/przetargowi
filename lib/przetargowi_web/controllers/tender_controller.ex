@@ -3,6 +3,7 @@ defmodule PrzetargowiWeb.TenderController do
 
   alias Przetargowi.Alerts
   alias Przetargowi.Payments
+  alias Przetargowi.SearchLogs
   alias Przetargowi.Tenders
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
@@ -26,6 +27,21 @@ defmodule PrzetargowiWeb.TenderController do
     ]
 
     result = Tenders.search_tender_notices(search_opts)
+
+    # Log search query
+    if params["q"] && params["q"] != "" do
+      SearchLogs.log_search(%{
+        query: params["q"],
+        source: "tenders",
+        filters: %{
+          regions: regions,
+          order_types: order_types,
+          deadline_from: params["deadline_from"],
+          deadline_to: params["deadline_to"]
+        },
+        user_id: SearchLogs.get_user_id(conn)
+      })
+    end
 
     # Check if user can create alerts
     {can_create_alert, is_premium} = get_alert_permissions(conn)
@@ -97,6 +113,21 @@ defmodule PrzetargowiWeb.TenderController do
 
     result = Tenders.search_tender_notices(search_opts)
     region_name = Map.get(@region_names, region, region)
+
+    # Log search query
+    if params["q"] && params["q"] != "" do
+      SearchLogs.log_search(%{
+        query: params["q"],
+        source: "tenders",
+        filters: %{
+          regions: [region],
+          order_types: params["order_types"] || [],
+          deadline_from: params["deadline_from"],
+          deadline_to: params["deadline_to"]
+        },
+        user_id: SearchLogs.get_user_id(conn)
+      })
+    end
 
     # Check if user can create alerts
     {can_create_alert, is_premium} = get_alert_permissions(conn)
