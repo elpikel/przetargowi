@@ -15,18 +15,86 @@
     
 <!-- Search Form -->
     <form action={~p"/raporty"} method="get" class="card-base p-6 mb-8">
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <input
-            type="text"
-            name="q"
-            value={@query}
-            placeholder="Szukaj raportów..."
-            class="search-input w-full px-4 py-3 rounded-lg"
-          />
+      <div class="space-y-4">
+        <!-- Text search -->
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <input
+              type="text"
+              name="q"
+              value={@query}
+              placeholder="Szukaj raportów..."
+              class="search-input w-full px-4 py-3 rounded-lg"
+            />
+          </div>
         </div>
-        <div class="flex gap-3">
-          <%= if @query != "" do %>
+        
+<!-- Filters -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <!-- Region filter -->
+          <%= if @filter_options.regions != [] do %>
+            <select name="region" class="select select-bordered w-full">
+              <option value="">Wszystkie regiony</option>
+              <%= for region <- @filter_options.regions do %>
+                <option value={region} selected={@filters.region == region}>
+                  {format_region_name(region)}
+                </option>
+              <% end %>
+            </select>
+          <% end %>
+          
+<!-- Report type filter -->
+          <%= if @filter_options.report_types != [] do %>
+            <select name="report_type" class="select select-bordered w-full">
+              <option value="">Wszystkie typy</option>
+              <%= for type <- @filter_options.report_types do %>
+                <option value={type} selected={@filters.report_type == type}>
+                  {format_report_type(type)}
+                </option>
+              <% end %>
+            </select>
+          <% end %>
+          
+<!-- Year filter -->
+          <%= if @filter_options.years != [] do %>
+            <select name="year" class="select select-bordered w-full">
+              <option value="">Wszystkie lata</option>
+              <%= for year <- @filter_options.years do %>
+                <option value={year} selected={@filters.year == to_string(year)}>
+                  {year}
+                </option>
+              <% end %>
+            </select>
+          <% end %>
+          
+<!-- Month filter -->
+          <%= if @filter_options.months != [] do %>
+            <select name="month" class="select select-bordered w-full">
+              <option value="">Wszystkie miesiące</option>
+              <%= for month <- @filter_options.months do %>
+                <option value={month} selected={@filters.month == to_string(month)}>
+                  {format_month_name(month)}
+                </option>
+              <% end %>
+            </select>
+          <% end %>
+          
+<!-- Order type filter -->
+          <%= if @filter_options.order_types != [] do %>
+            <select name="order_type" class="select select-bordered w-full">
+              <option value="">Wszystkie kategorie</option>
+              <%= for order_type <- @filter_options.order_types do %>
+                <option value={order_type} selected={@filters.order_type == order_type}>
+                  {format_order_type(order_type)}
+                </option>
+              <% end %>
+            </select>
+          <% end %>
+        </div>
+        
+<!-- Buttons -->
+        <div class="flex gap-3 justify-end">
+          <%= if @query != "" or Enum.any?(@filters, fn {_k, v} -> v != "" end) do %>
             <a
               href={~p"/raporty"}
               class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center"
@@ -101,7 +169,7 @@
           <nav class="flex items-center space-x-2">
             <%= if @page > 1 do %>
               <a
-                href={~p"/raporty?#{build_pagination_params(@query, @page - 1)}"}
+                href={~p"/raporty?#{build_pagination_params(@query, @filters, @page - 1)}"}
                 class="btn-outline px-4 py-2 rounded-lg text-sm"
               >
                 Poprzednia
@@ -114,7 +182,7 @@
 
             <%= if @page < @total_pages do %>
               <a
-                href={~p"/raporty?#{build_pagination_params(@query, @page + 1)}"}
+                href={~p"/raporty?#{build_pagination_params(@query, @filters, @page + 1)}"}
                 class="btn-outline px-4 py-2 rounded-lg text-sm"
               >
                 Następna

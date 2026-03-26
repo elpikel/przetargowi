@@ -18,6 +18,7 @@ defmodule Przetargowi.Reports.TenderReport do
     field :region, :string
     field :order_type, :string
     field :report_month, :date
+    field :year, :integer
     field :cover_image_url, :string
     field :report_type, :string
     field :report_data, :map
@@ -43,6 +44,7 @@ defmodule Przetargowi.Reports.TenderReport do
       :region,
       :order_type,
       :report_month,
+      :year,
       :cover_image_url,
       :report_type,
       :report_data,
@@ -63,7 +65,15 @@ defmodule Przetargowi.Reports.TenderReport do
     ])
     |> validate_inclusion(:report_type, @valid_types)
     |> validate_report_type_fields()
+    |> fill_year_from_report_month()
     |> unique_constraint(:slug)
+  end
+
+  defp fill_year_from_report_month(changeset) do
+    case get_field(changeset, :report_month) do
+      %Date{year: year} -> put_change(changeset, :year, year)
+      _ -> changeset
+    end
   end
 
   # Validate that detailed reports have region and order_type

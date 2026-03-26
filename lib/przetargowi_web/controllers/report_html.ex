@@ -54,8 +54,41 @@ defmodule PrzetargowiWeb.ReportHTML do
     "#{month_name} #{date.year}"
   end
 
-  def build_pagination_params(query, page) do
+  def build_pagination_params(query, filters, page) do
     params = [{"page", page}]
-    if query && query != "", do: [{"q", query} | params], else: params
+
+    params =
+      if query && query != "", do: [{"q", query} | params], else: params
+
+    params
+    |> maybe_add_filter("region", filters.region)
+    |> maybe_add_filter("report_type", filters.report_type)
+    |> maybe_add_filter("year", filters.year)
+    |> maybe_add_filter("month", filters.month)
+    |> maybe_add_filter("order_type", filters.order_type)
   end
+
+  defp maybe_add_filter(params, _key, nil), do: params
+  defp maybe_add_filter(params, _key, ""), do: params
+  defp maybe_add_filter(params, key, value), do: [{key, value} | params]
+
+  def format_report_type("detailed"), do: "Szczegółowy"
+  def format_report_type("region_summary"), do: "Podsumowanie regionu"
+  def format_report_type("industry_summary"), do: "Podsumowanie branży"
+  def format_report_type("overall"), do: "Ogólny"
+  def format_report_type(other), do: other
+
+  def format_month_name(1), do: "Styczeń"
+  def format_month_name(2), do: "Luty"
+  def format_month_name(3), do: "Marzec"
+  def format_month_name(4), do: "Kwiecień"
+  def format_month_name(5), do: "Maj"
+  def format_month_name(6), do: "Czerwiec"
+  def format_month_name(7), do: "Lipiec"
+  def format_month_name(8), do: "Sierpień"
+  def format_month_name(9), do: "Wrzesień"
+  def format_month_name(10), do: "Październik"
+  def format_month_name(11), do: "Listopad"
+  def format_month_name(12), do: "Grudzień"
+  def format_month_name(_), do: ""
 end

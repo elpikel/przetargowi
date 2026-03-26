@@ -13,20 +13,34 @@ defmodule PrzetargowiWeb.ReportController do
     page = parse_page(params["page"])
     query = params["q"] || ""
 
+    filters = %{
+      region: params["region"] || "",
+      report_type: params["report_type"] || "",
+      year: params["year"] || "",
+      month: params["month"] || "",
+      order_type: params["order_type"] || ""
+    }
+
     search_opts = [
       query: query,
+      region: filters.region,
+      report_type: filters.report_type,
+      year: filters.year,
+      month: filters.month,
+      order_type: filters.order_type,
       page: page,
       per_page: 12
     ]
 
     result = Reports.list_tender_reports(search_opts)
+    filter_options = Reports.get_filter_options()
 
     # Log search query
-    if query != "" do
+    if query != "" or has_filters?(filters) do
       SearchLogs.log_search(%{
         query: query,
         source: "reports",
-        filters: %{},
+        filters: filters,
         user_id: SearchLogs.get_user_id(conn)
       })
     end
@@ -47,8 +61,14 @@ defmodule PrzetargowiWeb.ReportController do
       total_count: result.total_count,
       page: result.page,
       total_pages: result.total_pages,
-      query: query
+      query: query,
+      filters: filters,
+      filter_options: filter_options
     )
+  end
+
+  defp has_filters?(filters) do
+    Enum.any?(filters, fn {_k, v} -> v != "" end)
   end
 
   def show(conn, %{"slug" => slug} = params) do
@@ -82,12 +102,26 @@ defmodule PrzetargowiWeb.ReportController do
   defp show_region(conn, region, params) do
     page = parse_page(params["page"])
 
+    filters = %{
+      region: region,
+      report_type: params["report_type"] || "",
+      year: params["year"] || "",
+      month: params["month"] || "",
+      order_type: params["order_type"] || ""
+    }
+
     search_opts = [
+      region: region,
+      report_type: filters.report_type,
+      year: filters.year,
+      month: filters.month,
+      order_type: filters.order_type,
       page: page,
       per_page: 12
     ]
 
-    result = Reports.list_tender_reports_by_region(region, search_opts)
+    result = Reports.list_tender_reports(search_opts)
+    filter_options = Reports.get_filter_options()
     region_name = Map.get(@region_names, region, region)
 
     conn
@@ -108,7 +142,9 @@ defmodule PrzetargowiWeb.ReportController do
       total_count: result.total_count,
       page: result.page,
       total_pages: result.total_pages,
-      query: ""
+      query: "",
+      filters: filters,
+      filter_options: filter_options
     )
   end
 

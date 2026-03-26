@@ -9,49 +9,88 @@ defmodule Przetargowi.Reports do
   alias Przetargowi.Reports.TenderReport
 
   @doc """
-  Lists tender reports with pagination.
+  Returns available filter options based on existing reports.
+  """
+  def get_filter_options do
+    regions =
+      from(r in TenderReport,
+        where: not is_nil(r.region),
+        select: r.region,
+        distinct: true,
+        order_by: r.region
+      )
+      |> Repo.all()
+
+    report_types =
+      from(r in TenderReport,
+        select: r.report_type,
+        distinct: true,
+        order_by: r.report_type
+      )
+      |> Repo.all()
+
+    years =
+      from(r in TenderReport,
+        where: not is_nil(r.year),
+        select: r.year,
+        distinct: true,
+        order_by: [desc: r.year]
+      )
+      |> Repo.all()
+
+    months =
+      from(r in TenderReport,
+        select: fragment("EXTRACT(MONTH FROM ?)::integer", r.report_month),
+        distinct: true,
+        order_by: fragment("1")
+      )
+      |> Repo.all()
+
+    order_types =
+      from(r in TenderReport,
+        where: not is_nil(r.order_type),
+        select: r.order_type,
+        distinct: true,
+        order_by: r.order_type
+      )
+      |> Repo.all()
+
+    %{
+      regions: regions,
+      report_types: report_types,
+      years: years,
+      months: months,
+      order_types: order_types
+    }
+  end
+
+  @doc """
+  Lists tender reports with pagination and filtering.
 
   ## Options
 
     * `:page` - Page number (default: 1)
     * `:per_page` - Results per page (default: 12)
-
-  ## Returns
-
-  A map with:
-    * `:reports` - List of reports
-    * `:total_count` - Total number of reports
-    * `:page` - Current page
-    * `:per_page` - Results per page
-    * `:total_pages` - Total number of pages
-
-  ## Examples
-
-      iex> list_tender_reports(page: 2, per_page: 10)
-      %{reports: [...], total_count: 45, page: 2, per_page: 10, total_pages: 5}
-
+    * `:query` - Text search query
+    * `:region` - Filter by region
+    * `:report_type` - Filter by report type
+    * `:year` - Filter by year
+    * `:month` - Filter by month (1-12)
+    * `:order_type` - Filter by order type
   """
   def list_tender_reports(opts \\ []) do
     page = Keyword.get(opts, :page, 1)
     per_page = Keyword.get(opts, :per_page, 12)
-    query = Keyword.get(opts, :query)
     offset = (page - 1) * per_page
 
-    base_query = from(r in TenderReport)
-
     base_query =
-      if query && query != "" do
-        search_term = "%#{query}%"
-
-        from(r in base_query,
-          where:
-            ilike(r.title, ^search_term) or
-              ilike(r.region, ^search_term) or
-              ilike(r.meta_description, ^search_term)
-        )
-      else
-        base_query
-      end
+      from(r in TenderReport)
+      |> apply_text_filter(Keyword.get(opts, :query))
+      |> apply_region_filter(Keyword.get(opts, :region))
+      |> apply_report_type_filter(Keyword.get(opts, :report_type))
+      |> apply_year_filter(Keyword.get(opts, :year))
+      |> apply_month_filter(Keyword.get(opts, :month))
+      |> apply_order_type_filter(Keyword.get(opts, :order_type))
 
     total_count = base_query |> select([r], count(r.id)) |> Repo.one()
 
@@ -70,6 +109,70 @@ defmodule Przetargowi.Reports do
       total_pages: max(ceil(total_count / per_page), 1)
     }
   end
+
+  defp apply_text_filter(query, nil), do: query
+  defp apply_text_filter(query, ""), do: query
+
+  defp apply_text_filter(query, search_term) do
+    term = "%#{search_term}%"
+
+    from(r in query,
+      where:
+        ilike(r.title, ^term) or
+          ilike(r.region, ^term) or
+          ilike(r.meta_description, ^term)
+    )
+  end
+
+  defp apply_region_filter(query, nil), do: query
+  defp apply_region_filter(query, ""), do: query
+  defp apply_region_filter(query, region), do: from(r in query, where: r.region == ^region)
+
+  defp apply_report_type_filter(query, nil), do: query
+  defp apply_report_type_filter(query, ""), do: query
+
+  defp apply_report_type_filter(query, report_type),
+    do: from(r in query, where: r.report_type == ^report_type)
+
+  defp apply_year_filter(query, nil), do: query
+  defp apply_year_filter(query, ""), do: query
+
+  defp apply_year_filter(query, year) when is_binary(year) do
+    case Integer.parse(year) do
+      {year_int, _} -> from(r in query, where: r.year == ^year_int)
+      :error -> query
+    end
+  end
+
+  defp apply_year_filter(query, year) when is_integer(year),
+    do: from(r in query, where: r.year == ^year)
+
+  defp apply_month_filter(query, nil), do: query
+  defp apply_month_filter(query, ""), do: query
+
+  defp apply_month_filter(query, month) when is_binary(month) do
+    case Integer.parse(month) do
+      {month_int, _} ->
+        from(r in query,
+          where: fragment("EXTRACT(MONTH FROM ?)::integer = ?", r.report_month, ^month_int)
+        )
+
+      :error ->
+        query
+    end
+  end
+
+  defp apply_month_filter(query, month) when is_integer(month) do
+    from(r in query,
+      where: fragment("EXTRACT(MONTH FROM ?)::integer = ?", r.report_month, ^month)
+    )
+  end
+
+  defp apply_order_type_filter(query, nil), do: query
+  defp apply_order_type_filter(query, ""), do: query
+
+  defp apply_order_type_filter(query, order_type),
+    do: from(r in query, where: r.order_type == ^order_type)
 
   @doc """
   Lists tender reports filtered by region with pagination.
