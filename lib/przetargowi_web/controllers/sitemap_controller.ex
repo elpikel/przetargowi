@@ -3,7 +3,6 @@ defmodule PrzetargowiWeb.SitemapController do
 
   alias Przetargowi.Judgements
   alias Przetargowi.Tenders
-  alias Przetargowi.Repo
 
   @base_url "https://przetargowi.pl"
 
@@ -12,6 +11,7 @@ defmodule PrzetargowiWeb.SitemapController do
   def index(conn, _params) do
     conn
     |> put_resp_content_type("application/xml")
+    |> put_resp_header("cache-control", "public, max-age=3600")
     |> send_resp(200, build_sitemap())
   end
 
@@ -33,32 +33,26 @@ defmodule PrzetargowiWeb.SitemapController do
       end)
 
     judgement_urls =
-      Repo.transaction(fn ->
-        Judgements.stream_sitemap_entries()
-        |> Enum.map(fn entry ->
-          %{
-            loc: "#{@base_url}/orzeczenie/#{entry.slug}",
-            lastmod: format_date(entry.updated_at),
-            priority: "0.8",
-            changefreq: "monthly"
-          }
-        end)
+      Judgements.list_sitemap_entries()
+      |> Enum.map(fn entry ->
+        %{
+          loc: "#{@base_url}/orzeczenie/#{entry.slug}",
+          lastmod: format_date(entry.updated_at),
+          priority: "0.8",
+          changefreq: "monthly"
+        }
       end)
-      |> elem(1)
 
     tender_urls =
-      Repo.transaction(fn ->
-        Tenders.stream_sitemap_entries()
-        |> Enum.map(fn entry ->
-          %{
-            loc: "#{@base_url}/przetargi/#{entry.slug}",
-            lastmod: format_date(entry.updated_at),
-            priority: "0.7",
-            changefreq: "weekly"
-          }
-        end)
+      Tenders.list_sitemap_entries()
+      |> Enum.map(fn entry ->
+        %{
+          loc: "#{@base_url}/przetargi/#{entry.slug}",
+          lastmod: format_date(entry.updated_at),
+          priority: "0.7",
+          changefreq: "weekly"
+        }
       end)
-      |> elem(1)
 
     urls = static_urls ++ region_urls ++ judgement_urls ++ tender_urls
 

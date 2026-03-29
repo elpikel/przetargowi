@@ -712,15 +712,13 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
-  Returns all judgement IDs and updated_at for sitemap generation.
-  Streams results to handle large datasets efficiently.
+  Returns all judgement slugs and updated_at for sitemap generation.
   """
-  def stream_sitemap_entries do
+  def list_sitemap_entries do
     Judgement
-    |> select([j], %{id: j.id, slug: j.slug, updated_at: j.updated_at})
+    |> select([j], %{slug: j.slug, updated_at: j.updated_at})
     |> where([j], not is_nil(j.slug))
-    |> order_by(desc: :updated_at)
-    |> Repo.stream()
+    |> Repo.all()
   end
 
   @doc """
