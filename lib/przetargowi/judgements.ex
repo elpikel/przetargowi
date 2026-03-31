@@ -712,13 +712,30 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
-  Returns all judgement slugs and updated_at for sitemap generation.
+  Returns judgement slugs and updated_at for sitemap generation.
+  Supports pagination with limit and offset.
   """
-  def list_sitemap_entries do
+  def list_sitemap_entries(limit \\ nil, offset \\ 0) do
     Judgement
     |> select([j], %{slug: j.slug, updated_at: j.updated_at})
     |> where([j], not is_nil(j.slug))
+    |> order_by([j], asc: j.id)
+    |> then(fn query ->
+      case limit do
+        nil -> query
+        n -> query |> limit(^n) |> offset(^offset)
+      end
+    end)
     |> Repo.all()
+  end
+
+  @doc """
+  Returns the count of judgements with slugs for sitemap pagination.
+  """
+  def count_sitemap_entries do
+    Judgement
+    |> where([j], not is_nil(j.slug))
+    |> Repo.aggregate(:count)
   end
 
   @doc """

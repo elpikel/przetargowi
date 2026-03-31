@@ -42,6 +42,9 @@ defmodule PrzetargowiWeb.Router do
 
   scope "/", PrzetargowiWeb do
     get "/sitemap.xml", SitemapController, :index
+    get "/sitemap-static.xml", SitemapController, :static
+    get "/sitemap/judgements/:page", SitemapController, :judgements
+    get "/sitemap/tenders/:page", SitemapController, :tenders
   end
 
   # Analytics proxy to avoid ad blockers

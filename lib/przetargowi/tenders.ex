@@ -296,13 +296,30 @@ defmodule Przetargowi.Tenders do
   end
 
   @doc """
-  Returns all tender notice slugs and updated_at for sitemap generation.
+  Returns tender notice slugs and updated_at for sitemap generation.
+  Supports pagination with limit and offset.
   """
-  def list_sitemap_entries do
+  def list_sitemap_entries(limit \\ nil, offset \\ 0) do
     TenderNotice
     |> select([t], %{slug: t.slug, updated_at: t.updated_at})
     |> where([t], not is_nil(t.slug))
+    |> order_by([t], asc: t.id)
+    |> then(fn query ->
+      case limit do
+        nil -> query
+        n -> query |> limit(^n) |> offset(^offset)
+      end
+    end)
     |> Repo.all()
+  end
+
+  @doc """
+  Returns the count of tender notices with slugs for sitemap pagination.
+  """
+  def count_sitemap_entries do
+    TenderNotice
+    |> where([t], not is_nil(t.slug))
+    |> Repo.aggregate(:count)
   end
 
   # Document functions
