@@ -219,4 +219,69 @@ defmodule Przetargowi.TendersTest do
       assert Tenders.count_sitemap_entries() == 0
     end
   end
+
+  describe "upsert_tender_document/1" do
+    test "inserts new document with valid attrs" do
+      attrs = valid_tender_document_attributes()
+
+      assert {:ok, doc} = Tenders.upsert_tender_document(attrs)
+      assert doc.object_id == attrs[:object_id]
+      assert doc.tender_id == attrs[:tender_id]
+      assert doc.name == attrs[:name]
+    end
+
+    test "updates existing document on conflict" do
+      attrs = valid_tender_document_attributes()
+      {:ok, original} = Tenders.upsert_tender_document(attrs)
+
+      updated_attrs = Map.put(attrs, :name, "Updated name")
+      {:ok, updated} = Tenders.upsert_tender_document(updated_attrs)
+
+      assert updated.object_id == original.object_id
+      assert updated.name == "Updated name"
+    end
+
+    test "returns error changeset when required fields missing" do
+      attrs = %{object_id: "test-id"}
+
+      assert {:error, changeset} = Tenders.upsert_tender_document(attrs)
+      refute changeset.valid?
+
+      errors = errors_on(changeset)
+      assert "can't be blank" in errors.tender_id
+      assert "can't be blank" in errors.name
+      assert "can't be blank" in errors.file_name
+      assert "can't be blank" in errors.url
+    end
+  end
+
+  describe "upsert_tender_documents/1" do
+    test "inserts multiple documents" do
+      attrs1 = valid_tender_document_attributes()
+      attrs2 = valid_tender_document_attributes()
+
+      {success_count, failed} = Tenders.upsert_tender_documents([attrs1, attrs2])
+
+      assert success_count == 2
+      assert failed == []
+    end
+
+    test "returns failed documents with errors" do
+      valid_attrs = valid_tender_document_attributes()
+      invalid_attrs = %{object_id: "invalid-doc"}
+
+      {success_count, failed} = Tenders.upsert_tender_documents([valid_attrs, invalid_attrs])
+
+      assert success_count == 1
+      assert length(failed) == 1
+      assert {:error, ^invalid_attrs, _changeset} = hd(failed)
+    end
+
+    test "handles empty list" do
+      {success_count, failed} = Tenders.upsert_tender_documents([])
+
+      assert success_count == 0
+      assert failed == []
+    end
+  end
 end

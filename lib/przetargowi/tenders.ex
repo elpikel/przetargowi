@@ -360,9 +360,21 @@ defmodule Przetargowi.Tenders do
             {:ok, document}
 
           {:error, changeset} ->
-            Logger.error(
-              "Failed to upsert tender document #{inspect(attrs[:object_id])}: #{inspect(changeset)}"
-            )
+            errors = Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+              Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+                opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+              end)
+            end)
+
+            Logger.error("""
+            Failed to upsert tender document:
+              object_id: #{inspect(attrs[:object_id])}
+              tender_id: #{inspect(attrs[:tender_id])}
+              name: #{inspect(attrs[:name])}
+              file_name: #{inspect(attrs[:file_name])}
+              url: #{inspect(attrs[:url])}
+              errors: #{inspect(errors)}
+            """)
 
             {:error, attrs, changeset}
         end

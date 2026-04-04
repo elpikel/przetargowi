@@ -84,8 +84,10 @@ config :przetargowi, Oban,
        {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}},
        # Fetch tenders daily at 7 AM
        {"0 7 * * *", Przetargowi.Workers.FetchTendersNotices, args: %{days: 60}},
-       # Download tender documents at 7:30 AM (after tenders are fetched)
-       {"30 7 * * *", Przetargowi.Workers.DownloadTenderDocuments, args: %{limit: 100}},
+       # Download tender documents at 7:30 AM, 12:00 PM, and 6:00 PM
+       {"30 7 * * *", Przetargowi.Workers.DownloadTenderDocuments, args: %{batch_size: 100}},
+       {"0 12 * * *", Przetargowi.Workers.DownloadTenderDocuments, args: %{batch_size: 100}},
+       {"0 18 * * *", Przetargowi.Workers.DownloadTenderDocuments, args: %{batch_size: 100}},
        # Generate monthly reports on 1st of each month at 2 AM
        {"0 2 1 * *", Przetargowi.Workers.GenerateMonthlyReports, args: %{}},
        # Send alerts daily at 8 AM
