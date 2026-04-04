@@ -5,6 +5,7 @@ defmodule Przetargowi.TendersFixtures do
 
   alias Przetargowi.Repo
   alias Przetargowi.Tenders.TenderDocument
+  alias Przetargowi.Tenders.TenderNotice
 
   def unique_object_id do
     "doc-#{System.unique_integer([:positive])}"
@@ -91,5 +92,41 @@ defmodule Przetargowi.TendersFixtures do
 
     {:ok, {~c"document.docx", binary}} = :zip.create(~c"document.docx", entries, [:memory])
     binary
+  end
+
+  # TenderNotice fixtures
+
+  def unique_notice_object_id do
+    "notice-#{System.unique_integer([:positive])}"
+  end
+
+  def valid_tender_notice_attributes(attrs \\ %{}) do
+    object_id = unique_notice_object_id()
+
+    Enum.into(attrs, %{
+      object_id: object_id,
+      notice_type: "ContractNotice",
+      notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+      bzp_number: "BZP-#{System.unique_integer([:positive])}",
+      is_tender_amount_below_eu: true,
+      publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+      cpv_codes: ["45000000-7"],
+      organization_name: "Test Organization",
+      organization_city: "Warszawa",
+      organization_country: "Polska",
+      organization_national_id: "1234567890",
+      organization_id: "ORG-#{System.unique_integer([:positive])}",
+      html_body: "<html>Test</html>",
+      order_object: "Dostawa sprzętu komputerowego",
+      slug: "dostawa-sprzetu-komputerowego-#{object_id}"
+    })
+  end
+
+  def tender_notice_fixture(attrs \\ %{}) do
+    attrs = valid_tender_notice_attributes(attrs)
+
+    %TenderNotice{}
+    |> TenderNotice.changeset(attrs)
+    |> Repo.insert!()
   end
 end

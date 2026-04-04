@@ -303,7 +303,7 @@ defmodule Przetargowi.Tenders do
     TenderNotice
     |> select([t], %{slug: t.slug, updated_at: t.updated_at})
     |> where([t], not is_nil(t.slug))
-    |> order_by([t], asc: t.id)
+    |> order_by([t], asc: t.object_id)
     |> then(fn query ->
       case limit do
         nil -> query

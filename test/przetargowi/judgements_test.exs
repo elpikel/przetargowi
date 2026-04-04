@@ -345,6 +345,88 @@ defmodule Przetargowi.JudgementsTest do
     end
   end
 
+  describe "list_sitemap_entries/2" do
+    test "returns all entries with slug when no limit" do
+      {:ok, j1} = create_judgement()
+      {:ok, j2} = create_judgement()
+
+      entries = Judgements.list_sitemap_entries()
+
+      slugs = Enum.map(entries, & &1.slug)
+      assert j1.slug in slugs
+      assert j2.slug in slugs
+    end
+
+    test "excludes entries without slug" do
+      {:ok, j_with_slug} = create_judgement()
+
+      # Create judgement then clear its slug directly
+      {:ok, j_without_slug} = create_judgement()
+
+      import Ecto.Query
+
+      from(j in Przetargowi.Judgements.Judgement, where: j.id == ^j_without_slug.id)
+      |> Repo.update_all(set: [slug: nil])
+
+      entries = Judgements.list_sitemap_entries()
+
+      slugs = Enum.map(entries, & &1.slug)
+      assert j_with_slug.slug in slugs
+      assert length(entries) == 1
+    end
+
+    test "respects limit and offset for pagination" do
+      for _ <- 1..5, do: create_judgement()
+
+      entries_page1 = Judgements.list_sitemap_entries(2, 0)
+      entries_page2 = Judgements.list_sitemap_entries(2, 2)
+      entries_page3 = Judgements.list_sitemap_entries(2, 4)
+
+      assert length(entries_page1) == 2
+      assert length(entries_page2) == 2
+      assert length(entries_page3) == 1
+
+      all_slugs =
+        (entries_page1 ++ entries_page2 ++ entries_page3)
+        |> Enum.map(& &1.slug)
+        |> Enum.uniq()
+
+      assert length(all_slugs) == 5
+    end
+
+    test "returns entries with updated_at field" do
+      create_judgement()
+
+      [entry] = Judgements.list_sitemap_entries()
+
+      assert %{slug: _, updated_at: _} = entry
+    end
+  end
+
+  describe "count_sitemap_entries/0" do
+    test "returns count of entries with slug" do
+      for _ <- 1..3, do: create_judgement()
+
+      assert Judgements.count_sitemap_entries() == 3
+    end
+
+    test "excludes entries without slug" do
+      create_judgement()
+      {:ok, j_without_slug} = create_judgement()
+
+      import Ecto.Query
+
+      from(j in Przetargowi.Judgements.Judgement, where: j.id == ^j_without_slug.id)
+      |> Repo.update_all(set: [slug: nil])
+
+      assert Judgements.count_sitemap_entries() == 1
+    end
+
+    test "returns 0 when no entries" do
+      assert Judgements.count_sitemap_entries() == 0
+    end
+  end
+
   # Helper function to create test judgements
   defp create_judgement(attrs \\ %{}) do
     default_attrs = %{

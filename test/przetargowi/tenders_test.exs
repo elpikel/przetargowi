@@ -117,4 +117,106 @@ defmodule Przetargowi.TendersTest do
       assert Tenders.get_document("non-existent") == nil
     end
   end
+
+  describe "list_sitemap_entries/2" do
+    test "returns all entries with slug when no limit" do
+      notice1 = tender_notice_fixture()
+      notice2 = tender_notice_fixture()
+
+      entries = Tenders.list_sitemap_entries()
+
+      slugs = Enum.map(entries, & &1.slug)
+      assert notice1.slug in slugs
+      assert notice2.slug in slugs
+    end
+
+    test "excludes entries without slug" do
+      notice_with_slug = tender_notice_fixture()
+
+      Repo.insert!(%Przetargowi.Tenders.TenderNotice{
+        object_id: "no-slug-#{System.unique_integer([:positive])}",
+        notice_type: "ContractNotice",
+        notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+        bzp_number: "BZP-#{System.unique_integer([:positive])}",
+        is_tender_amount_below_eu: true,
+        publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+        cpv_codes: ["45000000-7"],
+        organization_name: "Test",
+        organization_city: "Warszawa",
+        organization_country: "Polska",
+        organization_national_id: "123",
+        organization_id: "ORG-123",
+        html_body: "<html>Test</html>",
+        slug: nil
+      })
+
+      entries = Tenders.list_sitemap_entries()
+
+      slugs = Enum.map(entries, & &1.slug)
+      assert notice_with_slug.slug in slugs
+      assert length(entries) == 1
+    end
+
+    test "respects limit and offset for pagination" do
+      for _ <- 1..5, do: tender_notice_fixture()
+
+      entries_page1 = Tenders.list_sitemap_entries(2, 0)
+      entries_page2 = Tenders.list_sitemap_entries(2, 2)
+      entries_page3 = Tenders.list_sitemap_entries(2, 4)
+
+      assert length(entries_page1) == 2
+      assert length(entries_page2) == 2
+      assert length(entries_page3) == 1
+
+      all_slugs =
+        (entries_page1 ++ entries_page2 ++ entries_page3)
+        |> Enum.map(& &1.slug)
+        |> Enum.uniq()
+
+      assert length(all_slugs) == 5
+    end
+
+    test "returns entries with updated_at field" do
+      tender_notice_fixture()
+
+      [entry] = Tenders.list_sitemap_entries()
+
+      assert %{slug: _, updated_at: %NaiveDateTime{}} = entry
+    end
+  end
+
+  describe "count_sitemap_entries/0" do
+    test "returns count of entries with slug" do
+      for _ <- 1..3, do: tender_notice_fixture()
+
+      assert Tenders.count_sitemap_entries() == 3
+    end
+
+    test "excludes entries without slug" do
+      tender_notice_fixture()
+
+      Repo.insert!(%Przetargowi.Tenders.TenderNotice{
+        object_id: "no-slug-count-#{System.unique_integer([:positive])}",
+        notice_type: "ContractNotice",
+        notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+        bzp_number: "BZP-#{System.unique_integer([:positive])}",
+        is_tender_amount_below_eu: true,
+        publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+        cpv_codes: ["45000000-7"],
+        organization_name: "Test",
+        organization_city: "Warszawa",
+        organization_country: "Polska",
+        organization_national_id: "123",
+        organization_id: "ORG-456",
+        html_body: "<html>Test</html>",
+        slug: nil
+      })
+
+      assert Tenders.count_sitemap_entries() == 1
+    end
+
+    test "returns 0 when no entries" do
+      assert Tenders.count_sitemap_entries() == 0
+    end
+  end
 end
