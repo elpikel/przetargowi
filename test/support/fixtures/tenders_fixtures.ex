@@ -29,9 +29,35 @@ defmodule Przetargowi.TendersFixtures do
   def tender_document_fixture(attrs \\ %{}) do
     attrs = valid_tender_document_attributes(attrs)
 
+    # Create a linked TenderNotice so documents can be found by get_documents_to_download
+    ensure_tender_notice_exists(attrs[:tender_id])
+
     %TenderDocument{}
     |> TenderDocument.changeset(attrs)
     |> Repo.insert!()
+  end
+
+  defp ensure_tender_notice_exists(tender_id) do
+    unless Repo.get_by(TenderNotice, tender_id: tender_id) do
+      %TenderNotice{}
+      |> TenderNotice.changeset(%{
+        object_id: "notice-for-#{tender_id}",
+        tender_id: tender_id,
+        notice_type: "ContractNotice",
+        notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+        bzp_number: "BZP-#{System.unique_integer([:positive])}",
+        is_tender_amount_below_eu: true,
+        publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+        cpv_codes: ["45000000-7"],
+        organization_name: "Test Organization",
+        organization_city: "Warszawa",
+        organization_country: "Polska",
+        organization_national_id: "1234567890",
+        organization_id: "ORG-#{System.unique_integer([:positive])}",
+        html_body: "<html>Test</html>"
+      })
+      |> Repo.insert!()
+    end
   end
 
   def tender_document_with_content_fixture(attrs \\ %{}) do

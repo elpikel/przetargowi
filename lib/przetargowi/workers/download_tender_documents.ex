@@ -15,8 +15,7 @@ defmodule Przetargowi.Workers.DownloadTenderDocuments do
   """
   use Oban.Worker,
     queue: :documents,
-    max_attempts: 3,
-    unique: [period: 60]
+    max_attempts: 3
 
   alias Przetargowi.Tenders
 
@@ -40,9 +39,11 @@ defmodule Przetargowi.Workers.DownloadTenderDocuments do
         Process.sleep(500)
       end)
 
-      # Schedule next batch if we had a full batch (more might be waiting)
-      if count == batch_size do
-        Logger.info("Scheduling next batch...")
+      # Check if more documents are pending and schedule next batch
+      remaining = length(Tenders.get_documents_to_download(1))
+
+      if remaining > 0 do
+        Logger.info("#{remaining}+ documents still pending, scheduling next batch...")
 
         %{batch_size: batch_size}
         |> __MODULE__.new(schedule_in: 5)

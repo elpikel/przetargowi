@@ -409,12 +409,20 @@ defmodule Przetargowi.Tenders do
 
   @doc """
   Gets fillable documents that haven't been downloaded yet.
+  Only returns documents for tenders published within the last 30 days.
   Used by the document download worker.
   """
   def get_documents_to_download(limit \\ 50) do
+    cutoff_date = DateTime.utc_now() |> DateTime.add(-30, :day)
+
     TenderDocument
     |> from(as: :doc)
+    |> join(:inner, [doc: d], tn in TenderNotice,
+      on: d.tender_id == tn.tender_id,
+      as: :tender_notice
+    )
     |> where([doc: d], is_nil(d.content) and is_nil(d.download_error))
+    |> where([tender_notice: tn], tn.publication_date >= ^cutoff_date)
     |> order_by([doc: d], asc: d.inserted_at)
     |> limit(^limit)
     |> Repo.all()
@@ -457,6 +465,28 @@ defmodule Przetargowi.Tenders do
   """
   def get_document(object_id) do
     Repo.get(TenderDocument, object_id)
+  end
+
+  @doc """
+  Removes content from documents belonging to tenders older than the specified days.
+  Returns the number of documents cleaned up.
+  """
+  def cleanup_old_document_content(days_old \\ 30) do
+    cutoff_date = DateTime.utc_now() |> DateTime.add(-days_old, :day)
+
+    {count, _} =
+      TenderDocument
+      |> from(as: :doc)
+      |> join(:inner, [doc: d], tn in TenderNotice,
+        on: d.tender_id == tn.tender_id,
+        as: :tender_notice
+      )
+      |> where([doc: d], not is_nil(d.content))
+      |> where([tender_notice: tn], tn.publication_date < ^cutoff_date)
+      |> select([doc: d], d)
+      |> Repo.update_all(set: [content: nil, downloaded_at: nil])
+
+    count
   end
 
   @doc """

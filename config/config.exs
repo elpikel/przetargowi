@@ -91,7 +91,9 @@ config :przetargowi, Oban,
        # Generate monthly reports on 1st of each month at 2 AM
        {"0 2 1 * *", Przetargowi.Workers.GenerateMonthlyReports, args: %{}},
        # Send alerts daily at 8 AM
-       {"0 8 * * *", Przetargowi.Workers.SendAlerts, args: %{}}
+       {"0 8 * * *", Przetargowi.Workers.SendAlerts, args: %{}},
+       # Cleanup old document content daily at 3 AM (keeps URL, removes binary)
+       {"0 3 * * *", Przetargowi.Workers.CleanupOldDocuments, args: %{days_old: 30}}
      ]}
   ]
 

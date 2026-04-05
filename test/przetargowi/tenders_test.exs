@@ -284,4 +284,91 @@ defmodule Przetargowi.TendersTest do
       assert failed == []
     end
   end
+
+  describe "cleanup_old_document_content/1" do
+    test "removes content from documents with old publication date" do
+      # Create old tender notice (40 days ago)
+      old_tender_id = "old-tender-#{System.unique_integer([:positive])}"
+
+      Repo.insert!(%Przetargowi.Tenders.TenderNotice{
+        object_id: "notice-#{old_tender_id}",
+        tender_id: old_tender_id,
+        notice_type: "ContractNotice",
+        notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+        bzp_number: "BZP-#{System.unique_integer([:positive])}",
+        is_tender_amount_below_eu: true,
+        publication_date: DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second),
+        cpv_codes: ["45000000-7"],
+        organization_name: "Test",
+        organization_city: "Warszawa",
+        organization_country: "Polska",
+        organization_national_id: "123",
+        organization_id: "ORG-old",
+        html_body: "<html>Test</html>"
+      })
+
+      # Create document with content for old tender
+      old_doc = tender_document_with_content_fixture(tender_id: old_tender_id)
+      assert old_doc.content != nil
+
+      # Create document with content for recent tender (default fixture is recent)
+      recent_doc = tender_document_with_content_fixture()
+      assert recent_doc.content != nil
+
+      # Run cleanup
+      count = Tenders.cleanup_old_document_content(30)
+
+      # Should clean up 1 old document
+      assert count == 1
+
+      # Verify old document content was removed
+      old_doc_updated = Tenders.get_document(old_doc.object_id)
+      assert old_doc_updated.content == nil
+      assert old_doc_updated.downloaded_at == nil
+      # URL should still exist
+      assert old_doc_updated.url != nil
+
+      # Verify recent document content was kept
+      recent_doc_updated = Tenders.get_document(recent_doc.object_id)
+      assert recent_doc_updated.content != nil
+    end
+
+    test "returns 0 when no old documents with content exist" do
+      # Create only recent documents
+      _recent_doc = tender_document_with_content_fixture()
+
+      count = Tenders.cleanup_old_document_content(30)
+
+      assert count == 0
+    end
+
+    test "does not affect documents without content" do
+      # Create old tender notice
+      old_tender_id = "old-tender-no-content-#{System.unique_integer([:positive])}"
+
+      Repo.insert!(%Przetargowi.Tenders.TenderNotice{
+        object_id: "notice-#{old_tender_id}",
+        tender_id: old_tender_id,
+        notice_type: "ContractNotice",
+        notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+        bzp_number: "BZP-#{System.unique_integer([:positive])}",
+        is_tender_amount_below_eu: true,
+        publication_date: DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second),
+        cpv_codes: ["45000000-7"],
+        organization_name: "Test",
+        organization_city: "Warszawa",
+        organization_country: "Polska",
+        organization_national_id: "123",
+        organization_id: "ORG-old-no-content",
+        html_body: "<html>Test</html>"
+      })
+
+      # Create document without content for old tender
+      _old_doc_no_content = tender_document_fixture(tender_id: old_tender_id)
+
+      count = Tenders.cleanup_old_document_content(30)
+
+      assert count == 0
+    end
+  end
 end
