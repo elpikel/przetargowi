@@ -13,6 +13,8 @@ defmodule Przetargowi.Application do
       {DNSCluster, query: Application.get_env(:przetargowi, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Przetargowi.PubSub},
       {Oban, Application.fetch_env!(:przetargowi, Oban)},
+      # Embedding cache for semantic search
+      Przetargowi.Embeddings.EmbeddingCache,
       # Start to serve requests, typically the last entry
       PrzetargowiWeb.Endpoint
     ]

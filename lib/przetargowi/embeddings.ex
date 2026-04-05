@@ -5,7 +5,7 @@ defmodule Przetargowi.Embeddings do
 
   import Ecto.Query
   alias Przetargowi.Repo
-  alias Przetargowi.Embeddings.{Chunk, TextChunker, OpenAIClient}
+  alias Przetargowi.Embeddings.{Chunk, EmbeddingCache, TextChunker, OpenAIClient}
   alias Przetargowi.Judgements.Judgement
 
   @doc """
@@ -127,22 +127,36 @@ defmodule Przetargowi.Embeddings do
   @doc """
   Searches for chunks similar to the query text.
   Returns chunks with their judgements, ordered by similarity.
+  Uses caching to avoid redundant OpenAI API calls for repeated queries.
   """
   def search_similar(query_text, limit \\ 10) do
-    case OpenAIClient.get_embedding(query_text) do
-      {:ok, query_embedding} ->
-        search_by_embedding(query_embedding, limit)
+    # Check cache first
+    case EmbeddingCache.get(query_text) do
+      {:ok, cached_embedding} ->
+        search_by_embedding(cached_embedding, limit)
 
-      {:error, reason} ->
-        {:error, reason}
+      :miss ->
+        # Generate embedding and cache it
+        case OpenAIClient.get_embedding(query_text) do
+          {:ok, query_embedding} ->
+            EmbeddingCache.put(query_text, query_embedding)
+            search_by_embedding(query_embedding, limit)
+
+          {:error, reason} ->
+            {:error, reason}
+        end
     end
   end
 
   @doc """
   Searches for chunks similar to the given embedding vector.
+  Sets IVFFlat probes for better recall/speed tradeoff.
   """
   def search_by_embedding(embedding, limit \\ 10) do
     embedding_vector = Pgvector.new(embedding)
+
+    # Set IVFFlat probes for better recall (default is 1, we use 10 for better results)
+    Repo.query!("SET ivfflat.probes = 10")
 
     chunks =
       Chunk
