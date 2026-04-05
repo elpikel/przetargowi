@@ -8,7 +8,7 @@
     </div>
     
 <!-- Search Form -->
-    <form action="/szukaj" method="get" class="card-base p-6 mb-8">
+    <form action="/szukaj" method="get" class="card-base p-6 mb-8" id="search-form">
       <!-- Search mode toggle -->
       <div class="mb-4">
         <label class="block text-sm font-medium text-base-content/70 mb-2">
@@ -34,7 +34,7 @@
         </div>
         <%= if @search_mode == "semantic" do %>
           <p class="text-xs text-base-content/50 mt-2">
-            Wyszukuje podobne znaczeniowo orzeczenia
+            Wyszukuje podobne znaczeniowo orzeczenia (pierwsze wyszukiwanie może potrwać kilka sekund)
           </p>
         <% end %>
       </div>
@@ -162,12 +162,27 @@
               Wyczyść filtry
             </a>
           <% end %>
-          <button type="submit" class="btn-gold px-6 py-2 rounded-lg text-sm font-medium">
-            Szukaj
+          <button type="submit" id="search-btn" class="btn-gold px-6 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2">
+            <span id="search-btn-text">Szukaj</span>
+            <svg id="search-spinner" class="hidden animate-spin size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </button>
         </div>
       </div>
     </form>
+
+    <script>
+      document.getElementById('search-form').addEventListener('submit', function() {
+        const mode = document.querySelector('input[name="mode"]').value;
+        if (mode === 'semantic') {
+          document.getElementById('search-btn-text').textContent = 'Szukam...';
+          document.getElementById('search-spinner').classList.remove('hidden');
+          document.getElementById('search-btn').disabled = true;
+        }
+      });
+    </script>
     
 <!-- Results Count -->
     <div class="mb-6">
