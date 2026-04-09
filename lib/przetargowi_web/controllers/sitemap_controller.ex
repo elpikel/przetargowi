@@ -5,7 +5,7 @@ defmodule PrzetargowiWeb.SitemapController do
   alias Przetargowi.Tenders
 
   @base_url "https://przetargowi.pl"
-  @urls_per_sitemap 40_000
+  @urls_per_sitemap 200
 
   @regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
