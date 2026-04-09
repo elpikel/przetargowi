@@ -4,7 +4,10 @@ defmodule PrzetargowiWeb.JudgementController do
   alias Przetargowi.Judgements
 
   defp build_meta_description(judgement) do
-    base =
+    signature = judgement.signature || "orzeczenie"
+    prefix = "Wyrok KIO #{signature} — orzecznictwo zamówień publicznych. "
+
+    content =
       cond do
         judgement.meritum && String.length(judgement.meritum) > 0 ->
           judgement.meritum
@@ -13,10 +16,10 @@ defmodule PrzetargowiWeb.JudgementController do
           judgement.deliberation
 
         true ->
-          "Orzeczenie #{judgement.signature || ""} - #{judgement.issuing_authority || "KIO"}"
+          ""
       end
 
-    base
+    (prefix <> content)
     |> String.replace(~r/\s+/, " ")
     |> String.trim()
     |> String.slice(0, 155)
@@ -57,12 +60,19 @@ defmodule PrzetargowiWeb.JudgementController do
 
         breadcrumbs = [
           %{name: "Strona główna", url: "https://przetargowi.pl"},
-          %{name: "Wyszukiwarka", url: "https://przetargowi.pl/szukaj"},
+          %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"},
           %{name: view_judgement.signature || "Orzeczenie", url: canonical_url}
         ]
 
+        page_title =
+          if view_judgement.signature do
+            "#{view_judgement.signature} — wyrok KIO, orzecznictwo zamówień publicznych"
+          else
+            "Orzeczenie KIO — orzecznictwo zamówień publicznych"
+          end
+
         conn
-        |> assign(:page_title, view_judgement.signature || "Orzeczenie")
+        |> assign(:page_title, page_title)
         |> assign(:meta_description, meta_description)
         |> assign(:canonical_url, canonical_url)
         |> assign(:og_url, canonical_url)

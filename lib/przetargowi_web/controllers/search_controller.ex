@@ -72,8 +72,8 @@ defmodule PrzetargowiWeb.SearchController do
     |> assign(
       :page_title,
       if(query != "",
-        do: "Orzeczenia KIO: #{query}",
-        else: "Orzeczenia KIO — wyszukiwarka orzeczeń UZP"
+        do: "#{query} — orzecznictwo KIO",
+        else: "Orzecznictwo KIO — wyszukiwarka orzeczeń Krajowej Izby Odwoławczej"
       )
     )
     |> assign(:meta_description, build_search_meta_description(query, filters, total_count))
@@ -98,10 +98,10 @@ defmodule PrzetargowiWeb.SearchController do
     if query == "" do
       # No query for semantic search
       conn
-      |> assign(:page_title, "Orzeczenia KIO — wyszukiwarka orzeczeń UZP")
+      |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka semantyczna z AI")
       |> assign(
         :meta_description,
-        "Wyszukiwarka orzeczeń KIO z AI — znajdź podobne wyroki KIO i orzecznictwo zamówień publicznych."
+        "Orzecznictwo KIO wyszukiwarka z AI — znajdź podobne wyroki Krajowej Izby Odwoławczej i orzeczenia zamówień publicznych."
       )
       |> assign(:query, query)
       |> assign(:search_mode, "semantic")
@@ -136,8 +136,8 @@ defmodule PrzetargowiWeb.SearchController do
           })
 
           conn
-          |> assign(:page_title, "Orzeczenia KIO: #{query}")
-          |> assign(:meta_description, "Semantyczne wyniki wyszukiwania dla: #{query}")
+          |> assign(:page_title, "#{query} — orzecznictwo KIO")
+          |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka: semantyczne wyniki dla #{query}")
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
           |> assign(:filters, filters)
@@ -152,8 +152,8 @@ defmodule PrzetargowiWeb.SearchController do
 
         {:error, :missing_api_key} ->
           conn
-          |> assign(:page_title, "Orzeczenia KIO")
-          |> assign(:meta_description, "Wyszukaj podobne orzeczenia KIO używając AI.")
+          |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
+          |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej.")
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
           |> assign(:filters, filters)
@@ -168,8 +168,8 @@ defmodule PrzetargowiWeb.SearchController do
 
         {:error, _reason} ->
           conn
-          |> assign(:page_title, "Orzeczenia KIO")
-          |> assign(:meta_description, "Wyszukaj podobne orzeczenia KIO używając AI.")
+          |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
+          |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej.")
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
           |> assign(:filters, filters)
@@ -270,10 +270,10 @@ defmodule PrzetargowiWeb.SearchController do
     filter_options = Judgements.get_filter_options()
 
     conn
-    |> assign(:page_title, "Orzeczenia KIO — wyszukiwarka orzeczeń UZP")
+    |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka orzeczeń Krajowej Izby Odwoławczej")
     |> assign(
       :meta_description,
-      "Wyszukiwarka orzeczeń KIO i orzecznictwo zamówień publicznych — wyroki KIO, UZP."
+      "Orzecznictwo KIO wyszukiwarka — wyroki i orzeczenia Krajowej Izby Odwoławczej, zamówienia publiczne."
     )
     |> assign(:query, query)
     |> assign(:search_mode, search_mode)
@@ -343,7 +343,7 @@ defmodule PrzetargowiWeb.SearchController do
 
   defp build_search_meta_description(query, filters, total_count) do
     base =
-      "Wyszukiwarka orzeczeń KIO i orzecznictwo zamówień publicznych — wyroki KIO, UZP"
+      "Orzecznictwo KIO wyszukiwarka — wyroki Krajowej Izby Odwoławczej, zamówienia publiczne"
 
     cond do
       query != "" ->
