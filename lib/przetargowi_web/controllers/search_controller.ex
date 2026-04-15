@@ -68,6 +68,11 @@ defmodule PrzetargowiWeb.SearchController do
     # Canonical URL without page param to avoid duplicate content
     canonical_url = build_canonical_url(query, filters)
 
+    breadcrumbs = [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"}
+    ]
+
     conn
     |> assign(
       :page_title,
@@ -79,6 +84,7 @@ defmodule PrzetargowiWeb.SearchController do
     |> assign(:meta_description, build_search_meta_description(query, filters, total_count))
     |> assign(:canonical_url, canonical_url)
     |> assign(:og_url, canonical_url)
+    |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:query, query)
     |> assign(:search_mode, "keyword")
     |> assign(:filters, filters)
@@ -95,6 +101,11 @@ defmodule PrzetargowiWeb.SearchController do
   defp perform_semantic_search(conn, query, filters) do
     filter_options = Judgements.get_filter_options()
 
+    breadcrumbs = [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"}
+    ]
+
     if query == "" do
       # No query for semantic search
       conn
@@ -103,6 +114,7 @@ defmodule PrzetargowiWeb.SearchController do
         :meta_description,
         "Orzecznictwo KIO wyszukiwarka z AI — znajdź podobne wyroki Krajowej Izby Odwoławczej i orzeczenia zamówień publicznych."
       )
+      |> assign(:breadcrumbs, breadcrumbs)
       |> assign(:query, query)
       |> assign(:search_mode, "semantic")
       |> assign(:filters, filters)
@@ -138,6 +150,7 @@ defmodule PrzetargowiWeb.SearchController do
           conn
           |> assign(:page_title, "#{query} — orzecznictwo KIO")
           |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka: semantyczne wyniki dla #{query}")
+          |> assign(:breadcrumbs, breadcrumbs)
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
           |> assign(:filters, filters)
@@ -154,6 +167,7 @@ defmodule PrzetargowiWeb.SearchController do
           conn
           |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
           |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej.")
+          |> assign(:breadcrumbs, breadcrumbs)
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
           |> assign(:filters, filters)
@@ -170,6 +184,7 @@ defmodule PrzetargowiWeb.SearchController do
           conn
           |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
           |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej.")
+          |> assign(:breadcrumbs, breadcrumbs)
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
           |> assign(:filters, filters)
@@ -269,12 +284,18 @@ defmodule PrzetargowiWeb.SearchController do
   defp render_rate_limited(conn, query, filters, search_mode) do
     filter_options = Judgements.get_filter_options()
 
+    breadcrumbs = [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"}
+    ]
+
     conn
     |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka orzeczeń Krajowej Izby Odwoławczej")
     |> assign(
       :meta_description,
       "Orzecznictwo KIO wyszukiwarka — wyroki i orzeczenia Krajowej Izby Odwoławczej, zamówienia publiczne."
     )
+    |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:query, query)
     |> assign(:search_mode, search_mode)
     |> assign(:filters, filters)
