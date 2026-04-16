@@ -773,4 +773,24 @@ defmodule Przetargowi.Judgements do
         reraise e, __STACKTRACE__
       end
   end
+
+  @doc """
+  Returns recent judgements for display on landing pages.
+  """
+  def list_recent_judgements(limit \\ 6) do
+    Judgement
+    |> where([j], not is_nil(j.slug))
+    |> order_by([j], desc: j.decision_date)
+    |> limit(^limit)
+    |> select([j], %{
+      id: j.id,
+      slug: j.slug,
+      signature: j.signature,
+      decision_date: j.decision_date,
+      document_type: j.document_type,
+      resolution_method: j.resolution_method,
+      meritum: j.meritum
+    })
+    |> Repo.all()
+  end
 end

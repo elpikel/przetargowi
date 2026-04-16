@@ -22,6 +22,7 @@ defmodule PrzetargowiWeb.Router do
 
     get "/", PageController, :home
     get "/szukaj", SearchController, :index
+    get "/orzecznictwo-kio", LandingController, :orzecznictwo_kio
     get "/orzeczenie/:slug", JudgementController, :show
     get "/o-nas", StaticPageController, :about
     get "/kontakt", StaticPageController, :contact
@@ -45,6 +46,7 @@ defmodule PrzetargowiWeb.Router do
     get "/sitemap-static.xml", SitemapController, :static
     get "/sitemap/judgements/:page", SitemapController, :judgements
     get "/sitemap/tenders/:page", SitemapController, :tenders
+    get "/sitemap/reports/:page", SitemapController, :reports
   end
 
   # Analytics proxy to avoid ad blockers

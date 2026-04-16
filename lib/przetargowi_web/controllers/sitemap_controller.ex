@@ -2,6 +2,7 @@ defmodule PrzetargowiWeb.SitemapController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.Judgements
+  alias Przetargowi.Reports
   alias Przetargowi.Tenders
 
   @base_url "https://przetargowi.pl"
@@ -53,15 +54,31 @@ defmodule PrzetargowiWeb.SitemapController do
     end
   end
 
+  # Reports sitemap (paginated)
+  def reports(conn, %{"page" => page_str}) do
+    case Integer.parse(page_str) do
+      {page, ""} when page >= 1 ->
+        conn
+        |> put_resp_content_type("application/xml")
+        |> put_resp_header("cache-control", "public, max-age=3600")
+        |> send_resp(200, build_reports_sitemap(page))
+
+      _ ->
+        send_resp(conn, 404, "Not found")
+    end
+  end
+
   # Build sitemap index listing all sub-sitemaps
   defp build_sitemap_index do
     judgement_pages = ceil(Judgements.count_sitemap_entries() / @urls_per_sitemap)
     tender_pages = ceil(Tenders.count_sitemap_entries() / @urls_per_sitemap)
+    report_pages = ceil(Reports.count_sitemap_entries() / @urls_per_sitemap)
 
     sitemaps =
       [{"#{@base_url}/sitemap-static.xml", Date.utc_today()}] ++
         for(page <- 1..max(judgement_pages, 1), do: {"#{@base_url}/sitemap/judgements/#{page}", Date.utc_today()}) ++
-        for(page <- 1..max(tender_pages, 1), do: {"#{@base_url}/sitemap/tenders/#{page}", Date.utc_today()})
+        for(page <- 1..max(tender_pages, 1), do: {"#{@base_url}/sitemap/tenders/#{page}", Date.utc_today()}) ++
+        for(page <- 1..max(report_pages, 1), do: {"#{@base_url}/sitemap/reports/#{page}", Date.utc_today()})
 
     """
     <?xml version="1.0" encoding="UTF-8"?>
@@ -84,6 +101,7 @@ defmodule PrzetargowiWeb.SitemapController do
   defp build_static_sitemap do
     static_urls = [
       %{loc: @base_url, priority: "1.0", changefreq: "daily"},
+      %{loc: "#{@base_url}/orzecznictwo-kio", priority: "0.9", changefreq: "weekly"},
       %{loc: "#{@base_url}/szukaj", priority: "0.9", changefreq: "daily"},
       %{loc: "#{@base_url}/przetargi", priority: "0.9", changefreq: "daily"},
       %{loc: "#{@base_url}/raporty", priority: "0.7", changefreq: "weekly"},
@@ -132,6 +150,24 @@ defmodule PrzetargowiWeb.SitemapController do
           lastmod: format_date(entry.updated_at),
           priority: "0.7",
           changefreq: "weekly"
+        }
+      end)
+
+    build_urlset(urls)
+  end
+
+  # Build reports sitemap for a specific page
+  defp build_reports_sitemap(page) do
+    offset = (page - 1) * @urls_per_sitemap
+
+    urls =
+      Reports.list_sitemap_entries(@urls_per_sitemap, offset)
+      |> Enum.map(fn entry ->
+        %{
+          loc: "#{@base_url}/raporty/#{entry.slug}",
+          lastmod: format_date(entry.updated_at),
+          priority: "0.6",
+          changefreq: "monthly"
         }
       end)
 

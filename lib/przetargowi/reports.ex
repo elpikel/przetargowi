@@ -336,4 +336,30 @@ defmodule Przetargowi.Reports do
   end
 
   defp find_existing_report(_attrs), do: nil
+
+  @doc """
+  Returns report slugs and updated_at for sitemap generation.
+  """
+  def list_sitemap_entries(limit \\ nil, offset \\ 0) do
+    TenderReport
+    |> select([r], %{slug: r.slug, updated_at: r.updated_at})
+    |> where([r], not is_nil(r.slug))
+    |> order_by([r], asc: r.id)
+    |> then(fn query ->
+      case limit do
+        nil -> query
+        n -> query |> limit(^n) |> offset(^offset)
+      end
+    end)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the count of reports with slugs for sitemap pagination.
+  """
+  def count_sitemap_entries do
+    TenderReport
+    |> where([r], not is_nil(r.slug))
+    |> Repo.aggregate(:count)
+  end
 end

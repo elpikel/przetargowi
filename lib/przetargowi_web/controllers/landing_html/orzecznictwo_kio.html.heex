@@ -1,0 +1,140 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <!-- FAQ Schema for rich snippets -->
+  <script type="application/ld+json">
+    <%= raw(Jason.encode!(%{
+      "@context" => "https://schema.org",
+      "@type" => "FAQPage",
+      "mainEntity" => Enum.map(@faqs, fn faq ->
+        %{
+          "@type" => "Question",
+          "name" => faq.question,
+          "acceptedAnswer" => %{
+            "@type" => "Answer",
+            "text" => faq.answer
+          }
+        }
+      end)
+    })) %>
+  </script>
+
+  <div class="bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- Hero Section -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-base-content mb-4">
+          Orzecznictwo KIO
+        </h1>
+        <p class="text-xl text-base-content/70 max-w-3xl mx-auto mb-8">
+          Przeglądaj {@total_count} wyroków i orzeczeń Krajowej Izby Odwoławczej.
+          Wyszukiwanie po słowach kluczowych i semantyczne z AI.
+        </p>
+        <a
+          href="/szukaj"
+          class="btn-gold px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center gap-3"
+        >
+          <.icon name="hero-magnifying-glass" class="size-6" />
+          Przeszukaj orzecznictwo KIO
+        </a>
+      </div>
+
+      <!-- Features -->
+      <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <div class="pricing-card p-6 text-center">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-magnifying-glass" class="size-7 text-primary" />
+          </div>
+          <h2 class="text-lg font-semibold text-base-content mb-2">Wyszukiwarka orzeczeń</h2>
+          <p class="text-base-content/60">
+            Szukaj po słowach kluczowych, sygnaturze, dacie wydania lub rodzaju rozstrzygnięcia.
+          </p>
+        </div>
+
+        <div class="pricing-card p-6 text-center">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-secondary/10 flex items-center justify-center">
+            <.icon name="hero-sparkles" class="size-7 text-secondary" />
+          </div>
+          <h2 class="text-lg font-semibold text-base-content mb-2">Wyszukiwanie semantyczne</h2>
+          <p class="text-base-content/60">
+            Opisz problem własnymi słowami, a AI znajdzie podobne orzeczenia KIO.
+          </p>
+        </div>
+
+        <div class="pricing-card p-6 text-center">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <.icon name="hero-document-text" class="size-7 text-accent" />
+          </div>
+          <h2 class="text-lg font-semibold text-base-content mb-2">Pełne treści wyroków</h2>
+          <p class="text-base-content/60">
+            Dostęp do pełnej treści orzeczeń KIO wraz z uzasadnieniami i meritum.
+          </p>
+        </div>
+      </div>
+
+      <!-- Recent Judgements -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-base-content mb-6">Ostatnie orzeczenia KIO</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <%= for judgement <- @recent_judgements do %>
+            <a
+              href={"/orzeczenie/#{judgement.slug}"}
+              class="pricing-card p-5 hover:border-primary/30 transition-colors block"
+            >
+              <div class="font-semibold text-base-content mb-2">{judgement.signature}</div>
+              <%= if judgement.decision_date do %>
+                <div class="text-sm text-base-content/50 mb-2">
+                  {Calendar.strftime(judgement.decision_date, "%d.%m.%Y")}
+                </div>
+              <% end %>
+              <%= if judgement.meritum do %>
+                <p class="text-sm text-base-content/70 line-clamp-2">
+                  {String.slice(judgement.meritum, 0, 100)}{if String.length(judgement.meritum || "") > 100, do: "..."}
+                </p>
+              <% end %>
+            </a>
+          <% end %>
+        </div>
+        <div class="text-center mt-6">
+          <a href="/szukaj" class="text-primary font-medium hover:underline">
+            Zobacz wszystkie orzeczenia &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-base-content mb-6">Najczęściej zadawane pytania</h2>
+        <div class="space-y-4">
+          <%= for faq <- @faqs do %>
+            <details class="pricing-card p-5 group">
+              <summary class="font-semibold text-base-content cursor-pointer list-none flex items-center justify-between">
+                {faq.question}
+                <.icon name="hero-chevron-down" class="size-5 text-base-content/50 group-open:rotate-180 transition-transform" />
+              </summary>
+              <p class="mt-4 text-base-content/70 leading-relaxed">
+                {faq.answer}
+              </p>
+            </details>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center pricing-card p-8">
+        <h2 class="text-2xl font-bold text-base-content mb-4">
+          Rozpocznij wyszukiwanie
+        </h2>
+        <p class="text-base-content/70 mb-6 max-w-xl mx-auto">
+          Skorzystaj z naszej wyszukiwarki orzecznictwa KIO, aby znaleźć wyroki i postanowienia
+          dotyczące zamówień publicznych.
+        </p>
+        <a
+          href="/szukaj"
+          class="btn-gold px-8 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
+        >
+          <.icon name="hero-magnifying-glass" class="size-5" />
+          Przeszukaj bazę orzeczeń
+        </a>
+      </div>
+    </div>
+  </div>
+</Layouts.app>
