@@ -6,7 +6,8 @@ defmodule Przetargowi.Embeddings.EmbeddingCache do
   use GenServer
 
   @table_name :embedding_cache
-  @default_ttl_seconds 3600  # 1 hour
+  # 1 hour
+  @default_ttl_seconds 3600
 
   # Client API
 

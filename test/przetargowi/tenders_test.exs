@@ -297,7 +297,8 @@ defmodule Przetargowi.TendersTest do
         notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
         bzp_number: "BZP-#{System.unique_integer([:positive])}",
         is_tender_amount_below_eu: true,
-        publication_date: DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second),
+        publication_date:
+          DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second),
         cpv_codes: ["45000000-7"],
         organization_name: "Test",
         organization_city: "Warszawa",
@@ -353,7 +354,8 @@ defmodule Przetargowi.TendersTest do
         notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
         bzp_number: "BZP-#{System.unique_integer([:positive])}",
         is_tender_amount_below_eu: true,
-        publication_date: DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second),
+        publication_date:
+          DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second),
         cpv_codes: ["45000000-7"],
         organization_name: "Test",
         organization_city: "Warszawa",

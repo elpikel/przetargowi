@@ -53,6 +53,12 @@ defmodule PrzetargowiWeb.Layouts do
                   Raporty
                 </a>
                 <a
+                  href="/blog"
+                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
+                  Blog
+                </a>
+                <a
                   href="/#cennik"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
@@ -131,6 +137,12 @@ defmodule PrzetargowiWeb.Layouts do
                 Raporty
               </a>
               <a
+                href="/blog"
+                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+              >
+                Blog
+              </a>
+              <a
                 href="/#cennik"
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
@@ -205,6 +217,7 @@ defmodule PrzetargowiWeb.Layouts do
                 <li><a href="/szukaj">Orzeczenia</a></li>
                 <li><a href="/przetargi">Przetargi</a></li>
                 <li><a href="/raporty">Raporty</a></li>
+                <li><a href="/blog">Blog</a></li>
                 <li><a href="/#cennik">Cennik</a></li>
               </ul>
             </div>

@@ -1,6 +1,7 @@
 defmodule PrzetargowiWeb.SitemapController do
   use PrzetargowiWeb, :controller
 
+  alias Przetargowi.Blog
   alias Przetargowi.Judgements
   alias Przetargowi.Reports
   alias Przetargowi.Tenders
@@ -76,9 +77,18 @@ defmodule PrzetargowiWeb.SitemapController do
 
     sitemaps =
       [{"#{@base_url}/sitemap-static.xml", Date.utc_today()}] ++
-        for(page <- 1..max(judgement_pages, 1), do: {"#{@base_url}/sitemap/judgements/#{page}", Date.utc_today()}) ++
-        for(page <- 1..max(tender_pages, 1), do: {"#{@base_url}/sitemap/tenders/#{page}", Date.utc_today()}) ++
-        for(page <- 1..max(report_pages, 1), do: {"#{@base_url}/sitemap/reports/#{page}", Date.utc_today()})
+        for(
+          page <- 1..max(judgement_pages, 1),
+          do: {"#{@base_url}/sitemap/judgements/#{page}", Date.utc_today()}
+        ) ++
+        for(
+          page <- 1..max(tender_pages, 1),
+          do: {"#{@base_url}/sitemap/tenders/#{page}", Date.utc_today()}
+        ) ++
+        for(
+          page <- 1..max(report_pages, 1),
+          do: {"#{@base_url}/sitemap/reports/#{page}", Date.utc_today()}
+        )
 
     """
     <?xml version="1.0" encoding="UTF-8"?>
@@ -104,6 +114,7 @@ defmodule PrzetargowiWeb.SitemapController do
       %{loc: "#{@base_url}/orzecznictwo-kio", priority: "0.9", changefreq: "weekly"},
       %{loc: "#{@base_url}/szukaj", priority: "0.9", changefreq: "daily"},
       %{loc: "#{@base_url}/przetargi", priority: "0.9", changefreq: "daily"},
+      %{loc: "#{@base_url}/blog", priority: "0.8", changefreq: "weekly"},
       %{loc: "#{@base_url}/raporty", priority: "0.7", changefreq: "weekly"},
       %{loc: "#{@base_url}/o-nas", priority: "0.5", changefreq: "monthly"},
       %{loc: "#{@base_url}/kontakt", priority: "0.5", changefreq: "monthly"},
@@ -116,7 +127,18 @@ defmodule PrzetargowiWeb.SitemapController do
         %{loc: "#{@base_url}/przetargi/#{region}", priority: "0.7", changefreq: "daily"}
       end)
 
-    urls = static_urls ++ region_urls
+    blog_urls =
+      Blog.list_sitemap_entries()
+      |> Enum.map(fn entry ->
+        %{
+          loc: "#{@base_url}/blog/#{entry.slug}",
+          lastmod: format_date(entry.updated_at),
+          priority: "0.7",
+          changefreq: "monthly"
+        }
+      end)
+
+    urls = static_urls ++ region_urls ++ blog_urls
     build_urlset(urls)
   end
 

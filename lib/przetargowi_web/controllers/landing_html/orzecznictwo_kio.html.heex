@@ -32,12 +32,11 @@
           href="/szukaj"
           class="btn-gold px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center gap-3"
         >
-          <.icon name="hero-magnifying-glass" class="size-6" />
-          Przeszukaj orzecznictwo KIO
+          <.icon name="hero-magnifying-glass" class="size-6" /> Przeszukaj orzecznictwo KIO
         </a>
       </div>
-
-      <!-- Features -->
+      
+<!-- Features -->
       <div class="grid md:grid-cols-3 gap-6 mb-16">
         <div class="pricing-card p-6 text-center">
           <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -69,8 +68,8 @@
           </p>
         </div>
       </div>
-
-      <!-- Recent Judgements -->
+      
+<!-- Recent Judgements -->
       <div class="mb-16">
         <h2 class="text-2xl font-bold text-base-content mb-6">Ostatnie orzeczenia KIO</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -87,7 +86,10 @@
               <% end %>
               <%= if judgement.meritum do %>
                 <p class="text-sm text-base-content/70 line-clamp-2">
-                  {String.slice(judgement.meritum, 0, 100)}{if String.length(judgement.meritum || "") > 100, do: "..."}
+                  {String.slice(judgement.meritum, 0, 100)}{if String.length(
+                                                                 judgement.meritum || ""
+                                                               ) > 100,
+                                                               do: "..."}
                 </p>
               <% end %>
             </a>
@@ -99,8 +101,8 @@
           </a>
         </div>
       </div>
-
-      <!-- FAQ Section -->
+      
+<!-- FAQ Section -->
       <div class="mb-16">
         <h2 class="text-2xl font-bold text-base-content mb-6">Najczęściej zadawane pytania</h2>
         <div class="space-y-4">
@@ -108,7 +110,10 @@
             <details class="pricing-card p-5 group">
               <summary class="font-semibold text-base-content cursor-pointer list-none flex items-center justify-between">
                 {faq.question}
-                <.icon name="hero-chevron-down" class="size-5 text-base-content/50 group-open:rotate-180 transition-transform" />
+                <.icon
+                  name="hero-chevron-down"
+                  class="size-5 text-base-content/50 group-open:rotate-180 transition-transform"
+                />
               </summary>
               <p class="mt-4 text-base-content/70 leading-relaxed">
                 {faq.answer}
@@ -117,8 +122,8 @@
           <% end %>
         </div>
       </div>
-
-      <!-- CTA -->
+      
+<!-- CTA -->
       <div class="text-center pricing-card p-8">
         <h2 class="text-2xl font-bold text-base-content mb-4">
           Rozpocznij wyszukiwanie
@@ -131,8 +136,7 @@
           href="/szukaj"
           class="btn-gold px-8 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
         >
-          <.icon name="hero-magnifying-glass" class="size-5" />
-          Przeszukaj bazę orzeczeń
+          <.icon name="hero-magnifying-glass" class="size-5" /> Przeszukaj bazę orzeczeń
         </a>
       </div>
     </div>

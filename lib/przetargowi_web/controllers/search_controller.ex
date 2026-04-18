@@ -149,7 +149,10 @@ defmodule PrzetargowiWeb.SearchController do
 
           conn
           |> assign(:page_title, "#{query} — orzecznictwo KIO")
-          |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka: semantyczne wyniki dla #{query}")
+          |> assign(
+            :meta_description,
+            "Orzecznictwo KIO wyszukiwarka: semantyczne wyniki dla #{query}"
+          )
           |> assign(:breadcrumbs, breadcrumbs)
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
@@ -166,7 +169,10 @@ defmodule PrzetargowiWeb.SearchController do
         {:error, :missing_api_key} ->
           conn
           |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
-          |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej.")
+          |> assign(
+            :meta_description,
+            "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej."
+          )
           |> assign(:breadcrumbs, breadcrumbs)
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")
@@ -183,7 +189,10 @@ defmodule PrzetargowiWeb.SearchController do
         {:error, _reason} ->
           conn
           |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
-          |> assign(:meta_description, "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej.")
+          |> assign(
+            :meta_description,
+            "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej."
+          )
           |> assign(:breadcrumbs, breadcrumbs)
           |> assign(:query, query)
           |> assign(:search_mode, "semantic")

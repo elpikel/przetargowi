@@ -360,11 +360,12 @@ defmodule Przetargowi.Tenders do
             {:ok, document}
 
           {:error, changeset} ->
-            errors = Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-              Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-                opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+            errors =
+              Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+                Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+                  opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+                end)
               end)
-            end)
 
             Logger.error("""
             Failed to upsert tender document:

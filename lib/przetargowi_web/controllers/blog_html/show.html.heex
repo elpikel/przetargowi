@@ -1,0 +1,107 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="bg-base-200 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <article>
+        <!-- Header -->
+        <header class="mb-12">
+          <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-6 leading-tight">
+            {@article.title}
+          </h1>
+          <div class="flex items-center gap-6 text-base-content/60">
+            <span class="flex items-center gap-2">
+              <.icon name="hero-calendar" class="size-5" />
+              {format_date(@article.published_at)}
+            </span>
+            <span class="flex items-center gap-2">
+              <.icon name="hero-user" class="size-5" />
+              {@article.author}
+            </span>
+          </div>
+        </header>
+        
+<!-- Content -->
+        <div class="pricing-card p-8 md:p-12">
+          <div class="prose prose-lg max-w-none prose-headings:text-base-content prose-h2:text-2xl prose-h3:text-xl prose-p:text-base-content/80 prose-a:text-primary prose-strong:text-base-content prose-ul:text-base-content/80 prose-ol:text-base-content/80">
+            {raw(@article.content)}
+          </div>
+        </div>
+        
+<!-- CTA -->
+        <div class="mt-12 pricing-card p-8">
+          <h3 class="text-xl font-semibold text-base-content mb-6 text-center">
+            Narzędzia dla uczestników rynku zamówień publicznych
+          </h3>
+          <div class="grid md:grid-cols-3 gap-6">
+            <a
+              href="/przetargi"
+              class="p-6 rounded-xl bg-base-200 hover:bg-base-300 transition-colors text-center"
+            >
+              <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-primary/10 flex items-center justify-center">
+                <.icon name="hero-magnifying-glass" class="size-6 text-primary" />
+              </div>
+              <div class="font-semibold text-base-content mb-1">Wyszukiwarka przetargów</div>
+              <div class="text-sm text-base-content/60">
+                Wszystkie ogłoszenia w jednym miejscu
+              </div>
+            </a>
+            <a
+              href="/orzecznictwo-kio"
+              class="p-6 rounded-xl bg-base-200 hover:bg-base-300 transition-colors text-center"
+            >
+              <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-primary/10 flex items-center justify-center">
+                <.icon name="hero-scale" class="size-6 text-primary" />
+              </div>
+              <div class="font-semibold text-base-content mb-1">Orzecznictwo KIO</div>
+              <div class="text-sm text-base-content/60">
+                Tysiące wyroków z wyszukiwarką AI
+              </div>
+            </a>
+            <a
+              href="/raporty"
+              class="p-6 rounded-xl bg-base-200 hover:bg-base-300 transition-colors text-center"
+            >
+              <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-primary/10 flex items-center justify-center">
+                <.icon name="hero-chart-bar" class="size-6 text-primary" />
+              </div>
+              <div class="font-semibold text-base-content mb-1">Raporty i analizy</div>
+              <div class="text-sm text-base-content/60">Statystyki rynku zamówień</div>
+            </a>
+          </div>
+        </div>
+      </article>
+      
+<!-- Related Articles -->
+      <% other_articles = Enum.filter(@related_articles, fn a -> a.slug != @article.slug end) %>
+      <%= if other_articles != [] do %>
+        <div class="mt-16">
+          <h2 class="text-2xl font-semibold text-base-content mb-8">Inne artykuły</h2>
+          <div class="grid md:grid-cols-3 gap-6">
+            <%= for related <- other_articles do %>
+              <a
+                href={"/blog/#{related.slug}"}
+                class="pricing-card p-6 hover:border-primary/30 transition-colors block"
+              >
+                <h3 class="font-medium text-base-content mb-3 line-clamp-2">
+                  {related.title}
+                </h3>
+                <span class="text-sm text-base-content/50">
+                  {format_date(related.published_at)}
+                </span>
+              </a>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+      
+<!-- Back to blog -->
+      <div class="mt-12">
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+        >
+          <.icon name="hero-arrow-left" class="size-4" /> Powrót do bloga
+        </a>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

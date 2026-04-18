@@ -1,0 +1,77 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="bg-base-200 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="mb-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-4">Blog</h1>
+        <p class="text-lg text-base-content/60">
+          Poradniki i artykuły o zamówieniach publicznych
+        </p>
+      </div>
+
+      <%= if @articles == [] do %>
+        <div class="text-center py-24">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-300 flex items-center justify-center">
+            <.icon name="hero-document-text" class="size-8 text-base-content/30" />
+          </div>
+          <p class="text-lg text-base-content/60">Brak artykułów</p>
+        </div>
+      <% else %>
+        <div class="space-y-8">
+          <%= for article <- @articles do %>
+            <article class="pricing-card p-8 hover:border-primary/30 transition-colors">
+              <a href={"/blog/#{article.slug}"} class="block">
+                <h2 class="text-xl md:text-2xl font-semibold text-base-content mb-3 hover:text-primary transition-colors leading-tight">
+                  {article.title}
+                </h2>
+                <div class="flex items-center gap-6 text-sm text-base-content/50 mb-4">
+                  <span class="flex items-center gap-2">
+                    <.icon name="hero-calendar" class="size-4" />
+                    {format_date(article.published_at)}
+                  </span>
+                  <span class="flex items-center gap-2">
+                    <.icon name="hero-user" class="size-4" />
+                    {article.author}
+                  </span>
+                </div>
+                <%= if article.excerpt do %>
+                  <p class="text-base-content/70 leading-relaxed line-clamp-3">
+                    {article.excerpt}
+                  </p>
+                <% end %>
+              </a>
+            </article>
+          <% end %>
+        </div>
+        
+<!-- Pagination -->
+        <%= if @total_pages > 1 do %>
+          <div class="mt-12 flex justify-center">
+            <nav class="flex items-center space-x-4">
+              <%= if @current_page > 1 do %>
+                <a
+                  href={"/blog?page=#{@current_page - 1}"}
+                  class="btn-outline px-5 py-2.5 rounded-lg text-sm font-medium"
+                >
+                  Poprzednia
+                </a>
+              <% end %>
+
+              <span class="px-4 py-2 text-base-content/60 text-sm">
+                Strona {@current_page} z {@total_pages}
+              </span>
+
+              <%= if @current_page < @total_pages do %>
+                <a
+                  href={"/blog?page=#{@current_page + 1}"}
+                  class="btn-outline px-5 py-2.5 rounded-lg text-sm font-medium"
+                >
+                  Następna
+                </a>
+              <% end %>
+            </nav>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</Layouts.app>

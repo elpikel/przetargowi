@@ -39,6 +39,10 @@ defmodule PrzetargowiWeb.Router do
     # Reports
     get "/raporty", ReportController, :index
     get "/raporty/:slug", ReportController, :show
+
+    # Blog
+    get "/blog", BlogController, :index
+    get "/blog/:slug", BlogController, :show
   end
 
   scope "/", PrzetargowiWeb do
