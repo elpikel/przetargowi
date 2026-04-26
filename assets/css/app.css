@@ -373,6 +373,15 @@ h1, h2, h3, .font-display {
   transform: translateY(-4px);
 }
 
+.pricing-card-static,
+.pricing-card-static:hover {
+  border-color: #f3e4c3 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
 .pricing-card-featured {
   background: linear-gradient(135deg, #12233d 0%, #1a3052 100%);
   border: 2px solid #234168;
@@ -1133,4 +1142,14 @@ h1, h2, h3, .font-display {
   font-size: 1.125rem;
   margin-top: 0;
   margin-bottom: 1rem;
+}
+
+/* Override prose styles for dark callout boxes */
+.prose > div[style*="background: linear-gradient"] strong {
+  color: inherit;
+}
+
+.prose > div[style*="background: linear-gradient"] p,
+.prose > div[style*="background: linear-gradient"] li {
+  color: inherit;
 }
