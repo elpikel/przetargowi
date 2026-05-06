@@ -26,7 +26,7 @@
         <!-- Sidebar with metadata -->
         <div class="lg:col-span-1 space-y-6" id="sidebar">
           <!-- Basic Info Card -->
-          <div class="pricing-card p-6">
+          <div class="pricing-card pricing-card-static p-6">
             <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
               <.icon name="hero-information-circle" class="size-5 text-secondary" />
               Informacje podstawowe
@@ -41,33 +41,66 @@
               <%= if @judgement.issuing_authority do %>
                 <div>
                   <dt class="text-sm text-base-content/50 mb-1">Organ wydający</dt>
-                  <dd class="text-base-content font-medium">{@judgement.issuing_authority}</dd>
+                  <dd class="text-base-content font-medium">
+                    <a
+                      href={"/szukaj?issuing_authority=#{URI.encode(@judgement.issuing_authority)}"}
+                      class="hover:text-primary hover:underline transition-colors"
+                    >
+                      {@judgement.issuing_authority}
+                    </a>
+                  </dd>
                 </div>
               <% end %>
               <%= if @judgement.document_type do %>
                 <div>
                   <dt class="text-sm text-base-content/50 mb-1">Rodzaj dokumentu</dt>
-                  <dd class="text-base-content font-medium">{@judgement.document_type}</dd>
+                  <dd class="text-base-content font-medium">
+                    <a
+                      href={"/szukaj?document_type=#{URI.encode(@judgement.document_type)}"}
+                      class="hover:text-primary hover:underline transition-colors"
+                    >
+                      {@judgement.document_type}
+                    </a>
+                  </dd>
                 </div>
               <% end %>
               <%= if @judgement.decision_date do %>
                 <div>
                   <dt class="text-sm text-base-content/50 mb-1">Data wydania</dt>
                   <dd class="text-base-content font-medium">
-                    {Calendar.strftime(@judgement.decision_date, "%d.%m.%Y")}
+                    <a
+                      href={"/szukaj?date_from=#{@judgement.decision_date}&date_to=#{@judgement.decision_date}"}
+                      class="hover:text-primary hover:underline transition-colors"
+                    >
+                      {Calendar.strftime(@judgement.decision_date, "%d.%m.%Y")}
+                    </a>
                   </dd>
                 </div>
               <% end %>
               <%= if @judgement.chairman do %>
                 <div>
                   <dt class="text-sm text-base-content/50 mb-1">Przewodniczący</dt>
-                  <dd class="text-base-content font-medium">{@judgement.chairman}</dd>
+                  <dd class="text-base-content font-medium">
+                    <a
+                      href={"/szukaj?q=#{URI.encode(@judgement.chairman)}"}
+                      class="hover:text-primary hover:underline transition-colors"
+                    >
+                      {@judgement.chairman}
+                    </a>
+                  </dd>
                 </div>
               <% end %>
               <%= if @judgement.resolution_method do %>
                 <div>
                   <dt class="text-sm text-base-content/50 mb-1">Sposób rozstrzygnięcia</dt>
-                  <dd class="text-base-content font-medium">{@judgement.resolution_method}</dd>
+                  <dd class="text-base-content font-medium">
+                    <a
+                      href={"/szukaj?resolution_method=#{URI.encode(@judgement.resolution_method)}"}
+                      class="hover:text-primary hover:underline transition-colors"
+                    >
+                      {@judgement.resolution_method}
+                    </a>
+                  </dd>
                 </div>
               <% end %>
             </dl>
@@ -75,7 +108,7 @@
           
 <!-- Contracting Authority Card -->
           <%= if @judgement.contracting_authority || @judgement.location do %>
-            <div class="pricing-card p-6">
+            <div class="pricing-card pricing-card-static p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
                 <.icon name="hero-building-office-2" class="size-5 text-secondary" /> Zamawiający
               </h2>
@@ -84,14 +117,26 @@
                   <div>
                     <dt class="text-sm text-base-content/50 mb-1">Nazwa</dt>
                     <dd class="text-base-content font-medium">
-                      {@judgement.contracting_authority}
+                      <a
+                        href={"/szukaj?q=#{URI.encode(@judgement.contracting_authority)}"}
+                        class="hover:text-primary hover:underline transition-colors"
+                      >
+                        {@judgement.contracting_authority}
+                      </a>
                     </dd>
                   </div>
                 <% end %>
                 <%= if @judgement.location do %>
                   <div>
                     <dt class="text-sm text-base-content/50 mb-1">Miejscowość</dt>
-                    <dd class="text-base-content font-medium">{@judgement.location}</dd>
+                    <dd class="text-base-content font-medium">
+                      <a
+                        href={"/szukaj?q=#{URI.encode(@judgement.location)}"}
+                        class="hover:text-primary hover:underline transition-colors"
+                      >
+                        {@judgement.location}
+                      </a>
+                    </dd>
                   </div>
                 <% end %>
               </dl>
@@ -100,7 +145,7 @@
           
 <!-- Procedure Card -->
           <%= if @judgement.procedure_type do %>
-            <div class="pricing-card p-6">
+            <div class="pricing-card pricing-card-static p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
                 <.icon name="hero-clipboard-document-list" class="size-5 text-secondary" />
                 Postępowanie
@@ -108,7 +153,14 @@
               <dl class="space-y-4">
                 <div>
                   <dt class="text-sm text-base-content/50 mb-1">Tryb postępowania</dt>
-                  <dd class="text-base-content font-medium">{@judgement.procedure_type}</dd>
+                  <dd class="text-base-content font-medium">
+                    <a
+                      href={"/szukaj?procedure_type=#{URI.encode(@judgement.procedure_type)}"}
+                      class="hover:text-primary hover:underline transition-colors"
+                    >
+                      {@judgement.procedure_type}
+                    </a>
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -116,7 +168,7 @@
           
 <!-- Key Provisions Card -->
           <%= if @judgement.key_provisions && length(@judgement.key_provisions) > 0 do %>
-            <div class="pricing-card p-6">
+            <div class="pricing-card pricing-card-static p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
                 <.icon name="hero-scale" class="size-5 text-secondary" />
                 Kluczowe przepisy ustawy Pzp
@@ -138,15 +190,18 @@
           
 <!-- Thematic Issues Card -->
           <%= if @judgement.thematic_issues && length(@judgement.thematic_issues) > 0 do %>
-            <div class="pricing-card p-6">
+            <div class="pricing-card pricing-card-static p-6">
               <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
                 <.icon name="hero-tag" class="size-5 text-secondary" /> Zagadnienia merytoryczne
               </h2>
               <div class="flex flex-wrap gap-2">
                 <%= for issue <- @judgement.thematic_issues do %>
-                  <span class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium">
+                  <a
+                    href={"/szukaj?q=#{URI.encode(issue)}"}
+                    class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium hover:bg-secondary/20 transition-colors"
+                  >
                     {issue}
-                  </span>
+                  </a>
                 <% end %>
               </div>
             </div>
@@ -156,7 +211,7 @@
 <!-- Main content -->
         <div class="lg:col-span-2 flex flex-col gap-6">
           <!-- Document Content -->
-          <div class="pricing-card p-6 flex-1 flex flex-col">
+          <div class="pricing-card pricing-card-static p-6 flex-1 flex flex-col">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-lg font-semibold text-base-content flex items-center gap-2">
                 <.icon name="hero-document-text" class="size-5 text-secondary" /> Treść dokumentu
