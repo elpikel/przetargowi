@@ -28,6 +28,7 @@ defmodule PrzetargowiWeb.Router do
     get "/kontakt", StaticPageController, :contact
     get "/regulamin", StaticPageController, :terms
     get "/polityka-prywatnosci", StaticPageController, :privacy
+    get "/ustawa-pzp", StaticPageController, :pzp
 
     # Tenders (BZP)
     get "/przetargi", TenderController, :index

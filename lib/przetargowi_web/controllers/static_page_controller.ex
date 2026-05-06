@@ -41,4 +41,15 @@ defmodule PrzetargowiWeb.StaticPageController do
     |> assign(:canonical_url, "https://przetargowi.pl/polityka-prywatnosci")
     |> render(:privacy)
   end
+
+  def pzp(conn, _params) do
+    conn
+    |> assign(:page_title, "Ustawa Prawo zamówień publicznych")
+    |> assign(
+      :meta_description,
+      "Tekst ustawy z dnia 11 września 2019 r. - Prawo zamówień publicznych (Dz.U. 2024 poz. 1320)."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/ustawa-pzp")
+    |> render(:pzp)
+  end
 end

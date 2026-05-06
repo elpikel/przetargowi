@@ -123,9 +123,14 @@
               </h2>
               <div class="flex flex-wrap gap-2">
                 <%= for provision <- @judgement.key_provisions do %>
-                  <span class="px-3 py-1.5 text-sm bg-primary/10 text-primary rounded-lg font-medium">
+                  <a
+                    href={PrzetargowiWeb.JudgementHTML.provision_url(provision)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-3 py-1.5 text-sm bg-primary/10 text-primary rounded-lg font-medium hover:bg-primary/20 transition-colors"
+                  >
                     {provision}
-                  </span>
+                  </a>
                 <% end %>
               </div>
             </div>

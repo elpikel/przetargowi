@@ -3,6 +3,20 @@ defmodule PrzetargowiWeb.JudgementHTML do
 
   embed_templates "judgement_html/*"
 
+  @doc """
+  Generates a URL to the local PZP law page for a given provision.
+  Parses provision strings like "art. 16 pkt 1" and extracts the article number.
+  """
+  def provision_url(provision) do
+    case Regex.run(~r/art\.?\s*(\d+[a-z]?)/i, provision) do
+      [_, article_number] ->
+        "/ustawa-pzp#art-#{article_number}"
+
+      _ ->
+        nil
+    end
+  end
+
   def source_badge_class(source) do
     case source do
       "KIO" -> "badge-kio"
