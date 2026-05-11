@@ -114,6 +114,7 @@ defmodule PrzetargowiWeb.SitemapController do
       %{loc: "#{@base_url}/orzecznictwo-kio", priority: "0.9", changefreq: "weekly"},
       %{loc: "#{@base_url}/szukaj", priority: "0.9", changefreq: "daily"},
       %{loc: "#{@base_url}/przetargi", priority: "0.9", changefreq: "daily"},
+      %{loc: "#{@base_url}/ustawa-pzp", priority: "0.8", changefreq: "yearly"},
       %{loc: "#{@base_url}/blog", priority: "0.8", changefreq: "weekly"},
       %{loc: "#{@base_url}/raporty", priority: "0.7", changefreq: "weekly"},
       %{loc: "#{@base_url}/o-nas", priority: "0.5", changefreq: "monthly"},
