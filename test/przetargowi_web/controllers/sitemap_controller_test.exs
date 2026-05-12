@@ -34,6 +34,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
       assert body =~ "https://przetargowi.pl/szukaj</loc>"
       assert body =~ "https://przetargowi.pl/przetargi</loc>"
       assert body =~ "https://przetargowi.pl/przetargi/mazowieckie</loc>"
+      assert body =~ "https://przetargowi.pl/ustawa-pzp</loc>"
     end
 
     test "includes all 16 regions", %{conn: conn} do
@@ -45,6 +46,26 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
 
       for region <- regions do
         assert body =~ "/przetargi/#{region}</loc>"
+      end
+    end
+
+    test "all static URLs return 200", %{conn: conn} do
+      sitemap_conn = get(conn, ~p"/sitemap-static.xml")
+      body = response(sitemap_conn, 200)
+
+      # Extract all URLs from the sitemap
+      urls =
+        Regex.scan(~r/<loc>https:\/\/przetargowi\.pl([^<]+)<\/loc>/, body)
+        |> Enum.map(fn [_, path] -> path end)
+        |> Enum.reject(&String.starts_with?(&1, "/blog/"))
+
+      assert length(urls) > 0, "Expected to find URLs in sitemap"
+
+      for path <- urls do
+        page_conn = get(conn, path)
+
+        assert page_conn.status == 200,
+               "Expected #{path} to return 200, got #{page_conn.status}"
       end
     end
   end
