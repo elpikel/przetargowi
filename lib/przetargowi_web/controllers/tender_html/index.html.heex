@@ -233,8 +233,35 @@
               </div>
 
               <div class="flex-shrink-0 lg:text-right">
-                <div class="text-sm text-base-content/50 mb-1">
-                  Opublikowano: {format_date(notice.publication_date)}
+                <div class="text-sm text-base-content/50 mb-1 flex items-center gap-3 lg:justify-end">
+                  <span>Opublikowano: {format_date(notice.publication_date)}</span>
+                  <%= if @current_scope do %>
+                    <% is_watching = notice.object_id in @watched_ids %>
+                    <%= if is_watching do %>
+                      <.link
+                        href={~p"/obserwowane/przetarg/#{notice.object_id}"}
+                        method="delete"
+                        class="inline-flex items-center justify-center size-8 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer"
+                        title="Usuń z obserwowanych"
+                      >
+                        <.icon name="hero-star-solid" class="size-5" />
+                      </.link>
+                    <% else %>
+                      <%= if @can_add_to_watchlist do %>
+                        <form action={~p"/obserwowane"} method="post" class="inline">
+                          <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                          <input type="hidden" name="tender_object_id" value={notice.object_id} />
+                          <button
+                            type="submit"
+                            class="inline-flex items-center justify-center size-8 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer"
+                            title="Dodaj do obserwowanych"
+                          >
+                            <.icon name="hero-star" class="size-5" />
+                          </button>
+                        </form>
+                      <% end %>
+                    <% end %>
+                  <% end %>
                 </div>
                 <div class={[
                   "text-sm font-medium",

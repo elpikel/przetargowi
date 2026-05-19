@@ -550,6 +550,46 @@
           </a>
 
           <%= if @current_scope do %>
+            <%= if @is_watching do %>
+              <.link
+                href={~p"/obserwowane/#{@watchlist_entry_id}"}
+                method="delete"
+                class="btn-primary w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+              >
+                <.icon name="hero-star-solid" class="size-4" /> Obserwujesz
+              </.link>
+            <% else %>
+              <%= if @can_add_to_watchlist do %>
+                <form action={~p"/obserwowane"} method="post">
+                  <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                  <input type="hidden" name="tender_object_id" value={@tender.object_id} />
+                  <button
+                    type="submit"
+                    class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+                  >
+                    <.icon name="hero-star" class="size-4" /> Dodaj do obserwowanych
+                  </button>
+                </form>
+              <% else %>
+                <a
+                  href={~p"/subskrypcja/nowa"}
+                  class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2 opacity-60"
+                  title="Osiągnąłeś limit obserwowanych przetargów"
+                >
+                  <.icon name="hero-star" class="size-4" /> Dodaj do obserwowanych
+                </a>
+              <% end %>
+            <% end %>
+          <% else %>
+            <a
+              href={~p"/rejestracja"}
+              class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+            >
+              <.icon name="hero-star" class="size-4" /> Dodaj do obserwowanych
+            </a>
+          <% end %>
+
+          <%= if @current_scope do %>
             <form action={~p"/alerty"} method="post">
               <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
               <input

@@ -1,0 +1,113 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-display font-bold text-base-content">Obserwowane przetargi</h1>
+      <div class="text-sm text-base-content/60">
+        <%= if @limit do %>
+          {@count} / {@limit}
+        <% else %>
+          {@count} przetargów
+        <% end %>
+      </div>
+    </div>
+
+    <p class="text-base-content/60 mb-8">
+      Otrzymasz przypomnienia 7 dni i 1 dzień przed terminem składania ofert.
+    </p>
+
+    <%= if @entries == [] do %>
+      <div class="card-elevated p-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <.icon name="hero-star" class="size-8 text-primary" />
+        </div>
+        <p class="text-base-content/60 mb-4">Nie obserwujesz jeszcze żadnych przetargów.</p>
+        <p class="text-sm text-base-content/50 mb-6">
+          Dodaj przetargi do obserwowanych, klikając ikonę gwiazdki na stronie przetargu.
+        </p>
+        <a href={~p"/przetargi"} class="btn-primary">
+          Przeglądaj przetargi
+        </a>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <%= for entry <- @entries do %>
+          <div class="card-elevated p-6">
+            <div class="flex justify-between items-start gap-4">
+              <div class="flex gap-4 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
+                  <.icon name="hero-star-solid" class="size-5 text-warning" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <%= if entry.tender_notice do %>
+                    <a
+                      href={~p"/przetargi/#{entry.tender_notice.slug || entry.tender_object_id}"}
+                      class="font-semibold text-base-content hover:text-primary line-clamp-2"
+                    >
+                      {truncate(entry.tender_notice.order_object || "Przetarg", 150)}
+                    </a>
+                    <div class="text-sm text-base-content/60 mt-2 space-y-1">
+                      <p class="flex items-center gap-2">
+                        <.icon name="hero-building-office-2" class="size-4" />
+                        <span class="truncate">{entry.tender_notice.organization_name}</span>
+                      </p>
+                      <p class="flex items-center gap-2">
+                        <.icon name="hero-map-pin" class="size-4" />
+                        <span>
+                          {entry.tender_notice.organization_city}, {entry.tender_notice.organization_province}
+                        </span>
+                      </p>
+                      <p class="flex items-center gap-2">
+                        <.icon name="hero-clock" class="size-4" />
+                        <span class={deadline_class(entry.tender_notice.submitting_offers_date)}>
+                          Termin: {format_deadline(entry.tender_notice.submitting_offers_date)}
+                        </span>
+                      </p>
+                    </div>
+                  <% else %>
+                    <p class="text-base-content/50">
+                      Przetarg niedostępny (ID: {entry.tender_object_id})
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+              <.link
+                href={~p"/obserwowane/#{entry.id}"}
+                method="delete"
+                data-confirm="Czy na pewno chcesz usunąć ten przetarg z obserwowanych?"
+                class="text-error hover:text-error/80 text-sm font-medium flex-shrink-0"
+              >
+                Usuń
+              </.link>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%= unless @is_premium do %>
+        <div class="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
+          <div class="flex items-start gap-3">
+            <.icon name="hero-sparkles" class="size-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p class="text-sm text-base-content/80">
+                <span class="font-medium">Darmowy plan:</span>
+                {@limit} obserwowanych przetargów. Wybierz plan premium, aby obserwować bez limitu.
+              </p>
+              <a
+                href={~p"/subskrypcja/nowa"}
+                class="text-sm text-primary hover:text-primary/80 font-medium mt-1 inline-block"
+              >
+                Zobacz plany →
+              </a>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <div class="mt-8 text-center">
+      <a href={~p"/przetargi"} class="text-base-content/50 hover:text-base-content/70 text-sm">
+        ← Wróć do przetargów
+      </a>
+    </div>
+  </div>
+</Layouts.app>

@@ -70,6 +70,12 @@ defmodule PrzetargowiWeb.Layouts do
             <div class="flex items-center gap-4">
               <%= if @current_scope do %>
                 <a
+                  href="/obserwowane"
+                  class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
+                  Obserwowane
+                </a>
+                <a
                   href="/alerty"
                   class="hidden sm:block text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
@@ -151,6 +157,12 @@ defmodule PrzetargowiWeb.Layouts do
             <% end %>
             <div class="pt-3 border-t border-base-300">
               <%= if @current_scope do %>
+                <a
+                  href="/obserwowane"
+                  class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+                >
+                  Obserwowane
+                </a>
                 <a
                   href="/alerty"
                   class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"

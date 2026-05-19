@@ -76,7 +76,7 @@ config :phoenix, :json_library, Jason
 # Configure Oban
 config :przetargowi, Oban,
   repo: Przetargowi.Repo,
-  queues: [default: 10, uzp_sync: 1, embeddings: 1, tenders: 1, documents: 1],
+  queues: [default: 10, uzp_sync: 1, embeddings: 1, tenders: 1, documents: 1, alerts: 5],
   plugins: [
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
@@ -92,6 +92,8 @@ config :przetargowi, Oban,
        {"0 2 1 * *", Przetargowi.Workers.GenerateMonthlyReports, args: %{}},
        # Send alerts daily at 8 AM
        {"0 8 * * *", Przetargowi.Workers.SendAlerts, args: %{}},
+       # Send watchlist deadline reminders daily at 8 AM
+       {"0 8 * * *", Przetargowi.Workers.SendWatchlistReminders, args: %{}},
        # Cleanup old document content daily at 3 AM (keeps URL, removes binary)
        {"0 3 * * *", Przetargowi.Workers.CleanupOldDocuments, args: %{days_old: 30}}
      ]}

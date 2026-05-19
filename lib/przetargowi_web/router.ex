@@ -119,6 +119,12 @@ defmodule PrzetargowiWeb.Router do
     post "/alerty", AlertController, :create
     delete "/alerty/:id", AlertController, :delete
 
+    # Watchlist
+    get "/obserwowane", WatchlistController, :index
+    post "/obserwowane", WatchlistController, :create
+    delete "/obserwowane/przetarg/:tender_object_id", WatchlistController, :delete_by_tender
+    delete "/obserwowane/:id", WatchlistController, :delete
+
     # Company profiles
     get "/profil-firmy", ProfileController, :index
     get "/profil-firmy/nowy", ProfileController, :new

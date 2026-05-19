@@ -5,6 +5,7 @@ defmodule PrzetargowiWeb.TenderController do
   alias Przetargowi.Payments
   alias Przetargowi.SearchLogs
   alias Przetargowi.Tenders
+  alias Przetargowi.Watchlist
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
@@ -46,6 +47,9 @@ defmodule PrzetargowiWeb.TenderController do
     # Check if user can create alerts
     {can_create_alert, is_premium} = get_alert_permissions(conn)
 
+    # Get watchlist data for logged-in users
+    {watched_ids, can_add_to_watchlist} = get_watchlist_data(conn)
+
     conn
     |> assign(:page_title, "Aktualne przetargi publiczne — wyszukiwarka przetargów")
     |> assign(
@@ -64,7 +68,9 @@ defmodule PrzetargowiWeb.TenderController do
       deadline_from: params["deadline_from"] || "",
       deadline_to: params["deadline_to"] || "",
       can_create_alert: can_create_alert,
-      is_premium: is_premium
+      is_premium: is_premium,
+      watched_ids: watched_ids,
+      can_add_to_watchlist: can_add_to_watchlist
     )
   end
 
@@ -132,6 +138,9 @@ defmodule PrzetargowiWeb.TenderController do
     # Check if user can create alerts
     {can_create_alert, is_premium} = get_alert_permissions(conn)
 
+    # Get watchlist data for logged-in users
+    {watched_ids, can_add_to_watchlist} = get_watchlist_data(conn)
+
     conn
     |> assign(:page_title, "Przetargi #{region_name}")
     |> assign(
@@ -150,7 +159,9 @@ defmodule PrzetargowiWeb.TenderController do
       deadline_from: params["deadline_from"] || "",
       deadline_to: params["deadline_to"] || "",
       can_create_alert: can_create_alert,
-      is_premium: is_premium
+      is_premium: is_premium,
+      watched_ids: watched_ids,
+      can_add_to_watchlist: can_add_to_watchlist
     )
   end
 
@@ -187,6 +198,10 @@ defmodule PrzetargowiWeb.TenderController do
         page_title = truncate_title(tender.order_object)
         meta_description = build_tender_meta_description(tender)
 
+        # Get watchlist status for logged-in users
+        {is_watching, can_add_to_watchlist, watchlist_entry_id} =
+          get_watchlist_status(conn, tender.object_id)
+
         conn
         |> assign(:page_title, page_title)
         |> assign(:meta_description, meta_description)
@@ -196,7 +211,10 @@ defmodule PrzetargowiWeb.TenderController do
           tender: tender,
           is_expired: is_expired,
           related_contract_notice: related_contract_notice,
-          documents: documents
+          documents: documents,
+          is_watching: is_watching,
+          can_add_to_watchlist: can_add_to_watchlist,
+          watchlist_entry_id: watchlist_entry_id
         )
     end
   end
@@ -249,6 +267,34 @@ defmodule PrzetargowiWeb.TenderController do
         is_premium = Payments.has_alerts_access?(user.id)
         can_create = is_premium or Alerts.can_create_free_alert?(user.id)
         {can_create, is_premium}
+    end
+  end
+
+  defp get_watchlist_data(conn) do
+    case conn.assigns[:current_scope] do
+      nil ->
+        {[], false}
+
+      scope ->
+        user = scope.user
+        watched_ids = Watchlist.get_watched_tender_ids(user.id)
+        can_add = Watchlist.can_add_to_watchlist?(user.id)
+        {watched_ids, can_add}
+    end
+  end
+
+  defp get_watchlist_status(conn, tender_object_id) do
+    case conn.assigns[:current_scope] do
+      nil ->
+        {false, false, nil}
+
+      scope ->
+        user = scope.user
+        entry = Watchlist.get_entry_by_tender(user.id, tender_object_id)
+        is_watching = entry != nil
+        can_add = Watchlist.can_add_to_watchlist?(user.id)
+        entry_id = if entry, do: entry.id, else: nil
+        {is_watching, can_add, entry_id}
     end
   end
 end
