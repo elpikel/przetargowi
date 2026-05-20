@@ -146,7 +146,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
       conn = get(conn, ~p"/przetargi/#{tender.slug}")
 
       response = html_response(conn, 200)
-      assert response =~ "Dodaj do obserwowanych"
+      assert response =~ "Obserwuj"
     end
 
     test "shows watching status when tender is watched", %{conn: conn} do

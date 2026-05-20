@@ -554,7 +554,7 @@
               <.link
                 href={~p"/obserwowane/#{@watchlist_entry_id}"}
                 method="delete"
-                class="btn-primary w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
+                class="w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2 bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer font-medium"
               >
                 <.icon name="hero-star-solid" class="size-4" /> Obserwujesz
               </.link>
@@ -567,7 +567,7 @@
                     type="submit"
                     class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
                   >
-                    <.icon name="hero-star" class="size-4" /> Dodaj do obserwowanych
+                    <.icon name="hero-star" class="size-4" /> Obserwuj
                   </button>
                 </form>
               <% else %>
@@ -576,7 +576,7 @@
                   class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2 opacity-60"
                   title="Osiągnąłeś limit obserwowanych przetargów"
                 >
-                  <.icon name="hero-star" class="size-4" /> Dodaj do obserwowanych
+                  <.icon name="hero-star" class="size-4" /> Obserwuj
                 </a>
               <% end %>
             <% end %>
@@ -585,7 +585,7 @@
               href={~p"/rejestracja"}
               class="btn-outline w-full py-2.5 text-center rounded-lg text-sm flex items-center justify-center gap-2"
             >
-              <.icon name="hero-star" class="size-4" /> Dodaj do obserwowanych
+              <.icon name="hero-star" class="size-4" /> Obserwuj
             </a>
           <% end %>
 

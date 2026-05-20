@@ -241,10 +241,11 @@
                       <.link
                         href={~p"/obserwowane/przetarg/#{notice.object_id}"}
                         method="delete"
-                        class="inline-flex items-center justify-center size-8 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer text-sm font-medium"
                         title="Usuń z obserwowanych"
                       >
-                        <.icon name="hero-star-solid" class="size-5" />
+                        <.icon name="hero-star-solid" class="size-4" />
+                        <span>Obserwujesz</span>
                       </.link>
                     <% else %>
                       <%= if @can_add_to_watchlist do %>
@@ -253,12 +254,22 @@
                           <input type="hidden" name="tender_object_id" value={notice.object_id} />
                           <button
                             type="submit"
-                            class="inline-flex items-center justify-center size-8 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer text-sm font-medium"
                             title="Dodaj do obserwowanych"
                           >
-                            <.icon name="hero-star" class="size-5" />
+                            <.icon name="hero-star" class="size-4" />
+                            <span>Obserwuj</span>
                           </button>
                         </form>
+                      <% else %>
+                        <a
+                          href={~p"/subskrypcja/nowa"}
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-base-300 text-base-content/40 text-sm font-medium"
+                          title="Osiągnąłeś limit obserwowanych przetargów"
+                        >
+                          <.icon name="hero-star" class="size-4" />
+                          <span>Obserwuj</span>
+                        </a>
                       <% end %>
                     <% end %>
                   <% end %>
