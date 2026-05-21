@@ -17,8 +17,8 @@ defmodule Przetargowi.Payments do
 
   # Plan amounts
   @plan_amounts %{
-    "alert" => Decimal.new("29.00"),
-    "wyszukiwarka" => Decimal.new("29.00"),
+    "alert" => Decimal.new("19.00"),
+    "wyszukiwarka" => Decimal.new("39.00"),
     "razem" => Decimal.new("49.00")
   }
 
