@@ -7,6 +7,7 @@ defmodule Przetargowi.Tenders do
 
   alias Przetargowi.Repo
   alias Przetargowi.Tenders.BzpParser
+  alias Przetargowi.Tenders.CpvWinnerAnalysis
   alias Przetargowi.Tenders.TenderDocument
   alias Przetargowi.Tenders.TenderNotice
 
@@ -184,7 +185,10 @@ defmodule Przetargowi.Tenders do
   Parses the html_body to extract additional structured data.
   """
   def upsert_tender_notice(attrs) do
-    attrs = enrich_with_parsed_data(attrs)
+    attrs =
+      attrs
+      |> enrich_with_parsed_data()
+      |> maybe_backfill_cpv_main()
 
     %TenderNotice{}
     |> TenderNotice.changeset(attrs)
@@ -269,6 +273,24 @@ defmodule Przetargowi.Tenders do
 
   defp enrich_with_parsed_data(attrs), do: attrs
 
+  # Backfill cpv_main from cpv_codes[0] when cpv_main is not set (e.g. for result notices)
+  defp maybe_backfill_cpv_main(%{cpv_main: nil, cpv_codes: [first | _]} = attrs) do
+    Map.put(attrs, :cpv_main, extract_cpv_code(first))
+  end
+
+  defp maybe_backfill_cpv_main(%{"cpv_main" => nil, "cpv_codes" => [first | _]} = attrs) do
+    Map.put(attrs, "cpv_main", extract_cpv_code(first))
+  end
+
+  defp maybe_backfill_cpv_main(attrs), do: attrs
+
+  # Extracts the CPV code from strings like "33600000-6 (Produkty farmaceutyczne)"
+  defp extract_cpv_code(cpv_string) when is_binary(cpv_string) do
+    cpv_string |> String.split(" ") |> hd()
+  end
+
+  defp extract_cpv_code(other), do: other
+
   @doc """
   Upserts multiple tender notices in bulk.
   Returns `{success_count, failed_list}`.
@@ -321,6 +343,243 @@ defmodule Przetargowi.Tenders do
     |> where([t], not is_nil(t.slug))
     |> Repo.aggregate(:count)
   end
+
+  @closed_notice_types [
+    "TenderResultNotice",
+    "CompetitionResultNotice",
+    "AgreementIntentionNotice",
+    "AgreementUpdateNotice",
+    "ContractPerformingNotice",
+    "CircumstancesFulfillmentNotice",
+    "SmallContractNotice",
+    "ConcessionAgreementNotice",
+    "ConcessionUpdateAgreementNotice"
+  ]
+
+  @doc """
+  Returns precomputed winner analysis for a tender's CPV main + order type + province.
+  Tries regional first, falls back to national if no regional data exists.
+  Returns nil if no analysis exists or tender has no cpv_main.
+  """
+  def get_winner_analysis(%TenderNotice{cpv_main: nil}), do: nil
+
+  def get_winner_analysis(%TenderNotice{} = tender) do
+    cpv_main = tender.cpv_main
+    order_type = tender.order_type || ""
+    province = tender.organization_province
+
+    regional = if province, do: fetch_analysis(cpv_main, order_type, province), else: nil
+    national = fetch_analysis(cpv_main, order_type, "")
+
+    cond do
+      regional && national ->
+        %{"regional" => regional, "national" => national}
+
+      national ->
+        %{"regional" => nil, "national" => national}
+
+      true ->
+        nil
+    end
+  end
+
+  defp fetch_analysis(cpv_main, order_type, province) do
+    CpvWinnerAnalysis
+    |> from(as: :analysis)
+    |> where([analysis: a], a.cpv_main == ^cpv_main)
+    |> where([analysis: a], a.order_type == ^order_type)
+    |> where([analysis: a], a.province == ^province)
+    |> Repo.one()
+    |> case do
+      nil -> nil
+      analysis -> analysis.data
+    end
+  end
+
+  @doc """
+  Returns distinct cpv_main + order_type + province combinations from closed tender notices.
+  Used by the ComputeWinnerAnalyses worker to know what to compute.
+  """
+  def list_cpv_order_type_combos do
+    TenderNotice
+    |> from(as: :tender_notice)
+    |> where([tender_notice: tn], tn.notice_type in ^@closed_notice_types)
+    |> where([tender_notice: tn], not is_nil(tn.cpv_main))
+    |> group_by([tender_notice: tn], [tn.cpv_main, tn.order_type, tn.organization_province])
+    |> select([tender_notice: tn], {tn.cpv_main, tn.order_type, tn.organization_province})
+    |> Repo.all()
+  end
+
+  @doc """
+  Computes and stores winner analysis for a given cpv_main + order_type + province combination.
+  Province is nil or "" for national (all-province) analysis.
+  Called by the ComputeWinnerAnalyses worker.
+  """
+  def compute_and_store_winner_analysis(cpv_main, order_type, province \\ nil) do
+    base_query =
+      TenderNotice
+      |> from(as: :tender_notice)
+      |> where([tender_notice: tn], tn.cpv_main == ^cpv_main)
+      |> where([tender_notice: tn], tn.notice_type in ^@closed_notice_types)
+      |> order_by([tender_notice: tn], desc: tn.publication_date)
+      |> limit(200)
+
+    base_query =
+      if order_type do
+        where(base_query, [tender_notice: tn], tn.order_type == ^order_type)
+      else
+        base_query
+      end
+
+    base_query =
+      if province && province != "" do
+        where(base_query, [tender_notice: tn], tn.organization_province == ^province)
+      else
+        base_query
+      end
+
+    tenders = Repo.all(base_query)
+
+    if tenders == [] do
+      :skip
+    else
+      data = build_winners_summary(tenders)
+
+      %CpvWinnerAnalysis{}
+      |> CpvWinnerAnalysis.changeset(%{
+        cpv_main: cpv_main,
+        order_type: order_type || "",
+        province: province || "",
+        data: serialize_analysis(data),
+        computed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      })
+      |> Repo.insert(
+        on_conflict: {:replace, [:data, :computed_at, :updated_at]},
+        conflict_target: [:cpv_main, :order_type, :province]
+      )
+    end
+  end
+
+  defp serialize_analysis(data) do
+    %{
+      "total_similar_tenders" => data.total_similar_tenders,
+      "top_contractors" =>
+        Enum.map(data.top_contractors, fn c ->
+          %{
+            "name" => c.name,
+            "city" => c.city,
+            "win_count" => c.win_count,
+            "avg_price" => decimal_to_string(c.avg_price),
+            "total_value" => decimal_to_string(c.total_value)
+          }
+        end),
+      "price_stats" => %{
+        "avg" => decimal_to_string(data.price_stats.avg),
+        "min" => decimal_to_string(data.price_stats.min),
+        "max" => decimal_to_string(data.price_stats.max)
+      },
+      "recent_wins" =>
+        Enum.map(data.recent_wins, fn w ->
+          %{
+            "tender_title" => w.tender_title,
+            "tender_slug" => w.tender_slug,
+            "contractor_name" => w.contractor_name,
+            "winning_price" => decimal_to_string(w.winning_price),
+            "contract_value" => decimal_to_string(w.contract_value),
+            "publication_date" => to_string(w.publication_date)
+          }
+        end)
+    }
+  end
+
+  defp decimal_to_string(nil), do: nil
+  defp decimal_to_string(%Decimal{} = d), do: Decimal.to_string(d)
+
+  defp build_winners_summary(tenders) do
+    all_contracts =
+      tenders
+      |> Enum.flat_map(fn tender ->
+        (tender.contractors_contract_details || [])
+        |> Enum.filter(&(&1.status == :contract_signed))
+        |> Enum.map(&Map.put(&1, :tender, tender))
+      end)
+
+    top_contractors =
+      all_contracts
+      |> Enum.group_by(fn c ->
+        key = c.contractor_nip || c.contractor_name
+        {key, c.contractor_name, c.contractor_city}
+      end)
+      |> Enum.map(fn {{_key, name, city}, contracts} ->
+        prices =
+          contracts
+          |> Enum.map(& &1.winning_price)
+          |> Enum.filter(&(&1 != nil))
+
+        %{
+          name: name,
+          city: city,
+          win_count: length(contracts),
+          avg_price: safe_avg(prices),
+          total_value:
+            contracts
+            |> Enum.map(& &1.contract_value)
+            |> Enum.filter(&(&1 != nil))
+            |> safe_sum()
+        }
+      end)
+      |> Enum.sort_by(& &1.win_count, :desc)
+      |> Enum.take(10)
+
+    all_winning_prices =
+      all_contracts
+      |> Enum.map(& &1.winning_price)
+      |> Enum.filter(&(&1 != nil))
+
+    price_stats = %{
+      avg: safe_avg(all_winning_prices),
+      min: safe_min(all_winning_prices),
+      max: safe_max(all_winning_prices)
+    }
+
+    recent_wins =
+      all_contracts
+      |> Enum.sort_by(fn c -> c.tender.publication_date end, {:desc, DateTime})
+      |> Enum.take(10)
+      |> Enum.map(fn c ->
+        %{
+          tender_title: c.tender.order_object,
+          tender_slug: c.tender.slug,
+          contractor_name: c.contractor_name,
+          winning_price: c.winning_price,
+          contract_value: c.contract_value,
+          publication_date: c.tender.publication_date
+        }
+      end)
+
+    %{
+      total_similar_tenders: length(tenders),
+      top_contractors: top_contractors,
+      price_stats: price_stats,
+      recent_wins: recent_wins
+    }
+  end
+
+  defp safe_avg([]), do: nil
+
+  defp safe_avg(decimals) do
+    sum = Enum.reduce(decimals, Decimal.new(0), &Decimal.add/2)
+    Decimal.div(sum, Decimal.new(length(decimals)))
+  end
+
+  defp safe_sum([]), do: nil
+  defp safe_sum(decimals), do: Enum.reduce(decimals, Decimal.new(0), &Decimal.add/2)
+
+  defp safe_min([]), do: nil
+  defp safe_min(decimals), do: Enum.min(decimals, &(Decimal.compare(&1, &2) != :gt))
+
+  defp safe_max([]), do: nil
+  defp safe_max(decimals), do: Enum.max(decimals, &(Decimal.compare(&1, &2) != :lt))
 
   # Document functions
 

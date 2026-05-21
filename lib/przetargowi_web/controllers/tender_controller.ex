@@ -202,6 +202,10 @@ defmodule PrzetargowiWeb.TenderController do
         {is_watching, can_add_to_watchlist, watchlist_entry_id} =
           get_watchlist_status(conn, tender.object_id)
 
+        # Get precomputed winner analysis and premium status
+        similar_winners = Tenders.get_winner_analysis(tender)
+        is_premium = check_premium(conn)
+
         conn
         |> assign(:page_title, page_title)
         |> assign(:meta_description, meta_description)
@@ -214,7 +218,9 @@ defmodule PrzetargowiWeb.TenderController do
           documents: documents,
           is_watching: is_watching,
           can_add_to_watchlist: can_add_to_watchlist,
-          watchlist_entry_id: watchlist_entry_id
+          watchlist_entry_id: watchlist_entry_id,
+          similar_winners: similar_winners,
+          is_premium: is_premium
         )
     end
   end
@@ -295,6 +301,13 @@ defmodule PrzetargowiWeb.TenderController do
         can_add = Watchlist.can_add_to_watchlist?(user.id)
         entry_id = if entry, do: entry.id, else: nil
         {is_watching, can_add, entry_id}
+    end
+  end
+
+  defp check_premium(conn) do
+    case conn.assigns[:current_scope] do
+      nil -> false
+      scope -> Payments.has_alerts_access?(scope.user.id)
     end
   end
 end

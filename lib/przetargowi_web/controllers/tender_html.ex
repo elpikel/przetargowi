@@ -57,6 +57,14 @@ defmodule PrzetargowiWeb.TenderHTML do
     |> Kernel.<>(" PLN")
   end
 
+  def format_decimal_string(nil), do: "-"
+
+  def format_decimal_string(value) when is_binary(value) do
+    value |> Decimal.new() |> format_value()
+  end
+
+  def format_decimal_string(value), do: format_value(value)
+
   def format_order_type("Delivery"), do: "Dostawy"
   def format_order_type("Services"), do: "Usługi"
   def format_order_type("Works"), do: "Roboty budowlane"

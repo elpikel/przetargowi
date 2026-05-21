@@ -285,6 +285,439 @@ defmodule Przetargowi.TendersTest do
     end
   end
 
+  describe "cpv_main backfill on upsert" do
+    test "backfills cpv_main from cpv_codes when cpv_main is nil" do
+      {:ok, tender} =
+        Tenders.upsert_tender_notice(%{
+          object_id: "backfill-test-#{System.unique_integer([:positive])}",
+          notice_type: "TenderResultNotice",
+          notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+          bzp_number: "BZP-#{System.unique_integer([:positive])}",
+          is_tender_amount_below_eu: true,
+          publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+          cpv_codes: ["33600000-6 (Produkty farmaceutyczne)", "33692200-9 (Produkty)"],
+          cpv_main: nil,
+          organization_name: "Test Org",
+          organization_city: "Warszawa",
+          organization_country: "Polska",
+          organization_national_id: "123",
+          organization_id: "ORG-#{System.unique_integer([:positive])}",
+          html_body: "<html>Test</html>"
+        })
+
+      assert tender.cpv_main == "33600000-6"
+    end
+
+    test "does not backfill when cpv_main already set and no HTML parsing" do
+      {:ok, tender} =
+        Tenders.upsert_tender_notice(%{
+          object_id: "no-overwrite-#{System.unique_integer([:positive])}",
+          notice_type: "ContractNotice",
+          notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+          bzp_number: "BZP-#{System.unique_integer([:positive])}",
+          is_tender_amount_below_eu: true,
+          publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+          cpv_codes: ["99999999-9 (Other)"],
+          cpv_main: "11111111-1",
+          organization_name: "Test Org",
+          organization_city: "Warszawa",
+          organization_country: "Polska",
+          organization_national_id: "123",
+          organization_id: "ORG-#{System.unique_integer([:positive])}",
+          html_body: "<html>No CPV section</html>"
+        })
+
+      # HTML parsing returns nil for cpv_main, so backfill kicks in from cpv_codes
+      assert tender.cpv_main == "99999999-9"
+    end
+
+    test "leaves cpv_main nil when cpv_codes is empty" do
+      {:ok, tender} =
+        Tenders.upsert_tender_notice(%{
+          object_id: "empty-cpv-#{System.unique_integer([:positive])}",
+          notice_type: "TenderResultNotice",
+          notice_number: "2024/BZP/#{System.unique_integer([:positive])}",
+          bzp_number: "BZP-#{System.unique_integer([:positive])}",
+          is_tender_amount_below_eu: true,
+          publication_date: DateTime.utc_now() |> DateTime.truncate(:second),
+          cpv_codes: [],
+          cpv_main: nil,
+          organization_name: "Test Org",
+          organization_city: "Warszawa",
+          organization_country: "Polska",
+          organization_national_id: "123",
+          organization_id: "ORG-#{System.unique_integer([:positive])}",
+          html_body: "<html>Test</html>"
+        })
+
+      assert tender.cpv_main == nil
+    end
+  end
+
+  describe "winner analysis (compute + read)" do
+    defp result_notice_fixture(attrs) do
+      attrs =
+        Map.merge(
+          %{
+            notice_type: "TenderResultNotice",
+            publication_date: DateTime.utc_now() |> DateTime.truncate(:second)
+          },
+          attrs
+        )
+
+      tender_notice_fixture(attrs)
+    end
+
+    test "get_winner_analysis returns nil when tender has no cpv_main" do
+      tender = tender_notice_fixture(%{cpv_main: nil})
+      assert Tenders.get_winner_analysis(tender) == nil
+    end
+
+    test "get_winner_analysis returns nil when no analysis has been computed" do
+      tender = tender_notice_fixture(%{cpv_main: "99999999", order_type: "Delivery"})
+      assert Tenders.get_winner_analysis(tender) == nil
+    end
+
+    test "compute national and get_winner_analysis reads it back" do
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Firma ABC",
+            contractor_city: "Kraków",
+            contractor_nip: "1111111111",
+            winning_price: Decimal.new("100000"),
+            contract_value: Decimal.new("120000")
+          }
+        ]
+      })
+
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Firma ABC",
+            contractor_city: "Kraków",
+            contractor_nip: "1111111111",
+            winning_price: Decimal.new("200000"),
+            contract_value: Decimal.new("210000")
+          }
+        ]
+      })
+
+      # Compute national
+      assert {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      # Read back — no province on tender, so regional is nil
+      tender =
+        tender_notice_fixture(%{cpv_main: "30213000", order_type: "Delivery"})
+
+      result = Tenders.get_winner_analysis(tender)
+
+      assert result["regional"] == nil
+      national = result["national"]
+      assert national["total_similar_tenders"] == 2
+      assert length(national["top_contractors"]) == 1
+      assert hd(national["top_contractors"])["name"] == "Firma ABC"
+      assert hd(national["top_contractors"])["win_count"] == 2
+      assert national["price_stats"]["min"] == "100000"
+      assert national["price_stats"]["max"] == "200000"
+    end
+
+    test "regional analysis returned when province matches" do
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        organization_province: "PL14",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Local Co",
+            contractor_nip: "6666666666",
+            winning_price: Decimal.new("90000"),
+            contract_value: Decimal.new("95000")
+          }
+        ]
+      })
+
+      # Compute both regional and national
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery", "PL14")
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      # Tender in same province — should get both regional and national
+      tender =
+        tender_notice_fixture(%{
+          cpv_main: "30213000",
+          order_type: "Delivery",
+          organization_province: "PL14"
+        })
+
+      result = Tenders.get_winner_analysis(tender)
+
+      assert result["regional"] != nil
+      assert result["national"] != nil
+      assert hd(result["regional"]["top_contractors"])["name"] == "Local Co"
+    end
+
+    test "falls back to national when no regional data" do
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        organization_province: "PL14",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Some Co",
+            contractor_nip: "7777777777",
+            winning_price: Decimal.new("100000"),
+            contract_value: Decimal.new("100000")
+          }
+        ]
+      })
+
+      # Only compute national, not regional for PL22
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      # Tender in PL22 — no regional data for this province
+      tender =
+        tender_notice_fixture(%{
+          cpv_main: "30213000",
+          order_type: "Delivery",
+          organization_province: "PL22"
+        })
+
+      result = Tenders.get_winner_analysis(tender)
+
+      assert result["regional"] == nil
+      assert result["national"] != nil
+    end
+
+    test "compute_and_store_winner_analysis returns :skip when no tenders found" do
+      assert :skip == Tenders.compute_and_store_winner_analysis("99999999", "Delivery")
+    end
+
+    test "compute_and_store_winner_analysis excludes cancelled contracts" do
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Services",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :cancelled,
+            contractor_name: "Cancelled Co",
+            contractor_nip: "2222222222",
+            winning_price: Decimal.new("999999"),
+            cancellation_reason: "Cancelled"
+          },
+          %{
+            part: 2,
+            status: :contract_signed,
+            contractor_name: "Good Co",
+            contractor_nip: "3333333333",
+            winning_price: Decimal.new("150000"),
+            contract_value: Decimal.new("150000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Services")
+
+      tender = tender_notice_fixture(%{cpv_main: "30213000", order_type: "Services"})
+      result = Tenders.get_winner_analysis(tender)
+
+      national = result["national"]
+      assert national["total_similar_tenders"] == 1
+      assert length(national["top_contractors"]) == 1
+      assert hd(national["top_contractors"])["name"] == "Good Co"
+    end
+
+    test "list_cpv_order_type_combos returns distinct combinations with province" do
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        organization_province: "PL14"
+      })
+
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        organization_province: "PL14"
+      })
+
+      result_notice_fixture(%{
+        cpv_main: "45000000",
+        order_type: "Works",
+        organization_province: "PL22"
+      })
+
+      combos = Tenders.list_cpv_order_type_combos()
+
+      assert length(combos) == 2
+      assert {"30213000", "Delivery", "PL14"} in combos
+      assert {"45000000", "Works", "PL22"} in combos
+    end
+
+    test "recent_wins include tender details" do
+      similar =
+        result_notice_fixture(%{
+          cpv_main: "30213000",
+          order_type: "Works",
+          order_object: "Komputery dla szkoły",
+          contractors_contract_details: [
+            %{
+              part: 1,
+              status: :contract_signed,
+              contractor_name: "Winner Co",
+              contractor_nip: "5555555555",
+              winning_price: Decimal.new("80000"),
+              contract_value: Decimal.new("85000")
+            }
+          ]
+        })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Works")
+
+      tender = tender_notice_fixture(%{cpv_main: "30213000", order_type: "Works"})
+      result = Tenders.get_winner_analysis(tender)
+
+      national = result["national"]
+      assert length(national["recent_wins"]) == 1
+      win = hd(national["recent_wins"])
+      assert win["tender_title"] == "Komputery dla szkoły"
+      assert win["contractor_name"] == "Winner Co"
+      assert win["winning_price"] == "80000"
+      assert win["tender_slug"] == similar.slug
+    end
+
+    test "handles nil prices gracefully" do
+      result_notice_fixture(%{
+        cpv_main: "65310000",
+        order_type: "Services",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "No Price Co",
+            contractor_nip: "8888888888",
+            winning_price: nil,
+            contract_value: nil
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("65310000", "Services")
+
+      tender = tender_notice_fixture(%{cpv_main: "65310000", order_type: "Services"})
+      result = Tenders.get_winner_analysis(tender)
+
+      national = result["national"]
+      assert national["total_similar_tenders"] == 1
+      assert national["price_stats"]["avg"] == nil
+      assert national["price_stats"]["min"] == nil
+      assert national["price_stats"]["max"] == nil
+      assert hd(national["top_contractors"])["name"] == "No Price Co"
+      assert hd(national["top_contractors"])["avg_price"] == nil
+    end
+
+    test "recomputing updates existing analysis" do
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "First Co",
+            contractor_nip: "1010101010",
+            winning_price: Decimal.new("50000"),
+            contract_value: Decimal.new("55000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      tender = tender_notice_fixture(%{cpv_main: "30213000", order_type: "Delivery"})
+      result1 = Tenders.get_winner_analysis(tender)
+      assert result1["national"]["total_similar_tenders"] == 1
+
+      # Add another result notice and recompute
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Second Co",
+            contractor_nip: "2020202020",
+            winning_price: Decimal.new("70000"),
+            contract_value: Decimal.new("75000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      result2 = Tenders.get_winner_analysis(tender)
+      assert result2["national"]["total_similar_tenders"] == 2
+    end
+
+    test "ranks contractors by win count descending" do
+      for _ <- 1..3 do
+        result_notice_fixture(%{
+          cpv_main: "72000000",
+          order_type: "Services",
+          contractors_contract_details: [
+            %{
+              part: 1,
+              status: :contract_signed,
+              contractor_name: "Frequent Winner",
+              contractor_nip: "1111111111",
+              winning_price: Decimal.new("100000"),
+              contract_value: Decimal.new("100000")
+            }
+          ]
+        })
+      end
+
+      result_notice_fixture(%{
+        cpv_main: "72000000",
+        order_type: "Services",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "One-time Winner",
+            contractor_nip: "2222222222",
+            winning_price: Decimal.new("90000"),
+            contract_value: Decimal.new("90000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("72000000", "Services")
+
+      tender = tender_notice_fixture(%{cpv_main: "72000000", order_type: "Services"})
+      result = Tenders.get_winner_analysis(tender)
+
+      contractors = result["national"]["top_contractors"]
+      assert length(contractors) == 2
+      assert hd(contractors)["name"] == "Frequent Winner"
+      assert hd(contractors)["win_count"] == 3
+      assert List.last(contractors)["name"] == "One-time Winner"
+      assert List.last(contractors)["win_count"] == 1
+    end
+  end
+
   describe "cleanup_old_document_content/1" do
     test "removes content from documents with old publication date" do
       # Create old tender notice (40 days ago)

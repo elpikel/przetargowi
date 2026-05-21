@@ -95,7 +95,9 @@ config :przetargowi, Oban,
        # Send watchlist deadline reminders daily at 8 AM
        {"0 8 * * *", Przetargowi.Workers.SendWatchlistReminders, args: %{}},
        # Cleanup old document content daily at 3 AM (keeps URL, removes binary)
-       {"0 3 * * *", Przetargowi.Workers.CleanupOldDocuments, args: %{days_old: 30}}
+       {"0 3 * * *", Przetargowi.Workers.CleanupOldDocuments, args: %{days_old: 30}},
+       # Compute winner analyses daily at 8 PM (after tender data is fresh)
+       {"0 20 * * *", Przetargowi.Workers.ComputeWinnerAnalyses, args: %{}}
      ]}
   ]
 
