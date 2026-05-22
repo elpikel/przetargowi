@@ -113,8 +113,8 @@
         </div>
       </div>
       
-<!-- Deadline Date Filters -->
-      <div class="grid gap-4 md:grid-cols-2 mt-4">
+<!-- Winner Analysis Toggle & Deadline Date Filters -->
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
         <div>
           <label class="block text-sm font-medium text-base-content/70 mb-2">
             Termin od
@@ -137,11 +137,26 @@
             class="search-input w-full px-4 py-3 rounded-lg"
           />
         </div>
+        <div class="lg:col-span-2 flex items-end">
+          <label class="flex items-center gap-3 cursor-pointer px-4 py-3">
+            <input
+              type="checkbox"
+              name="with_winner_analysis"
+              value="1"
+              checked={@with_winner_analysis}
+              class="checkbox checkbox-sm checkbox-primary"
+            />
+            <span class="text-sm font-medium text-base-content/70">
+              <.icon name="hero-trophy" class="size-4 text-secondary inline-block mr-1" />
+              Tylko z analizą „Kto wygrywa?"
+            </span>
+          </label>
+        </div>
       </div>
 
       <div class="mt-4 flex justify-end">
         <div class="flex gap-3">
-          <%= if @query != "" or @regions != [] or @order_types != [] or @deadline_from != "" or @deadline_to != "" do %>
+          <%= if @query != "" or @regions != [] or @order_types != [] or @deadline_from != "" or @deadline_to != "" or @with_winner_analysis do %>
             <a href={~p"/przetargi"} class="btn-outline px-4 py-2 rounded-lg text-sm">
               Wyczyść filtry
             </a>
@@ -312,7 +327,7 @@
           <%= if @page > 1 do %>
             <a
               href={
-                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @deadline_from, @deadline_to, @page - 1)}"
+                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @deadline_from, @deadline_to, @with_winner_analysis, @page - 1)}"
               }
               class="btn-outline px-4 py-2 rounded-lg text-sm"
             >
@@ -327,7 +342,7 @@
           <%= if @page < @total_pages do %>
             <a
               href={
-                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @deadline_from, @deadline_to, @page + 1)}"
+                ~p"/przetargi?#{build_pagination_params(@query, @regions, @order_types, @deadline_from, @deadline_to, @with_winner_analysis, @page + 1)}"
               }
               class="btn-outline px-4 py-2 rounded-lg text-sm"
             >

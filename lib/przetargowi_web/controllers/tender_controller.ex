@@ -16,6 +16,7 @@ defmodule PrzetargowiWeb.TenderController do
     order_types = params["order_types"] || []
     deadline_from = parse_date(params["deadline_from"])
     deadline_to = parse_date(params["deadline_to"])
+    with_winner_analysis = params["with_winner_analysis"] == "1"
 
     search_opts = [
       query: params["q"],
@@ -23,6 +24,7 @@ defmodule PrzetargowiWeb.TenderController do
       order_types: order_types,
       deadline_from: deadline_from,
       deadline_to: deadline_to,
+      with_winner_analysis: with_winner_analysis,
       page: page,
       per_page: 20
     ]
@@ -67,6 +69,7 @@ defmodule PrzetargowiWeb.TenderController do
       order_types: order_types,
       deadline_from: params["deadline_from"] || "",
       deadline_to: params["deadline_to"] || "",
+      with_winner_analysis: with_winner_analysis,
       can_create_alert: can_create_alert,
       is_premium: is_premium,
       watched_ids: watched_ids,
@@ -106,6 +109,7 @@ defmodule PrzetargowiWeb.TenderController do
     page = parse_page(params["page"])
     deadline_from = parse_date(params["deadline_from"])
     deadline_to = parse_date(params["deadline_to"])
+    with_winner_analysis = params["with_winner_analysis"] == "1"
 
     search_opts = [
       query: params["q"],
@@ -113,6 +117,7 @@ defmodule PrzetargowiWeb.TenderController do
       order_types: params["order_types"] || [],
       deadline_from: deadline_from,
       deadline_to: deadline_to,
+      with_winner_analysis: with_winner_analysis,
       page: page,
       per_page: 20
     ]
@@ -158,6 +163,7 @@ defmodule PrzetargowiWeb.TenderController do
       order_types: params["order_types"] || [],
       deadline_from: params["deadline_from"] || "",
       deadline_to: params["deadline_to"] || "",
+      with_winner_analysis: with_winner_analysis,
       can_create_alert: can_create_alert,
       is_premium: is_premium,
       watched_ids: watched_ids,

@@ -170,7 +170,7 @@ defmodule PrzetargowiWeb.TenderHTML do
     diff >= 0 and diff <= 3
   end
 
-  def build_pagination_params(query, regions, order_types, deadline_from, deadline_to, page) do
+  def build_pagination_params(query, regions, order_types, deadline_from, deadline_to, with_winner_analysis, page) do
     params = []
     params = if query && query != "", do: [{"q", query} | params], else: params
     params = params ++ Enum.map(regions, &{"regions[]", &1})
@@ -185,6 +185,8 @@ defmodule PrzetargowiWeb.TenderHTML do
       if deadline_to && deadline_to != "",
         do: [{"deadline_to", deadline_to} | params],
         else: params
+
+    params = if with_winner_analysis, do: [{"with_winner_analysis", "1"} | params], else: params
 
     params = [{"page", page} | params]
     params

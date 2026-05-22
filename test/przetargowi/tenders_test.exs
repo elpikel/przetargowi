@@ -806,4 +806,150 @@ defmodule Przetargowi.TendersTest do
       assert count == 0
     end
   end
+
+  describe "search_tender_notices with_winner_analysis filter" do
+    defp future_deadline do
+      DateTime.utc_now() |> DateTime.add(7, :day) |> DateTime.truncate(:second)
+    end
+
+    test "without filter returns all tenders" do
+      tender_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        submitting_offers_date: future_deadline()
+      })
+
+      tender_notice_fixture(%{
+        cpv_main: nil,
+        order_type: "Services",
+        submitting_offers_date: future_deadline()
+      })
+
+      result = Tenders.search_tender_notices(with_winner_analysis: false)
+      assert result.total_count == 2
+    end
+
+    test "with filter returns only tenders that have winner analysis" do
+      # Tender with cpv_main that has analysis
+      tender_with =
+        tender_notice_fixture(%{
+          cpv_main: "30213000",
+          order_type: "Delivery",
+          submitting_offers_date: future_deadline()
+        })
+
+      # Create result notice and compute analysis for this CPV + order_type
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Firma ABC",
+            contractor_nip: "1111111111",
+            winning_price: Decimal.new("100000"),
+            contract_value: Decimal.new("100000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      # Tender without cpv_main — no analysis possible
+      _tender_without_cpv =
+        tender_notice_fixture(%{
+          cpv_main: nil,
+          order_type: "Services",
+          submitting_offers_date: future_deadline()
+        })
+
+      # Tender with cpv_main but no analysis computed
+      _tender_no_analysis =
+        tender_notice_fixture(%{
+          cpv_main: "99999999",
+          order_type: "Services",
+          submitting_offers_date: future_deadline()
+        })
+
+      result = Tenders.search_tender_notices(with_winner_analysis: true)
+      assert result.total_count == 1
+      assert hd(result.notices).object_id == tender_with.object_id
+    end
+
+    test "with filter matches when tender cpv_main includes description suffix" do
+      # Active tender has CPV with description (as ingested from BZP contract notices)
+      tender_with_desc =
+        tender_notice_fixture(%{
+          cpv_main: "30213000-5 - Komputery osobiste",
+          order_type: "Delivery",
+          submitting_offers_date: future_deadline()
+        })
+
+      # Analysis was computed with clean CPV code (from result notices)
+      result_notice_fixture(%{
+        cpv_main: "30213000-5",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Firma XYZ",
+            contractor_nip: "3333333333",
+            winning_price: Decimal.new("50000"),
+            contract_value: Decimal.new("50000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000-5", "Delivery")
+
+      result = Tenders.search_tender_notices(with_winner_analysis: true)
+      assert result.total_count == 1
+      assert hd(result.notices).object_id == tender_with_desc.object_id
+    end
+
+    test "with filter combines with other filters" do
+      tender_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        organization_province: "PL14",
+        submitting_offers_date: future_deadline()
+      })
+
+      tender_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        organization_province: "PL02",
+        submitting_offers_date: future_deadline()
+      })
+
+      # Create analysis
+      result_notice_fixture(%{
+        cpv_main: "30213000",
+        order_type: "Delivery",
+        contractors_contract_details: [
+          %{
+            part: 1,
+            status: :contract_signed,
+            contractor_name: "Firma ABC",
+            contractor_nip: "1111111111",
+            winning_price: Decimal.new("50000"),
+            contract_value: Decimal.new("50000")
+          }
+        ]
+      })
+
+      {:ok, _} = Tenders.compute_and_store_winner_analysis("30213000", "Delivery")
+
+      # Both tenders match winner analysis, but filter by region
+      result =
+        Tenders.search_tender_notices(
+          with_winner_analysis: true,
+          regions: ["mazowieckie"]
+        )
+
+      assert result.total_count == 1
+    end
+  end
 end

@@ -74,6 +74,7 @@ defmodule Przetargowi.Tenders do
     order_types = normalize_to_list(Keyword.get(opts, :order_types))
     deadline_from = Keyword.get(opts, :deadline_from)
     deadline_to = Keyword.get(opts, :deadline_to)
+    with_winner_analysis = Keyword.get(opts, :with_winner_analysis, false)
     page = Keyword.get(opts, :page, 1)
     per_page = Keyword.get(opts, :per_page, 20)
 
@@ -128,6 +129,29 @@ defmodule Przetargowi.Tenders do
         base_query
       else
         where(base_query, [tender_notice: tn], tn.order_type in ^order_types)
+      end
+
+    base_query =
+      if with_winner_analysis do
+        base_query
+        |> where([tender_notice: tn], not is_nil(tn.cpv_main))
+        |> where(
+          [tender_notice: tn],
+          exists(
+            from(cwa in CpvWinnerAnalysis,
+              where:
+                cwa.cpv_main ==
+                  fragment(
+                    "substring(? from 1 for 10)",
+                    parent_as(:tender_notice).cpv_main
+                  ) and
+                  cwa.order_type == coalesce(parent_as(:tender_notice).order_type, ""),
+              select: 1
+            )
+          )
+        )
+      else
+        base_query
       end
 
     total_count =
@@ -364,7 +388,7 @@ defmodule Przetargowi.Tenders do
   def get_winner_analysis(%TenderNotice{cpv_main: nil}), do: nil
 
   def get_winner_analysis(%TenderNotice{} = tender) do
-    cpv_main = tender.cpv_main
+    cpv_main = normalize_cpv_code(tender.cpv_main)
     order_type = tender.order_type || ""
     province = tender.organization_province
 
@@ -381,6 +405,12 @@ defmodule Przetargowi.Tenders do
       true ->
         nil
     end
+  end
+
+  # Extracts the CPV code (e.g. "45000000-7") from strings that may include
+  # a description suffix (e.g. "45000000-7 - Roboty budowlane").
+  defp normalize_cpv_code(cpv_main) do
+    cpv_main |> String.split(" ") |> List.first()
   end
 
   defp fetch_analysis(cpv_main, order_type, province) do
