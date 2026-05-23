@@ -60,6 +60,39 @@ defmodule PrzetargowiWeb.ProfileControllerTest do
       response = html_response(conn, 200)
       assert response =~ "Nowy profil firmy"
     end
+
+    test "creates profile when empty representatives are submitted", %{conn: conn} do
+      attrs =
+        valid_profile_attributes()
+        |> Map.delete(:user_id)
+        |> Map.delete(:representatives)
+        |> stringify_keys()
+        |> Map.put("representatives", %{
+          "0" => %{"full_name" => "", "position" => "", "is_primary" => "false"}
+        })
+
+      conn = post(conn, ~p"/profil-firmy", %{"company_profile" => attrs})
+      assert redirected_to(conn) == ~p"/profil-firmy"
+    end
+
+    test "creates profile with filled representative and ignores empty ones", %{conn: conn, user: user} do
+      attrs =
+        valid_profile_attributes()
+        |> Map.delete(:user_id)
+        |> Map.delete(:representatives)
+        |> stringify_keys()
+        |> Map.put("representatives", %{
+          "0" => %{"full_name" => "Jan Kowalski", "position" => "Prezes", "is_primary" => "true"},
+          "1" => %{"full_name" => "", "position" => "", "is_primary" => "false"}
+        })
+
+      conn = post(conn, ~p"/profil-firmy", %{"company_profile" => attrs})
+      assert redirected_to(conn) == ~p"/profil-firmy"
+
+      [profile] = Profiles.list_profiles_by_user(user.id)
+      assert length(profile.representatives) == 1
+      assert hd(profile.representatives).full_name == "Jan Kowalski"
+    end
   end
 
   describe "GET /profil-firmy/:id/edycja" do

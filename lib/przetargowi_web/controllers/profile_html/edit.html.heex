@@ -18,6 +18,17 @@
       method="put"
       class="space-y-8"
     >
+      <%= if @changeset.action && @changeset.errors != [] do %>
+        <div class="bg-error/10 border border-error/30 rounded-lg p-4">
+          <p class="text-sm font-medium text-error mb-2">Popraw następujące błędy:</p>
+          <ul class="list-disc list-inside text-sm text-error/80 space-y-1">
+            <%= for {field, {msg, _}} <- @changeset.errors do %>
+              <li>{Phoenix.Naming.humanize(field)}: {msg}</li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
       <.profile_form form={f} />
 
       <div class="flex justify-end gap-4">

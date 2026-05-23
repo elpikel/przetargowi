@@ -18,7 +18,11 @@ defmodule PrzetargowiWeb.ProfileController do
 
   def create(conn, %{"company_profile" => profile_params}) do
     user = conn.assigns.current_scope.user
-    attrs = Map.put(profile_params, "user_id", user.id)
+
+    attrs =
+      profile_params
+      |> filter_empty_representatives()
+      |> Map.put("user_id", user.id)
 
     case Profiles.create_profile(attrs) do
       {:ok, _profile} ->
@@ -27,7 +31,9 @@ defmodule PrzetargowiWeb.ProfileController do
         |> redirect(to: ~p"/profil-firmy")
 
       {:error, changeset} ->
-        render(conn, :new, changeset: changeset)
+        conn
+        |> put_flash(:error, "Popraw błędy w formularzu.")
+        |> render(:new, changeset: changeset)
     end
   end
 
@@ -56,7 +62,7 @@ defmodule PrzetargowiWeb.ProfileController do
         |> redirect(to: ~p"/profil-firmy")
 
       profile ->
-        case Profiles.update_profile(profile, profile_params) do
+        case Profiles.update_profile(profile, filter_empty_representatives(profile_params)) do
           {:ok, _profile} ->
             conn
             |> put_flash(:info, "Profil firmy został zaktualizowany.")
@@ -101,4 +107,25 @@ defmodule PrzetargowiWeb.ProfileController do
         |> redirect(to: ~p"/profil-firmy")
     end
   end
+
+  defp filter_empty_representatives(%{"representatives" => reps} = params) when is_map(reps) do
+    filtered =
+      reps
+      |> Enum.reject(fn {_idx, rep} ->
+        blank?(rep["full_name"]) and blank?(rep["position"])
+      end)
+      |> Enum.with_index()
+      |> Enum.into(%{}, fn {{_old_idx, rep}, new_idx} -> {to_string(new_idx), rep} end)
+
+    case filtered do
+      empty when map_size(empty) == 0 -> Map.delete(params, "representatives")
+      filtered -> Map.put(params, "representatives", filtered)
+    end
+  end
+
+  defp filter_empty_representatives(params), do: params
+
+  defp blank?(nil), do: true
+  defp blank?(s) when is_binary(s), do: String.trim(s) == ""
+  defp blank?(_), do: false
 end
