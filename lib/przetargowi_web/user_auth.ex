@@ -167,6 +167,26 @@ defmodule PrzetargowiWeb.UserAuth do
   end
 
   @doc """
+  LiveView on_mount callback to fetch the current scope from the session.
+  Used for public LiveViews that need the nav bar to render correctly.
+  """
+  def on_mount(:fetch_current_scope, _params, session, socket) do
+    scope =
+      case session do
+        %{"user_token" => token} ->
+          case Accounts.get_user_by_session_token(token) do
+            {user, _inserted_at} -> Scope.for_user(user)
+            _ -> nil
+          end
+
+        _ ->
+          nil
+      end
+
+    {:cont, Phoenix.Component.assign(socket, :current_scope, scope)}
+  end
+
+  @doc """
   Plug for routes that require sudo mode.
   """
   def require_sudo_mode(conn, _opts) do

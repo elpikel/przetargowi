@@ -21,6 +21,10 @@ defmodule PrzetargowiWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live_session :public, on_mount: [{PrzetargowiWeb.UserAuth, :fetch_current_scope}] do
+      live "/analiza-rynku", MarketDashboardLive
+    end
     get "/szukaj", SearchController, :index
     get "/orzecznictwo-kio", LandingController, :orzecznictwo_kio
     get "/orzeczenie/:slug", JudgementController, :show

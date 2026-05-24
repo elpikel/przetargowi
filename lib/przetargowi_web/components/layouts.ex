@@ -47,6 +47,12 @@ defmodule PrzetargowiWeb.Layouts do
                   Przetargi
                 </a>
                 <a
+                  href="/analiza-rynku"
+                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
+                >
+                  Analiza rynku
+                </a>
+                <a
                   href="/raporty"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
@@ -135,6 +141,12 @@ defmodule PrzetargowiWeb.Layouts do
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
                 Przetargi
+              </a>
+              <a
+                href="/analiza-rynku"
+                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
+              >
+                Analiza rynku
               </a>
               <a
                 href="/raporty"
