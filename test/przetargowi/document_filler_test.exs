@@ -1,6 +1,8 @@
 defmodule Przetargowi.DocumentFillerTest do
   use ExUnit.Case, async: true
 
+  @moduletag capture_log: true
+
   alias Przetargowi.DocumentFiller
   alias Przetargowi.DocxTestHelper
   alias Przetargowi.Profiles.CompanyProfile

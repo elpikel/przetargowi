@@ -2,6 +2,8 @@ defmodule Przetargowi.Workers.DownloadTenderDocumentsTest do
   use Przetargowi.DataCase
   use Oban.Testing, repo: Przetargowi.Repo
 
+  @moduletag capture_log: true
+
   alias Przetargowi.Workers.DownloadTenderDocuments
   alias Przetargowi.Tenders
 

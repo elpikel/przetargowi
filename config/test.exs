@@ -44,3 +44,6 @@ config :przetargowi, Oban, testing: :manual
 
 # Use mock HTTP client in tests
 config :przetargowi, :uzp_http_client, Przetargowi.UZP.HTTPClientMock
+
+# Run async operations synchronously in tests to avoid sandbox issues
+config :przetargowi, :sql_sandbox, true

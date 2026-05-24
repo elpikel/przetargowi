@@ -10,11 +10,17 @@ defmodule Przetargowi.SearchLogs do
   Logs a search query asynchronously to avoid slowing down the request.
   """
   def log_search(attrs) do
-    Task.start(fn ->
+    if Application.get_env(:przetargowi, :sql_sandbox) do
       %SearchLog{}
       |> SearchLog.changeset(attrs)
       |> Repo.insert()
-    end)
+    else
+      Task.start(fn ->
+        %SearchLog{}
+        |> SearchLog.changeset(attrs)
+        |> Repo.insert()
+      end)
+    end
 
     :ok
   end

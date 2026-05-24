@@ -266,6 +266,7 @@ defmodule Przetargowi.TendersTest do
       assert failed == []
     end
 
+    @tag capture_log: true
     test "returns failed documents with errors" do
       valid_attrs = valid_tender_document_attributes()
       invalid_attrs = %{object_id: "invalid-doc"}
