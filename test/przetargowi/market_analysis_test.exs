@@ -148,6 +148,73 @@ defmodule Przetargowi.MarketAnalysisTest do
       assert contractor.name == "Same Company"
     end
 
+    test "deduplicates contractors by NIP despite different case" do
+      insert_tender!(%{
+        cpv_main: "45000000-7",
+        notice_type: "ContractPerformingNotice",
+        contractors_contract_details: [
+          %{part: 1, status: "contract_signed", contractor_name: "AMB BUDOWNICTWO", contractor_city: "Warszawa", contractor_nip: "1112223344"}
+        ]
+      })
+
+      insert_tender!(%{
+        cpv_main: "45000000-7",
+        notice_type: "ContractPerformingNotice",
+        contractors_contract_details: [
+          %{part: 1, status: "contract_signed", contractor_name: "AMB Budownictwo", contractor_city: "Warszawa", contractor_nip: "1112223344"}
+        ]
+      })
+
+      result = MarketAnalysis.analyze("45")
+
+      assert [contractor] = result.top_contractors
+      assert contractor.wins == 2
+    end
+
+    test "deduplicates contractors without NIP by normalized name" do
+      insert_tender!(%{
+        cpv_main: "45000000-7",
+        notice_type: "ContractPerformingNotice",
+        contractors_contract_details: [
+          %{part: 1, status: "contract_signed", contractor_name: "FIRMA BUDOWLANA SP. Z O.O.", contractor_city: "Krakow", contractor_nip: ""}
+        ]
+      })
+
+      insert_tender!(%{
+        cpv_main: "45000000-7",
+        notice_type: "ContractPerformingNotice",
+        contractors_contract_details: [
+          %{part: 1, status: "contract_signed", contractor_name: "Firma Budowlana Sp. z o.o.", contractor_city: "Krakow", contractor_nip: ""}
+        ]
+      })
+
+      result = MarketAnalysis.analyze("45")
+
+      assert [contractor] = result.top_contractors
+      assert contractor.wins == 2
+    end
+
+    test "deduplicates ordering parties by normalized name" do
+      for _ <- 1..2 do
+        insert_tender!(%{
+          cpv_main: "45000000-7",
+          notice_type: "ContractPerformingNotice",
+          organization_name: "URZĄD MIASTA KRAKOWA"
+        })
+      end
+
+      insert_tender!(%{
+        cpv_main: "45000000-7",
+        notice_type: "ContractPerformingNotice",
+        organization_name: "Urząd Miasta Krakowa"
+      })
+
+      result = MarketAnalysis.analyze("45")
+
+      assert [party] = result.top_ordering_parties
+      assert party.count == 3
+    end
+
     test "filters out contractors with empty names" do
       insert_tender!(%{
         cpv_main: "45000000-7",

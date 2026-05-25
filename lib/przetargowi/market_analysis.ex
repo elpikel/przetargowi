@@ -205,15 +205,17 @@ defmodule Przetargowi.MarketAnalysis do
 
   defp compute_top_contractors(contracts) do
     contracts
-    |> Enum.filter(fn c ->
-      name = c.contractor_name
-      name != nil && name != ""
-    end)
+    |> Enum.filter(fn c -> c.contractor_name != nil && c.contractor_name != "" end)
     |> Enum.group_by(fn c ->
-      key = if c.contractor_nip && c.contractor_nip != "", do: c.contractor_nip, else: c.contractor_name
-      {key, c.contractor_name, c.contractor_city}
+      cond do
+        c.contractor_nip && c.contractor_nip != "" -> normalize_nip(c.contractor_nip)
+        true -> normalize_name(c.contractor_name)
+      end
     end)
-    |> Enum.map(fn {{_key, name, city}, group} ->
+    |> Enum.map(fn {_key, group} ->
+      # Pick the most common name variant as display name
+      {name, city} = pick_display_name(group, :contractor_name, :contractor_city)
+
       prices =
         group
         |> Enum.flat_map(fn c -> [c.winning_price, c.contract_value] end)
@@ -224,12 +226,7 @@ defmodule Przetargowi.MarketAnalysis do
           do: prices |> Enum.reduce(Decimal.new(0), &Decimal.add/2) |> Decimal.to_float(),
           else: nil
 
-      %{
-        name: name,
-        city: city,
-        wins: length(group),
-        total_value: total_value
-      }
+      %{name: name, city: city, wins: length(group), total_value: total_value}
     end)
     |> Enum.sort_by(& &1.wins, :desc)
     |> Enum.take(15)
@@ -238,13 +235,51 @@ defmodule Przetargowi.MarketAnalysis do
   defp compute_top_ordering_parties(tenders) do
     tenders
     |> Enum.filter(& &1.organization_name)
-    |> Enum.group_by(& &1.organization_name)
-    |> Enum.map(fn {name, group} ->
-      city = List.first(group).organization_city
+    |> Enum.group_by(fn t -> normalize_name(t.organization_name) end)
+    |> Enum.map(fn {_key, group} ->
+      {name, city} = pick_display_name(group, :organization_name, :organization_city)
       %{name: name, city: city, count: length(group)}
     end)
     |> Enum.sort_by(& &1.count, :desc)
     |> Enum.take(15)
+  end
+
+  defp normalize_name(name) when is_binary(name) do
+    name
+    |> String.downcase()
+    |> String.replace(~r/\s+/, " ")
+    |> String.replace(~r/["""„]/, "")
+    |> String.replace(~r/sp\.\s*z\s*o\.?\s*o\.?/, "")
+    |> String.replace(~r/sp[oó][łl]ka\s*(z\s*ograniczon[aą]\s*odpowiedzialno[sś]ci[aą]?|akcyjna|komandytowa|komandytowo-akcyjna|cywilna|jawna)/, "")
+    |> String.replace(~r/\s*s\.?\s*a\.?\s*$/, "")
+    |> String.trim()
+  end
+
+  defp normalize_name(_), do: ""
+
+  defp normalize_nip(nip) do
+    nip
+    |> String.replace(~r/[^0-9]/, "")
+    |> String.trim()
+  end
+
+  defp pick_display_name(group, name_field, city_field) do
+    # Pick the most frequent name variant
+    name =
+      group
+      |> Enum.map(&Map.get(&1, name_field))
+      |> Enum.filter(& &1)
+      |> Enum.frequencies()
+      |> Enum.max_by(&elem(&1, 1), fn -> {nil, 0} end)
+      |> elem(0)
+
+    city =
+      group
+      |> Enum.map(&Map.get(&1, city_field))
+      |> Enum.filter(& &1)
+      |> List.first()
+
+    {name, city}
   end
 
   defp compute_monthly_trends(tenders) do
