@@ -1,6 +1,7 @@
 defmodule PrzetargowiWeb.MarketDashboardLive do
   use PrzetargowiWeb, :live_view
 
+  alias Przetargowi.Cpv
   alias Przetargowi.MarketAnalysis
 
   @impl true
@@ -16,6 +17,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
      |> assign(:province, "")
      |> assign(:cpv_query, "")
      |> assign(:cpv_prefix, nil)
+     |> assign(:cpv_code, nil)
+     |> assign(:cpv_suggestions, [])
+     |> assign(:show_suggestions, false)
      |> assign(:analysis, nil)
      |> assign(:loading, false)}
   end
@@ -23,35 +27,53 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
   @impl true
   def handle_params(params, _uri, socket) do
     province = params["wojewodztwo"] || ""
-    cpv = params["cpv"] || ""
+    cpv_param = params["cpv"] || ""
+
+    socket = assign(socket, :province, province)
 
     socket =
-      socket
-      |> assign(:province, province)
-      |> assign(:cpv_query, cpv)
+      if cpv_param != "" do
+        # Resolve full code and prefix from whatever was in the URL
+        {prefix, full_code, label} = resolve_cpv(cpv_param)
 
-    socket =
-      if cpv != "" do
         socket
-        |> assign(:cpv_prefix, cpv)
+        |> assign(:cpv_query, label)
+        |> assign(:cpv_prefix, prefix)
+        |> assign(:cpv_code, full_code)
         |> assign(:loading, true)
-        |> start_async(:analyze, fn -> MarketAnalysis.analyze(cpv, province) end)
+        |> start_async(:analyze, fn -> MarketAnalysis.analyze(prefix, province) end)
       else
-        socket
+        assign(socket, :cpv_query, "")
       end
 
     {:noreply, socket}
   end
 
-  @impl true
-  def handle_event("filter", %{"province" => province, "cpv_query" => cpv_query}, socket) do
-    cpv_prefix = extract_cpv_prefix(cpv_query)
+  defp resolve_cpv(code) do
+    case Cpv.find(code) do
+      {prefix, full_code, desc} -> {prefix, full_code, "#{full_code} — #{desc}"}
+      nil -> {code, code, code}
+    end
+  end
 
-    if cpv_prefix do
+  @impl true
+  def handle_event("filter", params, socket) do
+    province = params["province"] || socket.assigns.province
+    cpv_query = params["cpv_query"] || socket.assigns.cpv_query
+    cpv_code = socket.assigns[:cpv_code]
+
+    # Use stored full code from autocomplete selection, or extract from input
+    cpv_for_url =
+      cond do
+        cpv_code && cpv_code != "" -> cpv_code
+        true -> extract_cpv_prefix(cpv_query)
+      end
+
+    if cpv_for_url do
       {:noreply,
-       push_patch(socket,
-         to: ~p"/analiza-rynku?#{%{wojewodztwo: province, cpv: cpv_prefix}}"
-       )}
+       socket
+       |> assign(:show_suggestions, false)
+       |> push_patch(to: ~p"/analiza-rynku?#{%{wojewodztwo: province, cpv: cpv_for_url}}")}
     else
       {:noreply,
        socket
@@ -59,6 +81,46 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
        |> assign(:cpv_query, cpv_query)
        |> assign(:analysis, nil)}
     end
+  end
+
+  def handle_event("cpv_search", %{"cpv_query" => query}, socket) do
+    limit = if String.trim(query) == "", do: 100, else: 15
+    suggestions = Cpv.search(query, limit)
+
+    {:noreply,
+     socket
+     |> assign(:cpv_query, query)
+     |> assign(:cpv_suggestions, suggestions)
+     |> assign(:show_suggestions, suggestions != [])}
+  end
+
+  # Fallback for form-level change events
+  def handle_event("cpv_search", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("cpv_focus", _params, socket) do
+    query = socket.assigns.cpv_query
+    limit = if query == "" or query == nil, do: 100, else: 15
+    suggestions = Cpv.search(query, limit)
+
+    {:noreply,
+     socket
+     |> assign(:cpv_suggestions, suggestions)
+     |> assign(:show_suggestions, true)}
+  end
+
+  def handle_event("cpv_close", _params, socket) do
+    {:noreply, assign(socket, :show_suggestions, false)}
+  end
+
+  def handle_event("cpv_select", %{"prefix" => prefix, "code" => code, "desc" => desc}, socket) do
+    {:noreply,
+     socket
+     |> assign(:cpv_query, "#{code} — #{desc}")
+     |> assign(:cpv_prefix, prefix)
+     |> assign(:cpv_code, code)
+     |> assign(:show_suggestions, false)}
   end
 
   @impl true
@@ -75,7 +137,13 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
   end
 
   defp extract_cpv_prefix(query) do
-    cleaned = String.replace(query, ~r/[^0-9]/, "")
+    # Handle "45 — Roboty budowlane" format from autocomplete
+    cleaned =
+      query
+      |> String.split(~r/[\s—\-]/, parts: 2)
+      |> List.first("")
+      |> String.replace(~r/[^0-9]/, "")
+
     if String.length(cleaned) >= 2, do: cleaned, else: nil
   end
 
@@ -118,27 +186,49 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
                 </select>
               </div>
 
-              <div class="form-control">
+              <div class="form-control relative" phx-click-away="cpv_close">
                 <label class="label">
-                  <span class="label-text font-medium">Kod CPV (min. 2 cyfry)</span>
+                  <span class="label-text font-medium">Branża / kod CPV</span>
                 </label>
                 <input
                   type="text"
+                  id="cpv-input"
                   name="cpv_query"
                   value={@cpv_query}
-                  placeholder="np. 45 (budownictwo), 72 (IT), 90 (odpady)"
+                  placeholder="Wpisz kod lub szukaj np. budowlane, informatyczne, medyczne..."
                   class="input input-bordered w-full"
+                  phx-change="cpv_search"
+                  phx-focus="cpv_focus"
+                  phx-debounce="150"
+                  autocomplete="off"
                 />
+                <div
+                  :if={@show_suggestions}
+                  class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-72 overflow-y-auto"
+                >
+                  <ul class="menu menu-sm p-1">
+                    <%= for {prefix, full_code, desc} <- @cpv_suggestions do %>
+                      <li>
+                        <a
+                          href="#"
+                          phx-click="cpv_select"
+                          phx-value-prefix={prefix}
+                          phx-value-code={full_code}
+                          phx-value-desc={desc}
+                          class="flex gap-2"
+                        >
+                          <span class="font-mono text-primary font-medium shrink-0">{full_code}</span>
+                          <span class="text-left flex-1 truncate">{desc}</span>
+                        </a>
+                      </li>
+                    <% end %>
+                  </ul>
+                </div>
               </div>
 
               <button type="submit" class="btn btn-primary">
                 Analizuj rynek
               </button>
-            </div>
-
-            <div class="mt-2 text-sm text-base-content/50">
-              Popularne: 45 — Budownictwo, 71 — Architektura/inżynieria, 72 — IT,
-              33 — Medycyna, 34 — Transport, 90 — Środowisko
             </div>
           </div>
         </form>
