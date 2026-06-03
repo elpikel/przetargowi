@@ -1,6 +1,7 @@
 defmodule PrzetargowiWeb.SearchController do
   use PrzetargowiWeb, :controller
 
+  alias Przetargowi.Blog
   alias Przetargowi.Embeddings
   alias Przetargowi.Judgements
   alias Przetargowi.Payments
@@ -95,7 +96,29 @@ defmodule PrzetargowiWeb.SearchController do
     |> assign(:total_pages, total_pages)
     |> assign(:rate_limited, false)
     |> assign(:semantic_error, nil)
+    |> maybe_assign_seo_content(query, filters)
     |> render(:index)
+  end
+
+  defp maybe_assign_seo_content(conn, "", filters) do
+    if not has_filters?(filters) do
+      conn
+      |> assign(:recent_judgements, Judgements.list_recent_judgements(6))
+      |> assign(:recent_articles, Blog.list_recent_articles(3))
+      |> assign(:show_seo_content, true)
+    else
+      conn
+      |> assign(:recent_judgements, [])
+      |> assign(:recent_articles, [])
+      |> assign(:show_seo_content, false)
+    end
+  end
+
+  defp maybe_assign_seo_content(conn, _query, _filters) do
+    conn
+    |> assign(:recent_judgements, [])
+    |> assign(:recent_articles, [])
+    |> assign(:show_seo_content, false)
   end
 
   defp perform_semantic_search(conn, query, filters) do
@@ -125,6 +148,9 @@ defmodule PrzetargowiWeb.SearchController do
       |> assign(:total_pages, 0)
       |> assign(:rate_limited, false)
       |> assign(:semantic_error, nil)
+      |> assign(:recent_judgements, Judgements.list_recent_judgements(6))
+      |> assign(:recent_articles, Blog.list_recent_articles(3))
+      |> assign(:show_seo_content, true)
       |> render(:index)
     else
       # Fetch more results to account for filtering
@@ -164,6 +190,9 @@ defmodule PrzetargowiWeb.SearchController do
           |> assign(:total_pages, 1)
           |> assign(:rate_limited, false)
           |> assign(:semantic_error, nil)
+          |> assign(:recent_judgements, [])
+          |> assign(:recent_articles, [])
+          |> assign(:show_seo_content, false)
           |> render(:index)
 
         {:error, :missing_api_key} ->
@@ -184,6 +213,9 @@ defmodule PrzetargowiWeb.SearchController do
           |> assign(:total_pages, 0)
           |> assign(:rate_limited, false)
           |> assign(:semantic_error, "Wyszukiwanie semantyczne jest tymczasowo niedostępne.")
+          |> assign(:recent_judgements, [])
+          |> assign(:recent_articles, [])
+          |> assign(:show_seo_content, false)
           |> render(:index)
 
         {:error, _reason} ->
@@ -204,6 +236,9 @@ defmodule PrzetargowiWeb.SearchController do
           |> assign(:total_pages, 0)
           |> assign(:rate_limited, false)
           |> assign(:semantic_error, "Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.")
+          |> assign(:recent_judgements, [])
+          |> assign(:recent_articles, [])
+          |> assign(:show_seo_content, false)
           |> render(:index)
       end
     end
@@ -315,6 +350,9 @@ defmodule PrzetargowiWeb.SearchController do
     |> assign(:total_pages, 0)
     |> assign(:rate_limited, true)
     |> assign(:semantic_error, nil)
+    |> assign(:recent_judgements, [])
+    |> assign(:recent_articles, [])
+    |> assign(:show_seo_content, false)
     |> render(:index)
   end
 

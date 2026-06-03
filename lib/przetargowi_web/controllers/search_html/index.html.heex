@@ -1,9 +1,11 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-base-content mb-2">Orzecznictwo KIO — wyszukiwarka</h1>
-      <p class="text-base-content/60">
-        Przeszukuj bazę orzeczeń Krajowej Izby Odwoławczej
+      <h1 class="text-3xl font-bold text-base-content mb-2">
+        Wyszukiwarka orzeczeń KIO — wyroki i orzeczenia zamówień publicznych
+      </h1>
+      <p class="text-base-content/60 max-w-3xl">
+        Przeszukuj tysiące orzeczeń Krajowej Izby Odwoławczej, sądów okręgowych, apelacyjnych i Sądu Najwyższego. Wyszukiwarka AI znajduje podobne wyroki po znaczeniu — nie tylko po słowach kluczowych.
       </p>
     </div>
     
@@ -365,6 +367,103 @@
               </a>
             <% end %>
           </nav>
+        </div>
+      <% end %>
+    <% end %>
+
+    <%= if @show_seo_content do %>
+      <!-- Recent Judgements -->
+      <%= if @recent_judgements != [] do %>
+        <div class="mt-16">
+          <h2 class="text-2xl font-bold text-base-content mb-6">Najnowsze orzeczenia</h2>
+          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <%= for judgement <- @recent_judgements do %>
+              <a
+                href={"/orzeczenie/#{judgement.slug}"}
+                class="card-base p-5 hover:border-primary/30 transition-colors block"
+              >
+                <div class="font-semibold text-base-content mb-2">{judgement.signature}</div>
+                <%= if judgement.decision_date do %>
+                  <div class="text-sm text-base-content/50 mb-3">
+                    {Calendar.strftime(judgement.decision_date, "%d.%m.%Y")}
+                  </div>
+                <% end %>
+                <%= if judgement.document_type do %>
+                  <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium">
+                    {judgement.document_type}
+                  </span>
+                <% end %>
+                <%= if judgement.meritum do %>
+                  <p class="text-sm text-base-content/60 mt-3 line-clamp-3">{judgement.meritum}</p>
+                <% end %>
+              </a>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- SEO Content -->
+      <div class="mt-16 prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/70 prose-a:text-primary prose-li:text-base-content/70">
+        <h2>Czym jest orzecznictwo KIO?</h2>
+        <p>
+          Krajowa Izba Odwoławcza (KIO) to organ rozpatrujący odwołania w postępowaniach o udzielenie zamówienia publicznego na gruncie <a href="/ustawa-pzp">ustawy Prawo zamówień publicznych</a>. Orzeczenia KIO kształtują praktykę stosowania prawa zamówień publicznych w Polsce — od interpretacji warunków udziału w postępowaniu, przez ocenę ofert, po zasady unieważniania przetargów.
+        </p>
+        <p>
+          Nasza baza obejmuje wyroki i postanowienia KIO, orzeczenia sądów okręgowych (jako instancji odwoławczej od wyroków KIO), sądów apelacyjnych oraz Sądu Najwyższego w sprawach zamówień publicznych.
+        </p>
+
+        <h2>Jak działa wyszukiwarka orzeczeń KIO?</h2>
+        <p>Wyszukiwarka oferuje dwa tryby:</p>
+        <ul>
+          <li>
+            <strong>Wyszukiwanie słów kluczowych</strong> — klasyczne przeszukiwanie tekstu orzeczeń. Idealne, gdy znasz sygnaturę sprawy, nazwę zamawiającego lub konkretny przepis (np. &quot;art. 226 ust. 1 pkt 5&quot;).
+          </li>
+          <li>
+            <strong>Wyszukiwanie semantyczne (AI)</strong> — opisz swoją sytuację własnymi słowami, a algorytm AI znajdzie orzeczenia o podobnym znaczeniu. Nie musisz znać dokładnej terminologii prawnej — wystarczy opis problemu.
+          </li>
+        </ul>
+        <p>
+          Dodatkowo możesz filtrować wyniki po rodzaju dokumentu, organie wydającym, sposobie rozstrzygnięcia, trybie postępowania i dacie wydania.
+        </p>
+
+        <h2>Kiedy warto sprawdzić orzecznictwo KIO?</h2>
+        <ul>
+          <li>Przed złożeniem <a href="/blog/jak-odwolac-sie-do-kio">odwołania do KIO</a> — aby ocenić szanse powodzenia na podstawie podobnych spraw</li>
+          <li>Przy przygotowaniu oferty przetargowej — aby uniknąć <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstszych błędów</a>, które prowadzą do odrzucenia</li>
+          <li>Gdy zamawiający <a href="/blog/uniewaznienie-przetargu-jak-sie-bronic">unieważnia postępowanie</a> — aby sprawdzić, czy przesłanki unieważnienia są zasadne</li>
+          <li>Przy sporządzaniu argumentacji prawnej — aby powołać się na dotychczasową linię orzeczniczą</li>
+          <li>Przy szacowaniu <a href="/blog/ile-kosztuje-odwolanie-do-kio-2026">kosztów odwołania do KIO</a> — aby podjąć racjonalną decyzję biznesową</li>
+        </ul>
+
+        <h2>Jakie orzeczenia znajdziesz w bazie?</h2>
+        <p>Baza zawiera orzeczenia dotyczące wszystkich aspektów zamówień publicznych, m.in.:</p>
+        <ul>
+          <li><strong>Odrzucenie oferty</strong> — rażąco niska cena, niezgodność z SWZ, błędy formalne</li>
+          <li><strong>Wykluczenie wykonawcy</strong> — niespełnienie warunków udziału, JEDZ, podmiotowe środki dowodowe</li>
+          <li><strong>Wybór najkorzystniejszej oferty</strong> — kryteria oceny, waga ceny vs. jakości</li>
+          <li><strong>Unieważnienie postępowania</strong> — przesłanki z art. 255 i 256 ustawy Pzp</li>
+          <li><strong>Opis przedmiotu zamówienia</strong> — ograniczenie konkurencji, równoważność produktów</li>
+          <li><strong>Warunki umowy</strong> — klauzule abuzywne, waloryzacja wynagrodzenia</li>
+        </ul>
+      </div>
+
+      <!-- Related Blog Posts -->
+      <%= if @recent_articles != [] do %>
+        <div class="mt-12">
+          <h2 class="text-2xl font-bold text-base-content mb-6">
+            Poradniki dotyczące zamówień publicznych
+          </h2>
+          <div class="grid gap-6 md:grid-cols-3">
+            <%= for article <- @recent_articles do %>
+              <a
+                href={"/blog/#{article.slug}"}
+                class="card-base p-6 hover:border-primary/30 transition-colors block"
+              >
+                <h3 class="font-semibold text-base-content mb-2 line-clamp-2">{article.title}</h3>
+                <p class="text-sm text-base-content/60 line-clamp-3">{article.excerpt}</p>
+              </a>
+            <% end %>
+          </div>
         </div>
       <% end %>
     <% end %>

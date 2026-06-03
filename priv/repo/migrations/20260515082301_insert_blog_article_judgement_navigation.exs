@@ -75,7 +75,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleJudgementNavigation do
 
 <h2>Wyszukiwarka orzeczeń — dwa tryby</h2>
 
-<p>Platforma <a href="/szukaj">Przetargowi.pl</a> oferuje dwa tryby wyszukiwania, które uzupełniają się nawzajem.</p>
+<p>Nasza <a href="/szukaj">wyszukiwarka orzeczeń KIO</a> oferuje dwa tryby wyszukiwania, które uzupełniają się nawzajem.</p>
 
 <h3>Tryb 1: Słowa kluczowe</h3>
 

@@ -19,7 +19,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleKioAppeal do
 </ul>
 
 <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 20px; margin: 24px 0;">
-  <p style="margin: 0; color: #d4af37;"><strong>💡 Wskazówka:</strong> Przed złożeniem odwołania sprawdź podobne sprawy w naszej <a href="/szukaj" style="color: #d4af37;">bazie orzeczeń KIO</a>. Znajdziesz tam tysiące wyroków, które pomogą Ci ocenić szanse powodzenia.</p>
+  <p style="margin: 0; color: #d4af37;"><strong>💡 Wskazówka:</strong> Przed złożeniem odwołania sprawdź podobne sprawy w naszej <a href="/szukaj" style="color: #d4af37;">wyszukiwarce orzeczeń KIO</a>. Znajdziesz tam tysiące wyroków, które pomogą Ci ocenić szanse powodzenia.</p>
 </div>
 
 <h2>Terminy na wniesienie odwołania</h2>
@@ -139,7 +139,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleKioAppeal do
 
 <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 20px; margin: 24px 0;">
   <h4 style="color: #d4af37; margin-top: 0;">📚 Szukaj argumentów w orzecznictwie</h4>
-  <p style="color: #e0e0e0; margin-bottom: 12px;">Powołanie się na wcześniejsze wyroki KIO znacząco wzmacnia argumentację. W naszej <a href="/szukaj" style="color: #d4af37;">bazie orzeczeń</a> znajdziesz:</p>
+  <p style="color: #e0e0e0; margin-bottom: 12px;">Powołanie się na wcześniejsze wyroki KIO znacząco wzmacnia argumentację. W naszej <a href="/szukaj" style="color: #d4af37;">wyszukiwarce orzeczeń KIO</a> znajdziesz:</p>
   <ul style="color: #e0e0e0; margin-bottom: 0;">
     <li>Wyroki dotyczące podobnych stanów faktycznych</li>
     <li>Interpretacje konkretnych przepisów ustawy Pzp</li>
@@ -216,7 +216,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleKioAppeal do
 
 <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 20px; margin: 24px 0;">
   <h4 style="color: #d4af37; margin-top: 0;">📊 Analizuj orzecznictwo przed decyzją</h4>
-  <p style="color: #e0e0e0; margin-bottom: 0;">W <a href="/szukaj" style="color: #d4af37;">bazie orzeczeń Przetargowi.pl</a> możesz sprawdzić statystyki rozstrzygnięć dla konkretnych typów spraw, zamawiających czy przewodniczących składów orzekających.</p>
+  <p style="color: #e0e0e0; margin-bottom: 0;">W <a href="/szukaj" style="color: #d4af37;">wyszukiwarce orzeczeń KIO</a> możesz sprawdzić statystyki rozstrzygnięć dla konkretnych typów spraw, zamawiających czy przewodniczących składów orzekających.</p>
 </div>
 
 <h2>Najczęstsze błędy przy składaniu odwołań</h2>

@@ -9,7 +9,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleTenderAnnulment do
 <p>W tym artykule analizujemy wszystkie podstawy prawne unieważnienia przetargu na gruncie ustawy <a href="/ustawa-pzp">Prawo zamówień publicznych</a>, omawiamy aktualne orzecznictwo KIO i podpowiadamy, kiedy warto składać odwołanie.</p>
 
 <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 20px; margin: 24px 0;">
-  <p style="margin: 0; color: #d4af37;"><strong>💡 Zanim przeczytasz dalej:</strong> Sprawdź podobne sprawy w naszej <a href="/szukaj" style="color: #d4af37;">bazie orzeczeń KIO</a>. Wyszukaj np. &quot;unieważnienie postępowania art. 255&quot; i zobacz, jak KIO rozstrzygała analogiczne przypadki.</p>
+  <p style="margin: 0; color: #d4af37;"><strong>💡 Zanim przeczytasz dalej:</strong> Sprawdź podobne sprawy w naszej <a href="/szukaj" style="color: #d4af37;">wyszukiwarce orzeczeń KIO</a>. Wyszukaj np. &quot;unieważnienie postępowania art. 255&quot; i zobacz, jak KIO rozstrzygała analogiczne przypadki.</p>
 </div>
 
 <h2>Kiedy zamawiający MUSI unieważnić przetarg (art. 255 PZP)</h2>
@@ -82,7 +82,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleTenderAnnulment do
 
 <h3>Krok 2: Sprawdź orzecznictwo KIO</h3>
 
-<p>Przed złożeniem odwołania koniecznie sprawdź, jak KIO orzekała w podobnych sprawach. Wyszukaj w <a href="/szukaj">bazie orzeczeń KIO</a> frazy takie jak:</p>
+<p>Przed złożeniem odwołania koniecznie sprawdź, jak KIO orzekała w podobnych sprawach. Wyszukaj w <a href="/szukaj">wyszukiwarce orzeczeń KIO</a> frazy takie jak:</p>
 
 <ul>
   <li>&quot;unieważnienie postępowania art. 255 pkt 3&quot;</li>

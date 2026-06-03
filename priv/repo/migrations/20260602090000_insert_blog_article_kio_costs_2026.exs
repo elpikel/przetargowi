@@ -302,7 +302,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleKioCosts2026 do
 <p>Oczekiwana wartość = (0,2 × 75 000) − 25 000 = <strong>−10 000 zł</strong> → lepiej odpuścić.</p>
 
 <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 20px; margin: 24px 0;">
-  <p style="margin: 0; color: #d4af37;"><strong>🔍 Jak ocenić swoje szanse?</strong> Sprawdź w <a href="/szukaj" style="color: #d4af37;">bazie orzeczeń KIO na Przetargowi.pl</a>, jak Izba orzekała w podobnych sprawach. Wpisz opis swojej sytuacji, a wyszukiwarka semantyczna znajdzie najlepiej pasujące wyroki.</p>
+  <p style="margin: 0; color: #d4af37;"><strong>🔍 Jak ocenić swoje szanse?</strong> Sprawdź w <a href="/szukaj" style="color: #d4af37;">wyszukiwarce orzeczeń KIO</a>, jak Izba orzekała w podobnych sprawach. Wpisz opis swojej sytuacji, a wyszukiwarka semantyczna znajdzie najlepiej pasujące wyroki.</p>
 </div>
 
 <h2>Skarga do sądu — ile to kosztuje?</h2>
@@ -346,7 +346,7 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleKioCosts2026 do
   <li>Kompletną dokumentację postępowania</li>
   <li>Chronologię zdarzeń</li>
   <li>Konkretne wskazanie, które przepisy naruszył zamawiający</li>
-  <li>Podobne orzeczenia KIO (sprawdź w <a href="/szukaj">naszej bazie</a>)</li>
+  <li>Podobne orzeczenia KIO (sprawdź w <a href="/szukaj">wyszukiwarce orzeczeń KIO</a>)</li>
 </ul>
 
 <h3>3. Rozważ przystąpienie zamiast odwołania</h3>

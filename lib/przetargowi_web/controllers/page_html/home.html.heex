@@ -4,10 +4,10 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="max-w-3xl mx-auto text-center">
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-gradient">
-          Orzeczenia KIO<br />i przetargi publiczne
+          Wygrywaj przetargi<br />dzięki danym i automatyzacji
         </h1>
         <p class="text-lg sm:text-xl text-base-content/70 mb-12 leading-relaxed max-w-2xl mx-auto">
-          Przeszukuj orzeczenia Krajowej Izby Odwoławczej, monitoruj przetargi i otrzymuj alerty o nowych zamówieniach.
+          Wyszukiwarka AI orzeczeń KIO, monitoring przetargów, analiza rynku i automatyczne wypełnianie dokumentacji ofertowej — w jednym narzędziu.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -62,7 +62,25 @@
           </a>
         </div>
         
-<!-- Feature 2: Alerty -->
+<!-- Feature 2: Orzecznictwo -->
+        <div class="card-base p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <.icon name="hero-scale" class="size-8 text-accent" />
+          </div>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Orzecznictwo KIO</h3>
+          <p class="text-base-content/60 leading-relaxed">
+            Przeszukuj orzeczenia Krajowej Izby Odwoławczej, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
+            Znajdź precedensy do swojej sprawy.
+          </p>
+          <a
+            href={~p"/szukaj"}
+            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+          >
+            Szukaj orzeczeń <.icon name="hero-arrow-right" class="size-4" />
+          </a>
+        </div>
+
+<!-- Feature 3: Alerty -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10 flex items-center justify-center">
             <.icon name="hero-bell-alert" class="size-8 text-secondary" />
@@ -89,7 +107,7 @@
           <% end %>
         </div>
 
-<!-- Feature: Lista obserwowanych -->
+<!-- Feature 4: Lista obserwowanych -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/10 flex items-center justify-center">
             <.icon name="hero-star" class="size-8 text-warning" />
@@ -115,24 +133,6 @@
           <% end %>
         </div>
         
-<!-- Feature 3: Orzecznictwo -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent/10 flex items-center justify-center">
-            <.icon name="hero-scale" class="size-8 text-accent" />
-          </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Orzecznictwo KIO</h3>
-          <p class="text-base-content/60 leading-relaxed">
-            Przeszukuj orzeczenia Krajowej Izby Odwoławczej, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
-            Znajdź precedensy do swojej sprawy.
-          </p>
-          <a
-            href={~p"/szukaj"}
-            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
-          >
-            Szukaj orzeczeń <.icon name="hero-arrow-right" class="size-4" />
-          </a>
-        </div>
-        
 <!-- Feature 4: Raporty -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-info/10 flex items-center justify-center">
@@ -151,34 +151,40 @@
           </a>
         </div>
         
-<!-- Feature 5: Filtry -->
+<!-- Feature 5: Automatyczne wypełnianie dokumentów -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-success/10 flex items-center justify-center">
-            <.icon name="hero-funnel" class="size-8 text-success" />
+            <.icon name="hero-document-check" class="size-8 text-success" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Zaawansowane filtry</h3>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Automatyczne wypełnianie dokumentów</h3>
           <p class="text-base-content/60 leading-relaxed">
-            Filtruj przetargi po województwie, rodzaju zamówienia, wartości szacunkowej i terminie składania ofert.
-            Oszczędź czas na przeglądaniu.
+            Wypełniaj dokumentację ofertową automatycznie na podstawie danych z profilu firmy.
+            Oszczędź godziny pracy przy każdym przetargu.
           </p>
           <a
             href={~p"/przetargi"}
             class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
           >
-            Wypróbuj filtry <.icon name="hero-arrow-right" class="size-4" />
+            Zobacz przetargi <.icon name="hero-arrow-right" class="size-4" />
           </a>
         </div>
-        
-<!-- Feature 6: Aktualizacje -->
+
+<!-- Feature 6: Analiza konkurencji -->
         <div class="card-base p-8 text-center">
           <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/10 flex items-center justify-center">
-            <.icon name="hero-arrow-path" class="size-8 text-warning" />
+            <.icon name="hero-user-group" class="size-8 text-warning" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Codzienne aktualizacje</h3>
+          <h3 class="text-xl font-semibold text-base-content mb-3">Analiza konkurencji</h3>
           <p class="text-base-content/60 leading-relaxed">
-            Dane pobierane codziennie z oficjalnych źródeł.
-            Zawsze masz dostęp do najnowszych ogłoszeń i orzeczeń.
+            Sprawdź kto wygrywał podobne przetargi, za ile i w jakim regionie.
+            Podejmuj decyzje o starcie na podstawie danych, nie intuicji.
           </p>
+          <a
+            href={~p"/analiza-rynku"}
+            class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
+          >
+            Analizuj rynek <.icon name="hero-arrow-right" class="size-4" />
+          </a>
         </div>
       </div>
     </div>
