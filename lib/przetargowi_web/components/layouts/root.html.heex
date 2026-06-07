@@ -15,7 +15,7 @@
       name="keywords"
       content="przetargi, wyszukiwarka przetargów, orzecznictwo kio, aktualne przetargi, ogłoszenia o przetargach, oferty przetargowe, wyroki kio, uzp wyszukiwarka orzeczeń, orzecznictwo zamówienia publiczne, przetargi publiczne"
     />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content={assigns[:meta_robots] || "index, follow"} />
     <meta property="og:title" content={assigns[:page_title] || "Przetargowi"} />
     <meta
       property="og:description"

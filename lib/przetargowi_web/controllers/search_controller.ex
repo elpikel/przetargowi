@@ -85,6 +85,7 @@ defmodule PrzetargowiWeb.SearchController do
     |> assign(:meta_description, build_search_meta_description(query, filters, total_count))
     |> assign(:canonical_url, canonical_url)
     |> assign(:og_url, canonical_url)
+    |> assign(:meta_robots, search_meta_robots(query, filters, page))
     |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:query, query)
     |> assign(:search_mode, "keyword")
@@ -407,6 +408,17 @@ defmodule PrzetargowiWeb.SearchController do
   defp add_filter_param(params, filters, key, param_name) do
     value = Map.get(filters, key, "")
     if value != "", do: params ++ [{param_name, value}], else: params
+  end
+
+  defp search_meta_robots(query, filters, page) do
+    has_active_filters =
+      Enum.any?(filters, fn {_k, v} -> v != "" end)
+
+    if query != "" or page > 1 or has_active_filters do
+      "noindex, follow"
+    else
+      "index, follow"
+    end
   end
 
   defp build_search_meta_description(query, filters, total_count) do

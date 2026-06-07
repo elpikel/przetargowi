@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 
+# Block search result pages from crawling (thin content)
+Disallow: /szukaj?
+
+# Block paginated listing pages
+Disallow: /przetargi?page=
+
 Sitemap: https://przetargowi.pl/sitemap.xml

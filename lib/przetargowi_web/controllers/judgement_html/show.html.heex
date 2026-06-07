@@ -44,6 +44,7 @@
                   <dd class="text-base-content font-medium">
                     <a
                       href={"/szukaj?issuing_authority=#{URI.encode(@judgement.issuing_authority)}"}
+                      rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
                       {@judgement.issuing_authority}
@@ -57,6 +58,7 @@
                   <dd class="text-base-content font-medium">
                     <a
                       href={"/szukaj?document_type=#{URI.encode(@judgement.document_type)}"}
+                      rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
                       {@judgement.document_type}
@@ -70,6 +72,7 @@
                   <dd class="text-base-content font-medium">
                     <a
                       href={"/szukaj?date_from=#{@judgement.decision_date}&date_to=#{@judgement.decision_date}"}
+                      rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
                       {Calendar.strftime(@judgement.decision_date, "%d.%m.%Y")}
@@ -83,6 +86,7 @@
                   <dd class="text-base-content font-medium">
                     <a
                       href={"/szukaj?q=#{URI.encode(@judgement.chairman)}"}
+                      rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
                       {@judgement.chairman}
@@ -96,6 +100,7 @@
                   <dd class="text-base-content font-medium">
                     <a
                       href={"/szukaj?resolution_method=#{URI.encode(@judgement.resolution_method)}"}
+                      rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
                       {@judgement.resolution_method}
@@ -119,6 +124,7 @@
                     <dd class="text-base-content font-medium">
                       <a
                         href={"/szukaj?q=#{URI.encode(@judgement.contracting_authority)}"}
+                        rel="nofollow"
                         class="hover:text-primary hover:underline transition-colors"
                       >
                         {@judgement.contracting_authority}
@@ -132,6 +138,7 @@
                     <dd class="text-base-content font-medium">
                       <a
                         href={"/szukaj?q=#{URI.encode(@judgement.location)}"}
+                        rel="nofollow"
                         class="hover:text-primary hover:underline transition-colors"
                       >
                         {@judgement.location}
@@ -156,6 +163,7 @@
                   <dd class="text-base-content font-medium">
                     <a
                       href={"/szukaj?procedure_type=#{URI.encode(@judgement.procedure_type)}"}
+                      rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
                       {@judgement.procedure_type}
@@ -198,6 +206,7 @@
                 <%= for issue <- @judgement.thematic_issues do %>
                   <a
                     href={"/szukaj?q=#{URI.encode(issue)}"}
+                    rel="nofollow"
                     class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium hover:bg-secondary/20 transition-colors"
                   >
                     {issue}
