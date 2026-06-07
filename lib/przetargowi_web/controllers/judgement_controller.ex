@@ -33,6 +33,11 @@ defmodule PrzetargowiWeb.JudgementController do
         |> put_flash(:error, "Orzeczenie nie zostało znalezione")
         |> redirect(to: "/szukaj")
 
+      judgement when judgement.slug != nil and judgement.slug != slug ->
+        conn
+        |> put_status(301)
+        |> redirect(to: "/orzeczenie/#{judgement.slug}")
+
       judgement ->
         view_judgement = %{
           id: judgement.id,
