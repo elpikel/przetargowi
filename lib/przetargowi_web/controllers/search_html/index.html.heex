@@ -19,6 +19,7 @@
         <div class="inline-flex rounded-lg bg-base-200 p-1">
           <a
             href={"/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+            rel="nofollow"
             class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
           >
             <span class="flex items-center gap-2">
@@ -27,6 +28,7 @@
           </a>
           <a
             href={"/szukaj?mode=semantic" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+            rel="nofollow"
             class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
           >
             <span class="flex items-center gap-2">
@@ -160,7 +162,7 @@
       <div class="mt-4 flex justify-end">
         <div class="flex gap-3">
           <%= if has_active_filters?(@filters) do %>
-            <a href="/szukaj" class="btn-outline px-4 py-2 rounded-lg text-sm">
+            <a href="/szukaj" class="btn-outline px-4 py-2 rounded-lg text-sm" rel="nofollow">
               Wyczyść filtry
             </a>
           <% end %>
@@ -349,6 +351,7 @@
               <a
                 href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
                 class="btn-outline px-4 py-2 rounded-lg text-sm"
+                rel="nofollow"
               >
                 Poprzednia
               </a>
@@ -362,6 +365,7 @@
               <a
                 href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
                 class="btn-outline px-4 py-2 rounded-lg text-sm"
+                rel="nofollow"
               >
                 Następna
               </a>

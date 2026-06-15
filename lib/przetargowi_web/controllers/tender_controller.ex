@@ -59,6 +59,14 @@ defmodule PrzetargowiWeb.TenderController do
       "Wyszukiwarka przetargów publicznych — #{result.total_count} aktualnych ogłoszeń o przetargach z BZP. Przeglądaj oferty przetargowe i składaj wnioski."
     )
     |> assign(:canonical_url, "https://przetargowi.pl/przetargi")
+    |> then(fn conn ->
+      has_filters = regions != [] or order_types != [] or deadline_from != nil or
+        deadline_to != nil or with_winner_analysis or (params["q"] || "") != ""
+
+      if page > 1 or has_filters,
+        do: assign(conn, :meta_robots, "noindex, follow"),
+        else: conn
+    end)
     |> render(:index,
       notices: result.notices,
       total_count: result.total_count,

@@ -15,6 +15,8 @@ defmodule Przetargowi.Application do
       {Oban, Application.fetch_env!(:przetargowi, Oban)},
       # Embedding cache for semantic search
       Przetargowi.Embeddings.EmbeddingCache,
+      # Sitemap XML cache to avoid slow OFFSET queries on Google fetches
+      Przetargowi.SitemapCache,
       # Start to serve requests, typically the last entry
       PrzetargowiWeb.Endpoint
     ]

@@ -52,6 +52,13 @@ defmodule PrzetargowiWeb.ReportController do
       "#{result.total_count} raportów i analiz rynku zamówień publicznych w Polsce. Statystyki przetargów według regionów i branż."
     )
     |> assign(:canonical_url, "https://przetargowi.pl/raporty")
+    |> then(fn conn ->
+      has_filters = query != "" or Enum.any?(filters, fn {_k, v} -> v != "" end)
+
+      if page > 1 or has_filters,
+        do: assign(conn, :meta_robots, "noindex, follow"),
+        else: conn
+    end)
     |> assign(:breadcrumbs, [
       %{name: "Strona główna", url: "https://przetargowi.pl"},
       %{name: "Raporty", url: "https://przetargowi.pl/raporty"}

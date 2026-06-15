@@ -4,6 +4,7 @@ defmodule PrzetargowiWeb.SitemapController do
   alias Przetargowi.Blog
   alias Przetargowi.Judgements
   alias Przetargowi.Reports
+  alias Przetargowi.SitemapCache
   alias Przetargowi.Tenders
 
   @base_url "https://przetargowi.pl"
@@ -13,28 +14,34 @@ defmodule PrzetargowiWeb.SitemapController do
 
   # Sitemap index - lists all sub-sitemaps
   def index(conn, _params) do
+    xml = cached("index", 3600, &build_sitemap_index/0)
+
     conn
     |> put_resp_content_type("application/xml")
     |> put_resp_header("cache-control", "public, max-age=3600")
-    |> send_resp(200, build_sitemap_index())
+    |> send_resp(200, xml)
   end
 
   # Static pages sitemap
   def static(conn, _params) do
+    xml = cached("static", 86_400, &build_static_sitemap/0)
+
     conn
     |> put_resp_content_type("application/xml")
     |> put_resp_header("cache-control", "public, max-age=86400")
-    |> send_resp(200, build_static_sitemap())
+    |> send_resp(200, xml)
   end
 
   # Judgements sitemap (paginated)
   def judgements(conn, %{"page" => page_str}) do
     case Integer.parse(page_str) do
       {page, ""} when page >= 1 ->
+        xml = cached("judgements:#{page}", 3600, fn -> build_judgements_sitemap(page) end)
+
         conn
         |> put_resp_content_type("application/xml")
         |> put_resp_header("cache-control", "public, max-age=3600")
-        |> send_resp(200, build_judgements_sitemap(page))
+        |> send_resp(200, xml)
 
       _ ->
         send_resp(conn, 404, "Not found")
@@ -45,10 +52,12 @@ defmodule PrzetargowiWeb.SitemapController do
   def tenders(conn, %{"page" => page_str}) do
     case Integer.parse(page_str) do
       {page, ""} when page >= 1 ->
+        xml = cached("tenders:#{page}", 3600, fn -> build_tenders_sitemap(page) end)
+
         conn
         |> put_resp_content_type("application/xml")
         |> put_resp_header("cache-control", "public, max-age=3600")
-        |> send_resp(200, build_tenders_sitemap(page))
+        |> send_resp(200, xml)
 
       _ ->
         send_resp(conn, 404, "Not found")
@@ -59,13 +68,26 @@ defmodule PrzetargowiWeb.SitemapController do
   def reports(conn, %{"page" => page_str}) do
     case Integer.parse(page_str) do
       {page, ""} when page >= 1 ->
+        xml = cached("reports:#{page}", 3600, fn -> build_reports_sitemap(page) end)
+
         conn
         |> put_resp_content_type("application/xml")
         |> put_resp_header("cache-control", "public, max-age=3600")
-        |> send_resp(200, build_reports_sitemap(page))
+        |> send_resp(200, xml)
 
       _ ->
         send_resp(conn, 404, "Not found")
+    end
+  end
+
+  # Cache helper - returns cached XML or generates and caches it
+  defp cached(key, ttl, generator) do
+    case SitemapCache.get(key) do
+      {:ok, xml} -> xml
+      :miss ->
+        xml = generator.()
+        SitemapCache.put(key, xml, ttl)
+        xml
     end
   end
 
