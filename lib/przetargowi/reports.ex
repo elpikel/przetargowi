@@ -362,4 +362,22 @@ defmodule Przetargowi.Reports do
     |> where([r], not is_nil(r.slug))
     |> Repo.aggregate(:count)
   end
+
+  @doc """
+  Returns the latest updated_at per sitemap page.
+  """
+  def sitemap_lastmods(per_page) do
+    TenderReport
+    |> where([r], not is_nil(r.slug))
+    |> select([r], %{
+      page: fragment("(ROW_NUMBER() OVER (ORDER BY id) - 1) / ? + 1", ^per_page),
+      updated_at: r.updated_at
+    })
+    |> subquery()
+    |> group_by([s], s.page)
+    |> select([s], {s.page, max(s.updated_at)})
+    |> order_by([s], s.page)
+    |> Repo.all()
+    |> Map.new()
+  end
 end

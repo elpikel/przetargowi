@@ -368,6 +368,24 @@ defmodule Przetargowi.Tenders do
     |> Repo.aggregate(:count)
   end
 
+  @doc """
+  Returns the latest updated_at per sitemap page.
+  """
+  def sitemap_lastmods(per_page) do
+    TenderNotice
+    |> where([t], not is_nil(t.slug))
+    |> select([t], %{
+      page: fragment("(ROW_NUMBER() OVER (ORDER BY object_id) - 1) / ? + 1", ^per_page),
+      updated_at: t.updated_at
+    })
+    |> subquery()
+    |> group_by([s], s.page)
+    |> select([s], {s.page, max(s.updated_at)})
+    |> order_by([s], s.page)
+    |> Repo.all()
+    |> Map.new()
+  end
+
   @closed_notice_types [
     "TenderResultNotice",
     "CompetitionResultNotice",

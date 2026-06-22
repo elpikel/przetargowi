@@ -97,19 +97,25 @@ defmodule PrzetargowiWeb.SitemapController do
     tender_pages = ceil(Tenders.count_sitemap_entries() / @urls_per_sitemap)
     report_pages = ceil(Reports.count_sitemap_entries() / @urls_per_sitemap)
 
+    judgement_lastmods = Judgements.sitemap_lastmods(@urls_per_sitemap)
+    tender_lastmods = Tenders.sitemap_lastmods(@urls_per_sitemap)
+    report_lastmods = Reports.sitemap_lastmods(@urls_per_sitemap)
+
+    today = Date.to_iso8601(Date.utc_today())
+
     sitemaps =
       [{"#{@base_url}/sitemap-static.xml", Date.utc_today()}] ++
         for(
           page <- 1..max(judgement_pages, 1),
-          do: {"#{@base_url}/sitemap/judgements/#{page}", Date.utc_today()}
+          do: {"#{@base_url}/sitemap/judgements/#{page}", format_date(judgement_lastmods[page]) || today}
         ) ++
         for(
           page <- 1..max(tender_pages, 1),
-          do: {"#{@base_url}/sitemap/tenders/#{page}", Date.utc_today()}
+          do: {"#{@base_url}/sitemap/tenders/#{page}", format_date(tender_lastmods[page]) || today}
         ) ++
         for(
           page <- 1..max(report_pages, 1),
-          do: {"#{@base_url}/sitemap/reports/#{page}", Date.utc_today()}
+          do: {"#{@base_url}/sitemap/reports/#{page}", format_date(report_lastmods[page]) || today}
         )
 
     """
@@ -120,11 +126,15 @@ defmodule PrzetargowiWeb.SitemapController do
     """
   end
 
-  defp sitemap_entry({loc, lastmod}) do
+  defp sitemap_entry({loc, %Date{} = lastmod}) do
+    sitemap_entry({loc, Date.to_iso8601(lastmod)})
+  end
+
+  defp sitemap_entry({loc, lastmod}) when is_binary(lastmod) do
     """
       <sitemap>
         <loc>#{loc}</loc>
-        <lastmod>#{Date.to_iso8601(lastmod)}</lastmod>
+        <lastmod>#{lastmod}</lastmod>
       </sitemap>
     """
   end

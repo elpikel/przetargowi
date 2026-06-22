@@ -739,6 +739,25 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
+  Returns the latest updated_at per sitemap page.
+  Each page contains `per_page` entries ordered by id.
+  """
+  def sitemap_lastmods(per_page) do
+    Judgement
+    |> where([j], not is_nil(j.slug))
+    |> select([j], %{
+      page: fragment("(ROW_NUMBER() OVER (ORDER BY id) - 1) / ? + 1", ^per_page),
+      updated_at: j.updated_at
+    })
+    |> subquery()
+    |> group_by([s], s.page)
+    |> select([s], {s.page, max(s.updated_at)})
+    |> order_by([s], s.page)
+    |> Repo.all()
+    |> Map.new()
+  end
+
+  @doc """
   Returns judgements that need slug regeneration (NULL slug with signature).
   """
   def judgements_needing_slug_regeneration(limit \\ 100) do
