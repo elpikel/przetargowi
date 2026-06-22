@@ -347,7 +347,7 @@ defmodule Przetargowi.Tenders do
   """
   def list_sitemap_entries(limit \\ nil, offset \\ 0) do
     TenderNotice
-    |> select([t], %{slug: t.slug, updated_at: t.updated_at})
+    |> select([t], %{slug: t.slug, updated_at: t.updated_at, submitting_offers_date: t.submitting_offers_date})
     |> where([t], not is_nil(t.slug))
     |> order_by([t], asc: t.object_id)
     |> then(fn query ->

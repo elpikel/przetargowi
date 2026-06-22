@@ -187,15 +187,20 @@ defmodule PrzetargowiWeb.SitemapController do
   # Build tenders sitemap for a specific page
   defp build_tenders_sitemap(page) do
     offset = (page - 1) * @urls_per_sitemap
+    now = DateTime.utc_now()
 
     urls =
       Tenders.list_sitemap_entries(@urls_per_sitemap, offset)
       |> Enum.map(fn entry ->
+        expired =
+          entry.submitting_offers_date != nil &&
+            DateTime.before?(entry.submitting_offers_date, now)
+
         %{
           loc: "#{@base_url}/przetargi/#{entry.slug}",
           lastmod: format_date(entry.updated_at),
-          priority: "0.7",
-          changefreq: "weekly"
+          priority: if(expired, do: "0.4", else: "0.7"),
+          changefreq: if(expired, do: "monthly", else: "weekly")
         }
       end)
 
