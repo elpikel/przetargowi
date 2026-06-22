@@ -537,6 +537,39 @@ h1, h2, h3, .font-display {
   color: #12233d;
 }
 
+/* ===== Judgement Content ===== */
+
+.judgement-content {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: #1a1a1a;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.judgement-content p {
+  margin-bottom: 0.5em;
+}
+
+.judgement-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.judgement-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.8125rem;
+}
+
+.judgement-content th,
+.judgement-content td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e5e5;
+  text-align: left;
+}
+
 /* ===== Card Styles ===== */
 
 .card-base {

@@ -26,4 +26,31 @@ defmodule PrzetargowiWeb.JudgementHTML do
       _ -> "badge-kio"
     end
   end
+
+  @doc """
+  Sanitizes content_html from UZP by extracting body content
+  and stripping dangerous elements (script, link, style, meta tags).
+  """
+  def sanitize_content_html(nil), do: nil
+
+  def sanitize_content_html(html) do
+    case Floki.parse_document(html) do
+      {:ok, document} ->
+        body_content =
+          case Floki.find(document, "body") do
+            [{"body", _attrs, children}] -> children
+            _ -> document
+          end
+
+        body_content
+        |> Floki.filter_out("script")
+        |> Floki.filter_out("style")
+        |> Floki.filter_out("link")
+        |> Floki.filter_out("meta")
+        |> Floki.raw_html()
+
+      _ ->
+        nil
+    end
+  end
 end

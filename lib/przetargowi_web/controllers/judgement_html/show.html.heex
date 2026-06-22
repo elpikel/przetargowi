@@ -236,13 +236,9 @@
               <% end %>
             </div>
             <%= if @judgement.content_html do %>
-              <iframe
-                id="content-iframe"
-                srcdoc={@judgement.content_html}
-                class="w-full bg-white rounded-xl border border-base-300"
-                sandbox="allow-same-origin"
-                onload="this.style.height = this.contentDocument.body.scrollHeight + 'px'"
-              />
+              <div class="bg-white rounded-xl border border-base-300 p-6 overflow-hidden judgement-content">
+                {raw(PrzetargowiWeb.JudgementHTML.sanitize_content_html(@judgement.content_html))}
+              </div>
             <% else %>
               <div class="bg-base-200/50 rounded-xl p-6 border border-base-300 text-center flex-1 flex flex-col items-center justify-center">
                 <.icon name="hero-document" class="size-12 text-base-content/30 mb-3" />
