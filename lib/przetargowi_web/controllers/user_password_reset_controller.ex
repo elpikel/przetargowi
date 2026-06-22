@@ -4,7 +4,9 @@ defmodule PrzetargowiWeb.UserPasswordResetController do
   alias Przetargowi.Accounts
 
   def new(conn, _params) do
-    render(conn, :new)
+    conn
+    |> assign(:meta_robots, "noindex, nofollow")
+    |> render(:new)
   end
 
   def create(conn, %{"user" => %{"email" => email}}) do

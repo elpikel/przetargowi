@@ -7,7 +7,10 @@ defmodule PrzetargowiWeb.UserRegistrationController do
 
   def new(conn, _params) do
     changeset = Accounts.change_user_registration(%User{})
-    render(conn, :new, changeset: changeset)
+
+    conn
+    |> assign(:meta_robots, "noindex, nofollow")
+    |> render(:new, changeset: changeset)
   end
 
   def create(conn, %{"user" => user_params}) do

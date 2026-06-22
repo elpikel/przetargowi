@@ -8,7 +8,9 @@ defmodule PrzetargowiWeb.UserSessionController do
     email = get_in(conn.assigns, [:current_scope, Access.key(:user), Access.key(:email)])
     form = Phoenix.Component.to_form(%{"email" => email}, as: "user")
 
-    render(conn, :new, form: form)
+    conn
+    |> assign(:meta_robots, "noindex, nofollow")
+    |> render(:new, form: form)
   end
 
   def create(conn, %{"user" => %{"email" => email, "password" => password} = user_params}) do

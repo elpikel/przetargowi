@@ -58,14 +58,23 @@ defmodule PrzetargowiWeb.TenderController do
       :meta_description,
       "Wyszukiwarka przetargów publicznych — #{result.total_count} aktualnych ogłoszeń o przetargach z BZP. Przeglądaj oferty przetargowe i składaj wnioski."
     )
-    |> assign(:canonical_url, "https://przetargowi.pl/przetargi")
     |> then(fn conn ->
       has_filters = regions != [] or order_types != [] or deadline_from != nil or
         deadline_to != nil or with_winner_analysis or (params["q"] || "") != ""
 
-      if page > 1 or has_filters,
-        do: assign(conn, :meta_robots, "noindex, follow"),
-        else: conn
+      cond do
+        has_filters ->
+          conn
+          |> assign(:meta_robots, "noindex, follow")
+
+        page > 1 ->
+          conn
+          |> assign(:canonical_url, "https://przetargowi.pl/przetargi?page=#{page}")
+          |> assign(:meta_robots, "noindex, follow")
+
+        true ->
+          assign(conn, :canonical_url, "https://przetargowi.pl/przetargi")
+      end
     end)
     |> render(:index,
       notices: result.notices,
@@ -160,7 +169,23 @@ defmodule PrzetargowiWeb.TenderController do
       :meta_description,
       "Przetargi publiczne w województwie #{region_name}. #{result.total_count} aktywnych ogłoszeń z BZP."
     )
-    |> assign(:canonical_url, "https://przetargowi.pl/przetargi/#{region}")
+    |> then(fn conn ->
+      has_filters = (params["q"] || "") != "" or (params["order_types"] || []) != [] or
+        deadline_from != nil or deadline_to != nil or with_winner_analysis
+
+      cond do
+        has_filters ->
+          assign(conn, :meta_robots, "noindex, follow")
+
+        page > 1 ->
+          conn
+          |> assign(:canonical_url, "https://przetargowi.pl/przetargi/#{region}?page=#{page}")
+          |> assign(:meta_robots, "noindex, follow")
+
+        true ->
+          assign(conn, :canonical_url, "https://przetargowi.pl/przetargi/#{region}")
+      end
+    end)
     |> render(:index,
       notices: result.notices,
       total_count: result.total_count,

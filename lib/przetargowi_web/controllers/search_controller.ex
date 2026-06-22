@@ -83,9 +83,17 @@ defmodule PrzetargowiWeb.SearchController do
       )
     )
     |> assign(:meta_description, build_search_meta_description(query, filters, total_count))
-    |> assign(:canonical_url, canonical_url)
-    |> assign(:og_url, canonical_url)
-    |> assign(:meta_robots, search_meta_robots(query, filters, page))
+    |> then(fn conn ->
+      robots = search_meta_robots(query, filters, page)
+
+      if robots == "noindex, follow" do
+        assign(conn, :meta_robots, robots)
+      else
+        conn
+        |> assign(:canonical_url, canonical_url)
+        |> assign(:og_url, canonical_url)
+      end
+    end)
     |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:query, query)
     |> assign(:search_mode, "keyword")

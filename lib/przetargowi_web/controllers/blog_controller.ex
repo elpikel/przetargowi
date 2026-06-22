@@ -24,9 +24,14 @@ defmodule PrzetargowiWeb.BlogController do
       :meta_description,
       "Blog Przetargowi.pl — poradniki jak rozpocząć działalność w zamówieniach publicznych, artykuły o przetargach i orzecznictwie KIO."
     )
-    |> assign(:canonical_url, "https://przetargowi.pl/blog")
     |> then(fn conn ->
-      if page > 1, do: assign(conn, :meta_robots, "noindex, follow"), else: conn
+      if page > 1 do
+        conn
+        |> assign(:canonical_url, "https://przetargowi.pl/blog?page=#{page}")
+        |> assign(:meta_robots, "noindex, follow")
+      else
+        assign(conn, :canonical_url, "https://przetargowi.pl/blog")
+      end
     end)
     |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:articles, articles)
