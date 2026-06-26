@@ -386,6 +386,7 @@ defmodule PrzetargowiWeb.SearchController do
   defp transform_judgement(judgement) do
     %{
       id: judgement.id,
+      slug: judgement.slug,
       signature: judgement.signature,
       decision_date: judgement.decision_date,
       document_type: judgement.document_type,
