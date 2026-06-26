@@ -1,4 +1,14 @@
 User-agent: *
 Allow: /
+Disallow: /dokumenty/
+Disallow: /logowanie
+Disallow: /rejestracja
+Disallow: /zapomnialem-hasla
+Disallow: /resetuj-haslo/
+Disallow: /ustawienia
+Disallow: /subskrypcja
+Disallow: /alerty
+Disallow: /obserwowane
+Disallow: /profil-firmy
 
 Sitemap: https://przetargowi.pl/sitemap.xml
