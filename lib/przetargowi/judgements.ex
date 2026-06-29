@@ -216,6 +216,15 @@ defmodule Przetargowi.Judgements do
       {:procedure_type, value}, q when value != "" ->
         where(q, [j], j.procedure_type == ^value)
 
+      {:contracting_authority, value}, q when value != "" ->
+        where(q, [j], j.contracting_authority == ^value)
+
+      {:chairman, value}, q when value != "" ->
+        where(q, [j], j.chairman == ^value)
+
+      {:location, value}, q when value != "" ->
+        where(q, [j], j.location == ^value)
+
       {:date_from, value}, q when value != "" ->
         case Date.from_iso8601(value) do
           {:ok, date} -> where(q, [j], j.decision_date >= ^date)

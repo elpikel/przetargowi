@@ -3,6 +3,8 @@ defmodule PrzetargowiWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Orzeczenia KIO"
+
+    assert html_response(conn, 200) =~
+             "Przetargowi.pl - wyszukiwarka przetargów publicznych i orzeczeń KIO"
   end
 end

@@ -17,6 +17,9 @@ defmodule PrzetargowiWeb.SearchHTML do
       |> add_if_present(:issuing_authority, filters[:issuing_authority])
       |> add_if_present(:resolution_method, filters[:resolution_method])
       |> add_if_present(:procedure_type, filters[:procedure_type])
+      |> add_if_present(:contracting_authority, filters[:contracting_authority])
+      |> add_if_present(:chairman, filters[:chairman])
+      |> add_if_present(:location, filters[:location])
       |> add_if_present(:date_from, filters[:date_from])
       |> add_if_present(:date_to, filters[:date_to])
 

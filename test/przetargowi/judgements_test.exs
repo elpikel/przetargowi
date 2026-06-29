@@ -235,6 +235,46 @@ defmodule Przetargowi.JudgementsTest do
       assert hd(result).id == j1.id
     end
 
+    test "filters by contracting_authority" do
+      {:ok, j1} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j1, %{contracting_authority: "Politechnika Poznańska"})
+
+      {:ok, j2} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j2, %{contracting_authority: "Uniwersytet Warszawski"})
+
+      result =
+        Judgements.search_judgements("", filters: %{contracting_authority: "Politechnika Poznańska"})
+
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by chairman" do
+      {:ok, j1} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j1, %{chairman: "Maria Kacprzyk"})
+
+      {:ok, j2} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j2, %{chairman: "Jan Kowalski"})
+
+      result = Judgements.search_judgements("", filters: %{chairman: "Maria Kacprzyk"})
+
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by location" do
+      {:ok, j1} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j1, %{location: "Warszawa"})
+
+      {:ok, j2} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j2, %{location: "Kraków"})
+
+      result = Judgements.search_judgements("", filters: %{location: "Warszawa"})
+
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
     test "filters by date_from" do
       {:ok, j1} = create_judgement(%{decision_date: ~D[2024-12-10]})
       {:ok, _j2} = create_judgement(%{decision_date: ~D[2024-12-01]})
