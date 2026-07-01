@@ -87,6 +87,38 @@ defmodule PrzetargowiWeb.TenderHTML do
   def format_notice_type(nil), do: "-"
   def format_notice_type(other), do: other
 
+  @doc """
+  Derives the lifecycle status of a tender for display, from its deadline and
+  any result notice enriching it. The tender page shows this instead of a raw
+  BZP notice type, which is a per-notice artifact and not meaningful for the
+  procurement as a whole.
+
+  Returns one of `:rozstrzygniety`, `:uniewazniony`, `:po_terminie`, `:aktywny`.
+  """
+  def tender_status(result_notice, is_expired) do
+    cond do
+      result_notice && all_contracts_cancelled?(result_notice) -> :uniewazniony
+      result_notice -> :rozstrzygniety
+      is_expired -> :po_terminie
+      true -> :aktywny
+    end
+  end
+
+  defp all_contracts_cancelled?(result_notice) do
+    details = result_notice.contractors_contract_details || []
+    details != [] and Enum.all?(details, &(&1.status == :cancelled))
+  end
+
+  def tender_status_label(:rozstrzygniety), do: "Rozstrzygnięty"
+  def tender_status_label(:uniewazniony), do: "Unieważniony"
+  def tender_status_label(:po_terminie), do: "Po terminie składania ofert"
+  def tender_status_label(:aktywny), do: "Aktywny"
+
+  def tender_status_badge_class(:rozstrzygniety), do: "bg-primary/10 text-primary"
+  def tender_status_badge_class(:uniewazniony), do: "bg-error/10 text-error"
+  def tender_status_badge_class(:po_terminie), do: "bg-base-300 text-base-content/70"
+  def tender_status_badge_class(:aktywny), do: "bg-success/10 text-success"
+
   def format_client_type("AAH"), do: "Administracja rządowa terenowa"
   def format_client_type("AAN"), do: "Administracja rządowa centralna"
   def format_client_type("ASI"), do: "Agencje wykonawcze"
@@ -170,7 +202,15 @@ defmodule PrzetargowiWeb.TenderHTML do
     diff >= 0 and diff <= 3
   end
 
-  def build_pagination_params(query, regions, order_types, deadline_from, deadline_to, with_winner_analysis, page) do
+  def build_pagination_params(
+        query,
+        regions,
+        order_types,
+        deadline_from,
+        deadline_to,
+        with_winner_analysis,
+        page
+      ) do
     params = []
     params = if query && query != "", do: [{"q", query} | params], else: params
     params = params ++ Enum.map(regions, &{"regions[]", &1})

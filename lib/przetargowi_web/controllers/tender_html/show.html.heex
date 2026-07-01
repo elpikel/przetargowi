@@ -30,26 +30,46 @@
         <.icon name="hero-arrow-left" class="size-4" /> Powrót do listy przetargów
       </a>
     </div>
+
+    <% status = tender_status(@result_notice, @is_expired) %>
     
 <!-- Status Banner -->
-    <%= if @is_expired do %>
-      <div class="mb-6 bg-error/10 border border-error/20 p-4 rounded-xl flex items-center gap-3">
-        <.icon name="hero-exclamation-triangle" class="size-5 text-error flex-shrink-0" />
-        <p class="text-sm text-error">
-          Ten przetarg jest już nieaktualny. Termin składania ofert minął.
-        </p>
-      </div>
-    <% else %>
-      <div class="mb-6 bg-success/10 border border-success/20 p-4 rounded-xl flex items-center gap-3">
-        <.icon name="hero-check-circle" class="size-5 text-success flex-shrink-0" />
-        <p class="text-sm text-success">
-          Aktywne ogłoszenie - termin składania ofert:
-          <strong>{format_datetime(@tender.submitting_offers_date)}</strong>
-          <%= if days = days_until_deadline(@tender.submitting_offers_date) do %>
-            ({days})
-          <% end %>
-        </p>
-      </div>
+    <%= case status do %>
+      <% :rozstrzygniety -> %>
+        <div class="mb-6 bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-center gap-3">
+          <.icon name="hero-check-badge" class="size-5 text-primary flex-shrink-0" />
+          <p class="text-sm text-primary">
+            Postępowanie zostało rozstrzygnięte.
+            <%= if @result_notice && @result_notice.total_contract_value do %>
+              Wartość umowy: <strong>{format_value(@result_notice.total_contract_value)}</strong>
+            <% end %>
+          </p>
+        </div>
+      <% :uniewazniony -> %>
+        <div class="mb-6 bg-error/10 border border-error/20 p-4 rounded-xl flex items-center gap-3">
+          <.icon name="hero-x-circle" class="size-5 text-error flex-shrink-0" />
+          <p class="text-sm text-error">
+            Postępowanie zostało unieważnione.
+          </p>
+        </div>
+      <% :po_terminie -> %>
+        <div class="mb-6 bg-base-300 border border-base-300 p-4 rounded-xl flex items-center gap-3">
+          <.icon name="hero-clock" class="size-5 text-base-content/60 flex-shrink-0" />
+          <p class="text-sm text-base-content/70">
+            Termin składania ofert minął. Postępowanie oczekuje na rozstrzygnięcie.
+          </p>
+        </div>
+      <% :aktywny -> %>
+        <div class="mb-6 bg-success/10 border border-success/20 p-4 rounded-xl flex items-center gap-3">
+          <.icon name="hero-check-circle" class="size-5 text-success flex-shrink-0" />
+          <p class="text-sm text-success">
+            Aktywne ogłoszenie - termin składania ofert:
+            <strong>{format_datetime(@tender.submitting_offers_date)}</strong>
+            <%= if days = days_until_deadline(@tender.submitting_offers_date) do %>
+              ({days})
+            <% end %>
+          </p>
+        </div>
     <% end %>
 
     <div class="grid lg:grid-cols-3 gap-8">
@@ -62,20 +82,15 @@
           </h1>
 
           <div class="flex flex-wrap gap-2 mb-4">
+            <span class={"inline-flex items-center px-3 py-1 rounded-full text-sm font-medium #{tender_status_badge_class(status)}"}>
+              {tender_status_label(status)}
+            </span>
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
               {format_order_type(@tender.order_type)}
             </span>
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-base-300 text-base-content/70">
               {@tender.bzp_number}
             </span>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent">
-              {format_notice_type(@tender.notice_type)}
-            </span>
-            <%= if @result_notice do %>
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success/10 text-success gap-1">
-                <.icon name="hero-check-badge" class="size-3" /> Rozstrzygnięty
-              </span>
-            <% end %>
           </div>
 
           <%= if @tender.numer_referencyjny do %>
@@ -413,7 +428,9 @@
             <p class="text-sm text-base-content/60 mb-4">
               <%= if has_regional do %>
                 <.icon name="hero-map-pin" class="size-3.5 inline" />
-                {format_province_name(@tender.organization_province)} — na podstawie {data["total_similar_tenders"]} rozstrzygniętych przetargów (CPV {@tender.cpv_main})
+                {format_province_name(@tender.organization_province)} — na podstawie {data[
+                  "total_similar_tenders"
+                ]} rozstrzygniętych przetargów (CPV {@tender.cpv_main})
               <% else %>
                 Na podstawie {data["total_similar_tenders"]} rozstrzygniętych przetargów z kodem CPV {@tender.cpv_main} (cała Polska)
               <% end %>
@@ -423,32 +440,57 @@
               <%!-- Price Statistics --%>
               <%= if data["price_stats"]["avg"] do %>
                 <div class="grid grid-cols-3 gap-3 mb-6">
-                  <div class="rounded-lg p-3 text-center" style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);">
+                  <div
+                    class="rounded-lg p-3 text-center"
+                    style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
+                  >
                     <p class="text-xs text-base-content/50 mb-1">Najniższa cena</p>
-                    <p class="font-semibold text-sm text-base-content">{format_decimal_string(data["price_stats"]["min"])}</p>
+                    <p class="font-semibold text-sm text-base-content">
+                      {format_decimal_string(data["price_stats"]["min"])}
+                    </p>
                   </div>
-                  <div class="rounded-lg p-3 text-center" style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);">
+                  <div
+                    class="rounded-lg p-3 text-center"
+                    style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
+                  >
                     <p class="text-xs text-base-content/50 mb-1">Średnia cena</p>
-                    <p class="font-semibold text-sm" style="color: #c9a227;">{format_decimal_string(data["price_stats"]["avg"])}</p>
+                    <p class="font-semibold text-sm" style="color: #c9a227;">
+                      {format_decimal_string(data["price_stats"]["avg"])}
+                    </p>
                   </div>
-                  <div class="rounded-lg p-3 text-center" style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);">
+                  <div
+                    class="rounded-lg p-3 text-center"
+                    style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.25);"
+                  >
                     <p class="text-xs text-base-content/50 mb-1">Najwyższa cena</p>
-                    <p class="font-semibold text-sm text-base-content">{format_decimal_string(data["price_stats"]["max"])}</p>
+                    <p class="font-semibold text-sm text-base-content">
+                      {format_decimal_string(data["price_stats"]["max"])}
+                    </p>
                   </div>
                 </div>
               <% end %>
 
               <%!-- Top Contractors Table --%>
               <%= if data["top_contractors"] != [] do %>
-                <h3 class="text-sm font-semibold text-base-content/70 mb-2">Najczęściej wygrywający wykonawcy</h3>
+                <h3 class="text-sm font-semibold text-base-content/70 mb-2">
+                  Najczęściej wygrywający wykonawcy
+                </h3>
                 <div class="overflow-x-auto mb-6">
                   <table class="w-full text-sm">
                     <thead>
                       <tr class="border-b border-base-300">
-                        <th class="text-left py-2 px-2 text-base-content/60 font-medium">Wykonawca</th>
-                        <th class="text-right py-2 px-2 text-base-content/60 font-medium">Wygrane</th>
-                        <th class="text-right py-2 px-2 text-base-content/60 font-medium">Śr. cena</th>
-                        <th class="text-right py-2 px-2 text-base-content/60 font-medium">Łączna wartość</th>
+                        <th class="text-left py-2 px-2 text-base-content/60 font-medium">
+                          Wykonawca
+                        </th>
+                        <th class="text-right py-2 px-2 text-base-content/60 font-medium">
+                          Wygrane
+                        </th>
+                        <th class="text-right py-2 px-2 text-base-content/60 font-medium">
+                          Śr. cena
+                        </th>
+                        <th class="text-right py-2 px-2 text-base-content/60 font-medium">
+                          Łączna wartość
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -457,7 +499,9 @@
                           <td class="py-2 px-2">
                             <span class="text-base-content">{contractor["name"]}</span>
                             <%= if contractor["city"] do %>
-                              <span class="text-base-content/50 text-xs block">{contractor["city"]}</span>
+                              <span class="text-base-content/50 text-xs block">
+                                {contractor["city"]}
+                              </span>
                             <% end %>
                           </td>
                           <td class="py-2 px-2 text-right">
@@ -466,10 +510,14 @@
                             </span>
                           </td>
                           <td class="py-2 px-2 text-right text-base-content/70">
-                            {if contractor["avg_price"], do: format_decimal_string(contractor["avg_price"]), else: "-"}
+                            {if contractor["avg_price"],
+                              do: format_decimal_string(contractor["avg_price"]),
+                              else: "-"}
                           </td>
                           <td class="py-2 px-2 text-right font-medium text-base-content">
-                            {if contractor["total_value"], do: format_decimal_string(contractor["total_value"]), else: "-"}
+                            {if contractor["total_value"],
+                              do: format_decimal_string(contractor["total_value"]),
+                              else: "-"}
                           </td>
                         </tr>
                       <% end %>
@@ -480,7 +528,9 @@
 
               <%!-- Recent Wins --%>
               <%= if data["recent_wins"] != [] do %>
-                <h3 class="text-sm font-semibold text-base-content/70 mb-2">Ostatnie rozstrzygnięcia</h3>
+                <h3 class="text-sm font-semibold text-base-content/70 mb-2">
+                  Ostatnie rozstrzygnięcia
+                </h3>
                 <div class="space-y-2">
                   <%= for win <- data["recent_wins"] do %>
                     <a
@@ -488,7 +538,9 @@
                       class="block p-3 rounded-lg transition-all hover:bg-base-200/50"
                       style="background: rgba(18, 35, 61, 0.03); border: 1px solid rgba(18, 35, 61, 0.08);"
                     >
-                      <p class="text-sm text-base-content font-medium truncate">{win["tender_title"]}</p>
+                      <p class="text-sm text-base-content font-medium truncate">
+                        {win["tender_title"]}
+                      </p>
                       <div class="flex justify-between items-center mt-1">
                         <span class="text-xs text-base-content/60">{win["contractor_name"]}</span>
                         <span class="text-xs font-medium text-base-content">
@@ -511,7 +563,12 @@
                   <%= if national["price_stats"]["avg"] do %>
                     <div class="flex gap-4 text-xs text-base-content/60">
                       <span>Min: {format_decimal_string(national["price_stats"]["min"])}</span>
-                      <span>Średnia: <strong class="text-base-content/80">{format_decimal_string(national["price_stats"]["avg"])}</strong></span>
+                      <span>
+                        Średnia:
+                        <strong class="text-base-content/80">
+                          {format_decimal_string(national["price_stats"]["avg"])}
+                        </strong>
+                      </span>
                       <span>Max: {format_decimal_string(national["price_stats"]["max"])}</span>
                     </div>
                   <% end %>
@@ -536,7 +593,7 @@
             <% end %>
           </div>
         <% end %>
-
+        
 <!-- Full Notice HTML -->
         <%= if @tender.html_body do %>
           <div class="card-base p-6">
@@ -695,7 +752,11 @@
             <% else %>
               <%= if @can_add_to_watchlist do %>
                 <form action={~p"/obserwowane"} method="post">
-                  <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Phoenix.Controller.get_csrf_token()}
+                  />
                   <input type="hidden" name="tender_object_id" value={@tender.object_id} />
                   <button
                     type="submit"

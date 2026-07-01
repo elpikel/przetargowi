@@ -136,6 +136,24 @@ defmodule PrzetargowiWeb.TenderControllerTest do
       assert html_response(conn, 404)
     end
 
+    test "shows a lifecycle status instead of the raw notice type", %{conn: conn} do
+      tender =
+        tender_notice_fixture(
+          order_object: "Aktywny przetarg",
+          notice_type: "ContractNotice",
+          tender_id: unique_tender_id(),
+          submitting_offers_date: future_deadline()
+        )
+
+      conn = get(conn, ~p"/przetargi/#{tender.slug}")
+
+      response = html_response(conn, 200)
+      assert response =~ "Aktywny"
+      assert response =~ "Aktywne ogłoszenie"
+      # The raw BZP notice type is no longer displayed on the tender page
+      refute response =~ "Ogłoszenie o zamówieniu"
+    end
+
     test "301-redirects a result notice to its contract notice and merges the award", %{
       conn: conn
     } do
@@ -175,6 +193,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
       response = html_response(shown, 200)
       assert response =~ "Firma Budowlana Sp. z o.o."
       assert response =~ "Rozstrzygnięty"
+      assert response =~ "Postępowanie zostało rozstrzygnięte"
     end
 
     test "canonical contract-notice URL does not redirect even with a result sibling", %{
