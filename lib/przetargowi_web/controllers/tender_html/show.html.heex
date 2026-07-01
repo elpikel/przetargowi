@@ -71,13 +71,10 @@
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent">
               {format_notice_type(@tender.notice_type)}
             </span>
-            <%= if @related_contract_notice do %>
-              <a
-                href={~p"/przetargi/#{@related_contract_notice.slug}"}
-                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors gap-1"
-              >
-                <.icon name="hero-link" class="size-3" /> Zobacz ogłoszenie o zamówieniu
-              </a>
+            <%= if @result_notice do %>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success/10 text-success gap-1">
+                <.icon name="hero-check-badge" class="size-3" /> Rozstrzygnięty
+              </span>
             <% end %>
           </div>
 
@@ -303,7 +300,7 @@
         <% end %>
         
 <!-- Contractors (if any) -->
-        <%= if @tender.contractors && length(@tender.contractors) > 0 do %>
+        <%= if @result_notice && @result_notice.contractors && length(@result_notice.contractors) > 0 do %>
           <div class="card-base p-6">
             <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
               <.icon name="hero-user-group" class="size-5 text-primary" /> Wykonawcy
@@ -318,7 +315,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <%= for contractor <- @tender.contractors do %>
+                  <%= for contractor <- @result_notice.contractors do %>
                     <tr class="border-b border-base-300/50">
                       <td class="py-3 px-2 text-base-content">{contractor.contractor_name}</td>
                       <td class="py-3 px-2 text-base-content/70">{contractor.contractor_city}</td>
@@ -334,11 +331,11 @@
         <% end %>
         
 <!-- Contract Details (if any) -->
-        <%= if @tender.contractors_contract_details && length(@tender.contractors_contract_details) > 0 do %>
+        <%= if @result_notice && @result_notice.contractors_contract_details && length(@result_notice.contractors_contract_details) > 0 do %>
           <div class="card-base p-6">
             <h2 class="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
               <.icon name="hero-document-check" class="size-5 text-primary" />
-              Szczegóły kontraktów
+              Wynik postępowania — szczegóły kontraktów
             </h2>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
@@ -358,7 +355,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <%= for detail <- @tender.contractors_contract_details do %>
+                  <%= for detail <- @result_notice.contractors_contract_details do %>
                     <tr class="border-b border-base-300/50">
                       <td class="py-3 px-2 text-base-content">{detail.part || "-"}</td>
                       <td class="py-3 px-2 text-base-content">
@@ -588,11 +585,11 @@
               </div>
             <% end %>
 
-            <%= if @tender.total_contract_value do %>
+            <%= if @result_notice && @result_notice.total_contract_value do %>
               <div>
                 <dt class="text-sm text-base-content/50">Wartość umowy</dt>
                 <dd class="text-base-content font-medium text-lg">
-                  {format_value(@tender.total_contract_value)}
+                  {format_value(@result_notice.total_contract_value)}
                 </dd>
               </div>
             <% end %>

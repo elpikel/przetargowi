@@ -3,6 +3,7 @@ defmodule Przetargowi.TendersTest do
 
   alias Przetargowi.Tenders
   alias Przetargowi.Tenders.TenderDocument
+  alias Przetargowi.Tenders.TenderNotice
 
   import Przetargowi.TendersFixtures
 
@@ -182,6 +183,92 @@ defmodule Przetargowi.TendersTest do
       [entry] = Tenders.list_sitemap_entries()
 
       assert %{slug: _, updated_at: %NaiveDateTime{}} = entry
+    end
+  end
+
+  describe "canonical grouping" do
+    test "get_notices_by_tender_id returns all notices sharing a tender_id" do
+      tender_id = unique_tender_id()
+      contract = tender_notice_fixture(notice_type: "ContractNotice", tender_id: tender_id)
+      result = tender_notice_fixture(notice_type: "TenderResultNotice", tender_id: tender_id)
+      _other = tender_notice_fixture(notice_type: "ContractNotice", tender_id: unique_tender_id())
+
+      object_ids = tender_id |> Tenders.get_notices_by_tender_id() |> Enum.map(& &1.object_id)
+
+      assert contract.object_id in object_ids
+      assert result.object_id in object_ids
+      assert length(object_ids) == 2
+    end
+
+    test "canonical_notice prefers the ContractNotice" do
+      tender_id = unique_tender_id()
+      _result = tender_notice_fixture(notice_type: "TenderResultNotice", tender_id: tender_id)
+      contract = tender_notice_fixture(notice_type: "ContractNotice", tender_id: tender_id)
+
+      notices = Tenders.get_notices_by_tender_id(tender_id)
+
+      assert Tenders.canonical_notice(notices).object_id == contract.object_id
+    end
+
+    test "canonical_notice falls back to earliest by publication_date without a ContractNotice" do
+      earlier = %TenderNotice{
+        object_id: "earlier",
+        notice_type: "TenderResultNotice",
+        publication_date: ~U[2026-01-01 00:00:00Z]
+      }
+
+      later = %TenderNotice{
+        object_id: "later",
+        notice_type: "NoticeUpdateNotice",
+        publication_date: ~U[2026-02-01 00:00:00Z]
+      }
+
+      assert Tenders.canonical_notice([later, earlier]).object_id == "earlier"
+    end
+
+    test "canonical_notice returns nil for an empty list" do
+      assert Tenders.canonical_notice([]) == nil
+    end
+
+    test "find_result_notice returns the notice carrying award data" do
+      contract = %TenderNotice{object_id: "c", notice_type: "ContractNotice"}
+
+      result = %TenderNotice{
+        object_id: "r",
+        notice_type: "TenderResultNotice",
+        contractors_contract_details: [%{part: 1}]
+      }
+
+      assert Tenders.find_result_notice([contract, result]).object_id == "r"
+    end
+
+    test "find_result_notice returns nil when no notice has award data" do
+      contract = %TenderNotice{object_id: "c", notice_type: "ContractNotice"}
+
+      assert Tenders.find_result_notice([contract]) == nil
+    end
+
+    test "sitemap keeps notices with different tender_ids separate" do
+      a = tender_notice_fixture(notice_type: "ContractNotice", tender_id: unique_tender_id())
+      b = tender_notice_fixture(notice_type: "ContractNotice", tender_id: unique_tender_id())
+
+      slugs = Tenders.list_sitemap_entries() |> Enum.map(& &1.slug)
+
+      assert a.slug in slugs
+      assert b.slug in slugs
+      assert Tenders.count_sitemap_entries() == 2
+    end
+
+    test "sitemap collapses notices sharing a tender_id to the contract notice" do
+      tender_id = unique_tender_id()
+      contract = tender_notice_fixture(notice_type: "ContractNotice", tender_id: tender_id)
+      result = tender_notice_fixture(notice_type: "TenderResultNotice", tender_id: tender_id)
+
+      slugs = Tenders.list_sitemap_entries() |> Enum.map(& &1.slug)
+
+      assert contract.slug in slugs
+      refute result.slug in slugs
+      assert Tenders.count_sitemap_entries() == 1
     end
   end
 

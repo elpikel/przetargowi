@@ -59,8 +59,9 @@ defmodule PrzetargowiWeb.TenderController do
       "Wyszukiwarka przetargów publicznych — #{result.total_count} aktualnych ogłoszeń o przetargach z BZP. Przeglądaj oferty przetargowe i składaj wnioski."
     )
     |> then(fn conn ->
-      has_filters = regions != [] or order_types != [] or deadline_from != nil or
-        deadline_to != nil or with_winner_analysis or (params["q"] || "") != ""
+      has_filters =
+        regions != [] or order_types != [] or deadline_from != nil or
+          deadline_to != nil or with_winner_analysis or (params["q"] || "") != ""
 
       cond do
         has_filters ->
@@ -170,8 +171,9 @@ defmodule PrzetargowiWeb.TenderController do
       "Przetargi publiczne w województwie #{region_name}. #{result.total_count} aktywnych ogłoszeń z BZP."
     )
     |> then(fn conn ->
-      has_filters = (params["q"] || "") != "" or (params["order_types"] || []) != [] or
-        deadline_from != nil or deadline_to != nil or with_winner_analysis
+      has_filters =
+        (params["q"] || "") != "" or (params["order_types"] || []) != [] or
+          deadline_from != nil or deadline_to != nil or with_winner_analysis
 
       cond do
         has_filters ->
@@ -212,56 +214,72 @@ defmodule PrzetargowiWeb.TenderController do
         |> put_view(html: PrzetargowiWeb.ErrorHTML)
         |> render(:"404")
 
-      tender ->
-        is_expired =
-          tender.submitting_offers_date != nil &&
-            DateTime.before?(tender.submitting_offers_date, DateTime.utc_now())
-
-        # Get related contract notice if this is not a ContractNotice
-        related_contract_notice =
-          if tender.notice_type != "ContractNotice" && tender.tender_id do
-            Tenders.get_contract_notice_by_tender_id(tender.tender_id)
-          else
-            nil
+      notice ->
+        # A procurement can have several notices (ContractNotice + result notice
+        # etc.) sharing a tender_id. Merge them onto one canonical page and
+        # 301-redirect the non-canonical notice URLs to it.
+        notices =
+          case notice.tender_id do
+            nil -> [notice]
+            tender_id -> Tenders.get_notices_by_tender_id(tender_id)
           end
 
-        # Get documents for this tender
-        documents =
-          if tender.tender_id do
-            Tenders.get_documents_by_tender_id(tender.tender_id)
-          else
-            []
-          end
+        canonical = Tenders.canonical_notice(notices) || notice
 
-        canonical_url = "https://przetargowi.pl/przetargi/#{tender.slug}"
-        page_title = truncate_title(tender.order_object)
-        meta_description = build_tender_meta_description(tender)
-
-        # Get watchlist status for logged-in users
-        {is_watching, can_add_to_watchlist, watchlist_entry_id} =
-          get_watchlist_status(conn, tender.object_id)
-
-        # Get precomputed winner analysis and premium status
-        similar_winners = Tenders.get_winner_analysis(tender)
-        is_premium = check_premium(conn)
-
-        conn
-        |> assign(:page_title, page_title)
-        |> assign(:meta_description, meta_description)
-        |> assign(:canonical_url, canonical_url)
-        |> assign(:og_url, canonical_url)
-        |> render(:show,
-          tender: tender,
-          is_expired: is_expired,
-          related_contract_notice: related_contract_notice,
-          documents: documents,
-          is_watching: is_watching,
-          can_add_to_watchlist: can_add_to_watchlist,
-          watchlist_entry_id: watchlist_entry_id,
-          similar_winners: similar_winners,
-          is_premium: is_premium
-        )
+        if canonical.slug != notice.slug do
+          conn
+          |> put_status(:moved_permanently)
+          |> redirect(to: ~p"/przetargi/#{canonical.slug}")
+        else
+          render_tender(conn, canonical, notices)
+        end
     end
+  end
+
+  defp render_tender(conn, tender, notices) do
+    is_expired =
+      tender.submitting_offers_date != nil &&
+        DateTime.before?(tender.submitting_offers_date, DateTime.utc_now())
+
+    # Result/award data lives on a sibling notice (Ogłoszenie o wyniku).
+    result_notice = Tenders.find_result_notice(notices)
+
+    # Get documents for this tender
+    documents =
+      if tender.tender_id do
+        Tenders.get_documents_by_tender_id(tender.tender_id)
+      else
+        []
+      end
+
+    canonical_url = "https://przetargowi.pl/przetargi/#{tender.slug}"
+    page_title = truncate_title(tender.order_object)
+    meta_description = build_tender_meta_description(tender)
+
+    # Get watchlist status for logged-in users
+    {is_watching, can_add_to_watchlist, watchlist_entry_id} =
+      get_watchlist_status(conn, tender.object_id)
+
+    # Get precomputed winner analysis and premium status
+    similar_winners = Tenders.get_winner_analysis(tender)
+    is_premium = check_premium(conn)
+
+    conn
+    |> assign(:page_title, page_title)
+    |> assign(:meta_description, meta_description)
+    |> assign(:canonical_url, canonical_url)
+    |> assign(:og_url, canonical_url)
+    |> render(:show,
+      tender: tender,
+      is_expired: is_expired,
+      result_notice: result_notice,
+      documents: documents,
+      is_watching: is_watching,
+      can_add_to_watchlist: can_add_to_watchlist,
+      watchlist_entry_id: watchlist_entry_id,
+      similar_winners: similar_winners,
+      is_premium: is_premium
+    )
   end
 
   defp truncate_title(nil), do: "Przetarg"

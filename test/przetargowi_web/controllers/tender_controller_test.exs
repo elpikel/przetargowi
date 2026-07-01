@@ -9,10 +9,11 @@ defmodule PrzetargowiWeb.TenderControllerTest do
 
   describe "GET /przetargi (index)" do
     test "lists tenders", %{conn: conn} do
-      tender = tender_notice_fixture(
-        order_object: "Test tender for listing",
-        submitting_offers_date: future_deadline()
-      )
+      tender =
+        tender_notice_fixture(
+          order_object: "Test tender for listing",
+          submitting_offers_date: future_deadline()
+        )
 
       conn = get(conn, ~p"/przetargi")
 
@@ -27,6 +28,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
         order_object: "Budowa drogi ekspresowej",
         submitting_offers_date: future_deadline()
       )
+
       tender_notice_fixture(
         order_object: "Dostawa komputerów",
         submitting_offers_date: future_deadline()
@@ -134,14 +136,121 @@ defmodule PrzetargowiWeb.TenderControllerTest do
       assert html_response(conn, 404)
     end
 
+    test "301-redirects a result notice to its contract notice and merges the award", %{
+      conn: conn
+    } do
+      tender_id = unique_tender_id()
+
+      contract =
+        tender_notice_fixture(
+          order_object: "Budowa przedszkola",
+          notice_type: "ContractNotice",
+          tender_id: tender_id,
+          submitting_offers_date: future_deadline()
+        )
+
+      result =
+        tender_notice_fixture(
+          order_object: "Budowa przedszkola",
+          notice_type: "TenderResultNotice",
+          tender_id: tender_id,
+          contractors: [%{contractor_name: "Firma Budowlana Sp. z o.o."}],
+          contractors_contract_details: [
+            %{
+              part: 1,
+              status: :contract_signed,
+              contractor_name: "Firma Budowlana Sp. z o.o.",
+              contract_value: "1000000"
+            }
+          ]
+        )
+
+      # The result-notice URL permanently redirects to the contract-notice URL
+      redirected = get(conn, ~p"/przetargi/#{result.slug}")
+      assert redirected.status == 301
+      assert redirected_to(redirected, 301) == ~p"/przetargi/#{contract.slug}"
+
+      # The contract-notice page now shows the award data from the result notice
+      shown = get(conn, ~p"/przetargi/#{contract.slug}")
+      response = html_response(shown, 200)
+      assert response =~ "Firma Budowlana Sp. z o.o."
+      assert response =~ "Rozstrzygnięty"
+    end
+
+    test "canonical contract-notice URL does not redirect even with a result sibling", %{
+      conn: conn
+    } do
+      tender_id = unique_tender_id()
+
+      contract =
+        tender_notice_fixture(
+          notice_type: "ContractNotice",
+          tender_id: tender_id,
+          submitting_offers_date: future_deadline()
+        )
+
+      _result =
+        tender_notice_fixture(
+          notice_type: "TenderResultNotice",
+          tender_id: tender_id,
+          contractors_contract_details: [
+            %{part: 1, status: :contract_signed, contractor_name: "Wykonawca A"}
+          ]
+        )
+
+      conn = get(conn, ~p"/przetargi/#{contract.slug}")
+
+      assert html_response(conn, 200)
+    end
+
+    test "contract notice without a result notice renders without the award section", %{
+      conn: conn
+    } do
+      tender =
+        tender_notice_fixture(
+          order_object: "Przetarg bez rozstrzygnięcia",
+          notice_type: "ContractNotice",
+          tender_id: unique_tender_id(),
+          submitting_offers_date: future_deadline()
+        )
+
+      conn = get(conn, ~p"/przetargi/#{tender.slug}")
+
+      response = html_response(conn, 200)
+      assert response =~ "Przetarg bez rozstrzygnięcia"
+      refute response =~ "Rozstrzygnięty"
+      refute response =~ "Wynik postępowania"
+    end
+
+    test "standalone result notice (no tender_id) renders its own award without redirecting", %{
+      conn: conn
+    } do
+      result =
+        tender_notice_fixture(
+          order_object: "Samodzielny wynik",
+          notice_type: "TenderResultNotice",
+          contractors: [%{contractor_name: "Zwycięzca S.A."}],
+          contractors_contract_details: [
+            %{part: 1, status: :contract_signed, contractor_name: "Zwycięzca S.A."}
+          ]
+        )
+
+      conn = get(conn, ~p"/przetargi/#{result.slug}")
+
+      response = html_response(conn, 200)
+      assert response =~ "Zwycięzca S.A."
+      assert response =~ "Rozstrzygnięty"
+    end
+
     test "shows watchlist button for logged-in users", %{conn: conn} do
       user = user_fixture()
       conn = log_in_user(conn, user)
 
-      tender = tender_notice_fixture(
-        order_object: "Watchable tender detail",
-        submitting_offers_date: future_deadline()
-      )
+      tender =
+        tender_notice_fixture(
+          order_object: "Watchable tender detail",
+          submitting_offers_date: future_deadline()
+        )
 
       conn = get(conn, ~p"/przetargi/#{tender.slug}")
 
@@ -190,7 +299,8 @@ defmodule PrzetargowiWeb.TenderControllerTest do
     end
 
     test "all valid regions are accessible", %{conn: conn} do
-      regions = ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
+      regions =
+        ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
       for region <- regions do
         conn = get(conn, ~p"/przetargi/#{region}")

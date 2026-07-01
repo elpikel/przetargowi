@@ -56,6 +56,46 @@ defmodule Przetargowi.Tenders do
   end
 
   @doc """
+  Returns all notices that belong to the same procurement (same tender_id),
+  ordered by publication date. A single procurement can have several notices
+  (e.g. ContractNotice + TenderResultNotice) that we merge onto one page.
+  """
+  def get_notices_by_tender_id(nil), do: []
+
+  def get_notices_by_tender_id(tender_id) do
+    TenderNotice
+    |> from(as: :tender_notice)
+    |> where([tender_notice: tn], tn.tender_id == ^tender_id)
+    |> order_by([tender_notice: tn], asc: tn.publication_date)
+    |> Repo.all()
+  end
+
+  @doc """
+  Picks the canonical notice for a procurement from a list of its notices.
+
+  The ContractNotice is preferred (published first, richest details, stable
+  URL across the tender lifecycle); otherwise the earliest by publication date.
+  This is the notice whose slug owns the public URL — all other notices for the
+  same tender_id 301-redirect to it.
+  """
+  def canonical_notice([]), do: nil
+
+  def canonical_notice(notices) when is_list(notices) do
+    Enum.find(notices, &(&1.notice_type == "ContractNotice")) ||
+      Enum.min_by(notices, & &1.publication_date, DateTime)
+  end
+
+  @doc """
+  Finds the notice carrying result/award data (contractors and contract
+  details) among a procurement's notices, or nil if none is resolved yet.
+  """
+  def find_result_notice(notices) when is_list(notices) do
+    Enum.find(notices, fn notice ->
+      (notice.contractors_contract_details || []) != [] or (notice.contractors || []) != []
+    end)
+  end
+
+  @doc """
   Searches tender notices with optional filters.
 
   ## Options
@@ -342,14 +382,39 @@ defmodule Przetargowi.Tenders do
   end
 
   @doc """
-  Returns tender notice slugs and updated_at for sitemap generation.
+  Query selecting one canonical notice per procurement for the sitemap.
+
+  Notices sharing a tender_id collapse to a single entry (preferring the
+  ContractNotice, else the earliest by publication date) so the sitemap never
+  advertises URLs that 301-redirect. Notices without a tender_id are each their
+  own canonical entry — `coalesce(tender_id, object_id)` keeps them distinct
+  (a plain `DISTINCT ON (tender_id)` would collapse all null tender_ids to one).
+  """
+  def canonical_notices_query do
+    from(t in TenderNotice,
+      where: not is_nil(t.slug),
+      distinct: [asc: fragment("coalesce(?, ?)", t.tender_id, t.object_id)],
+      order_by: [
+        asc: fragment("coalesce(?, ?)", t.tender_id, t.object_id),
+        desc: fragment("(? = 'ContractNotice')", t.notice_type),
+        asc: t.publication_date
+      ]
+    )
+  end
+
+  @doc """
+  Returns canonical tender notice slugs and updated_at for sitemap generation.
   Supports pagination with limit and offset.
   """
   def list_sitemap_entries(limit \\ nil, offset \\ 0) do
-    TenderNotice
-    |> select([t], %{slug: t.slug, updated_at: t.updated_at, submitting_offers_date: t.submitting_offers_date})
-    |> where([t], not is_nil(t.slug))
-    |> order_by([t], asc: t.object_id)
+    from(t in subquery(canonical_notices_query()),
+      select: %{
+        slug: t.slug,
+        updated_at: t.updated_at,
+        submitting_offers_date: t.submitting_offers_date
+      },
+      order_by: [asc: t.object_id]
+    )
     |> then(fn query ->
       case limit do
         nil -> query
@@ -360,11 +425,11 @@ defmodule Przetargowi.Tenders do
   end
 
   @doc """
-  Returns the count of tender notices with slugs for sitemap pagination.
+  Returns the count of canonical tender notices for sitemap pagination.
   """
   def count_sitemap_entries do
-    TenderNotice
-    |> where([t], not is_nil(t.slug))
+    canonical_notices_query()
+    |> subquery()
     |> Repo.aggregate(:count)
   end
 
@@ -372,12 +437,12 @@ defmodule Przetargowi.Tenders do
   Returns the latest updated_at per sitemap page.
   """
   def sitemap_lastmods(per_page) do
-    TenderNotice
-    |> where([t], not is_nil(t.slug))
-    |> select([t], %{
-      page: fragment("(ROW_NUMBER() OVER (ORDER BY object_id) - 1) / ? + 1", ^per_page),
-      updated_at: t.updated_at
-    })
+    from(t in subquery(canonical_notices_query()),
+      select: %{
+        page: fragment("(ROW_NUMBER() OVER (ORDER BY ?) - 1) / ? + 1", t.object_id, ^per_page),
+        updated_at: t.updated_at
+      }
+    )
     |> subquery()
     |> group_by([s], s.page)
     |> select([s], {s.page, max(s.updated_at)})
