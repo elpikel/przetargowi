@@ -205,7 +205,7 @@
               <div class="flex flex-wrap gap-2">
                 <%= for issue <- @judgement.thematic_issues do %>
                   <a
-                    href={"/szukaj?q=#{URI.encode(issue)}"}
+                    href={"/szukaj?zagadnienie=#{URI.encode(issue)}"}
                     rel="nofollow"
                     class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium hover:bg-secondary/20 transition-colors"
                   >

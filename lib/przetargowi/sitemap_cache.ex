@@ -44,6 +44,15 @@ defmodule Przetargowi.SitemapCache do
     :ok
   end
 
+  @doc """
+  Removes all cached entries. Primarily used to isolate tests, since the cache
+  is global and would otherwise leak generated XML between them.
+  """
+  def clear do
+    :ets.delete_all_objects(@table_name)
+    :ok
+  end
+
   # Server callbacks
 
   @impl true

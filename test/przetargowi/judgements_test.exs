@@ -237,13 +237,19 @@ defmodule Przetargowi.JudgementsTest do
 
     test "filters by contracting_authority" do
       {:ok, j1} = create_judgement()
-      {:ok, _} = Judgements.update_with_details(j1, %{contracting_authority: "Politechnika Poznańska"})
+
+      {:ok, _} =
+        Judgements.update_with_details(j1, %{contracting_authority: "Politechnika Poznańska"})
 
       {:ok, j2} = create_judgement()
-      {:ok, _} = Judgements.update_with_details(j2, %{contracting_authority: "Uniwersytet Warszawski"})
+
+      {:ok, _} =
+        Judgements.update_with_details(j2, %{contracting_authority: "Uniwersytet Warszawski"})
 
       result =
-        Judgements.search_judgements("", filters: %{contracting_authority: "Politechnika Poznańska"})
+        Judgements.search_judgements("",
+          filters: %{contracting_authority: "Politechnika Poznańska"}
+        )
 
       assert length(result) == 1
       assert hd(result).id == j1.id
@@ -270,6 +276,23 @@ defmodule Przetargowi.JudgementsTest do
       {:ok, _} = Judgements.update_with_details(j2, %{location: "Kraków"})
 
       result = Judgements.search_judgements("", filters: %{location: "Warszawa"})
+
+      assert length(result) == 1
+      assert hd(result).id == j1.id
+    end
+
+    test "filters by thematic_issue (array membership)" do
+      {:ok, j1} = create_judgement()
+
+      {:ok, _} =
+        Judgements.update_with_details(j1, %{
+          thematic_issues: ["rażąco niska cena", "odrzucenie oferty"]
+        })
+
+      {:ok, j2} = create_judgement()
+      {:ok, _} = Judgements.update_with_details(j2, %{thematic_issues: ["wykluczenie wykonawcy"]})
+
+      result = Judgements.search_judgements("", filters: %{thematic_issue: "rażąco niska cena"})
 
       assert length(result) == 1
       assert hd(result).id == j1.id

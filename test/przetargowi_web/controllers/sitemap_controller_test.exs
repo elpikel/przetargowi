@@ -3,7 +3,15 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
 
   alias Przetargowi.Repo
   alias Przetargowi.Judgements.Judgement
+  alias Przetargowi.SitemapCache
   alias Przetargowi.Tenders.TenderNotice
+
+  # The sitemap cache is a global ETS table; clear it so generated XML from one
+  # test never leaks into another (tests run in a shuffled, non-async order).
+  setup do
+    SitemapCache.clear()
+    :ok
+  end
 
   describe "GET /sitemap.xml" do
     test "returns sitemap index with sub-sitemaps", %{conn: conn} do

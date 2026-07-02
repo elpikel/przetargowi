@@ -381,6 +381,7 @@ defmodule PrzetargowiWeb.SearchController do
       contracting_authority: Map.get(params, "contracting_authority", ""),
       chairman: Map.get(params, "chairman", ""),
       location: Map.get(params, "location", ""),
+      thematic_issue: Map.get(params, "zagadnienie", ""),
       date_from: Map.get(params, "date_from", ""),
       date_to: Map.get(params, "date_to", "")
     }

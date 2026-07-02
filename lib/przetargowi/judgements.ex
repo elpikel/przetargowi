@@ -225,6 +225,9 @@ defmodule Przetargowi.Judgements do
       {:location, value}, q when value != "" ->
         where(q, [j], j.location == ^value)
 
+      {:thematic_issue, value}, q when value != "" ->
+        where(q, [j], fragment("? = ANY(?)", ^value, j.thematic_issues))
+
       {:date_from, value}, q when value != "" ->
         case Date.from_iso8601(value) do
           {:ok, date} -> where(q, [j], j.decision_date >= ^date)

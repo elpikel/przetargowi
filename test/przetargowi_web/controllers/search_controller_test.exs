@@ -48,5 +48,15 @@ defmodule PrzetargowiWeb.SearchControllerTest do
       assert response =~ match.signature
       refute response =~ other.signature
     end
+
+    test "filters results by thematic issue via the zagadnienie param", %{conn: conn} do
+      match = create_judgement(%{thematic_issues: ["rażąco niska cena", "odrzucenie oferty"]})
+      other = create_judgement(%{thematic_issues: ["wykluczenie wykonawcy"]})
+
+      response = conn |> get(~p"/szukaj", zagadnienie: "rażąco niska cena") |> html_response(200)
+
+      assert response =~ match.signature
+      refute response =~ other.signature
+    end
   end
 end
