@@ -1,9 +1,11 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-base-content mb-2">Przetargi publiczne</h1>
+      <h1 class="text-3xl font-bold text-base-content mb-2">
+        {assigns[:hub_title] || "Przetargi publiczne"}
+      </h1>
       <p class="text-base-content/60">
-        Aktualne ogłoszenia o zamówieniach publicznych z BZP
+        {assigns[:hub_intro] || "Aktualne ogłoszenia o zamówieniach publicznych z BZP"}
       </p>
     </div>
     
@@ -265,7 +267,11 @@
                     <% else %>
                       <%= if @can_add_to_watchlist do %>
                         <form action={~p"/obserwowane"} method="post" class="inline">
-                          <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                          <input
+                            type="hidden"
+                            name="_csrf_token"
+                            value={Phoenix.Controller.get_csrf_token()}
+                          />
                           <input type="hidden" name="tender_object_id" value={notice.object_id} />
                           <button
                             type="submit"

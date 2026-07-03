@@ -25,6 +25,7 @@ defmodule PrzetargowiWeb.Router do
     live_session :public, on_mount: [{PrzetargowiWeb.UserAuth, :fetch_current_scope}] do
       live "/analiza-rynku", MarketDashboardLive
     end
+
     get "/szukaj", SearchController, :index
     get "/orzecznictwo-kio", LandingController, :orzecznictwo_kio
     get "/orzeczenie/:slug", JudgementController, :show
@@ -36,6 +37,8 @@ defmodule PrzetargowiWeb.Router do
 
     # Tenders (BZP)
     get "/przetargi", TenderController, :index
+    get "/przetargi/rodzaj/:slug", TenderController, :hub_order_type
+    get "/przetargi/branza/:slug", TenderController, :hub_category
     get "/przetargi/:slug", TenderController, :show
 
     # Document download
@@ -54,7 +57,6 @@ defmodule PrzetargowiWeb.Router do
     get "/sitemap.xml", SitemapController, :index
     get "/sitemap-static.xml", SitemapController, :static
     get "/sitemap/judgements/:page", SitemapController, :judgements
-    get "/sitemap/tenders/:page", SitemapController, :tenders
     get "/sitemap/reports/:page", SitemapController, :reports
   end
 

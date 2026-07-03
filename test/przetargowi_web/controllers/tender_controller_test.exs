@@ -114,6 +114,52 @@ defmodule PrzetargowiWeb.TenderControllerTest do
     end
   end
 
+  describe "GET /przetargi category hubs" do
+    test "order-type hub filters by order type and shows its H1", %{conn: conn} do
+      tender_notice_fixture(
+        order_object: "Budowa hali sportowej",
+        order_type: "Works",
+        submitting_offers_date: future_deadline()
+      )
+
+      tender_notice_fixture(
+        order_object: "Dostawa laptopow do urzedu",
+        order_type: "Delivery",
+        submitting_offers_date: future_deadline()
+      )
+
+      response = conn |> get(~p"/przetargi/rodzaj/roboty-budowlane") |> html_response(200)
+
+      assert response =~ "Przetargi na roboty budowlane"
+      assert response =~ "Budowa hali sportowej"
+      refute response =~ "Dostawa laptopow do urzedu"
+    end
+
+    test "category hub filters by CPV prefix", %{conn: conn} do
+      tender_notice_fixture(
+        order_object: "Przebudowa budynku szkoly",
+        cpv_main: "45000000-7",
+        submitting_offers_date: future_deadline()
+      )
+
+      tender_notice_fixture(
+        order_object: "Zakup aparatury medycznej",
+        cpv_main: "33100000-1",
+        submitting_offers_date: future_deadline()
+      )
+
+      response = conn |> get(~p"/przetargi/branza/budowlane") |> html_response(200)
+
+      assert response =~ "Przetargi budowlane"
+      assert response =~ "Przebudowa budynku szkoly"
+      refute response =~ "Zakup aparatury medycznej"
+    end
+
+    test "unknown hub slug returns 404", %{conn: conn} do
+      assert conn |> get(~p"/przetargi/rodzaj/nieistniejacy-typ") |> html_response(404)
+    end
+  end
+
   describe "GET /przetargi/:slug (show tender)" do
     test "shows tender details", %{conn: conn} do
       tender =
@@ -134,6 +180,14 @@ defmodule PrzetargowiWeb.TenderControllerTest do
       conn = get(conn, ~p"/przetargi/non-existent-slug-12345")
 
       assert html_response(conn, 404)
+    end
+
+    test "individual tender page is noindex, follow", %{conn: conn} do
+      tender = tender_notice_fixture(submitting_offers_date: future_deadline())
+
+      response = conn |> get(~p"/przetargi/#{tender.slug}") |> html_response(200)
+
+      assert response =~ ~s(name="robots" content="noindex, follow")
     end
 
     test "shows a lifecycle status instead of the raw notice type", %{conn: conn} do

@@ -112,6 +112,7 @@ defmodule Przetargowi.Tenders do
     query = Keyword.get(opts, :query)
     regions = normalize_to_list(Keyword.get(opts, :regions))
     order_types = normalize_to_list(Keyword.get(opts, :order_types))
+    cpv_prefixes = normalize_to_list(Keyword.get(opts, :cpv_prefixes))
     deadline_from = Keyword.get(opts, :deadline_from)
     deadline_to = Keyword.get(opts, :deadline_to)
     with_winner_analysis = Keyword.get(opts, :with_winner_analysis, false)
@@ -169,6 +170,18 @@ defmodule Przetargowi.Tenders do
         base_query
       else
         where(base_query, [tender_notice: tn], tn.order_type in ^order_types)
+      end
+
+    base_query =
+      if cpv_prefixes == [] do
+        base_query
+      else
+        conditions =
+          Enum.reduce(cpv_prefixes, dynamic(false), fn prefix, acc ->
+            dynamic([tender_notice: tn], ^acc or ilike(tn.cpv_main, ^(prefix <> "%")))
+          end)
+
+        where(base_query, ^conditions)
       end
 
     base_query =
@@ -379,76 +392,6 @@ defmodule Przetargowi.Tenders do
     failed = Enum.filter(results, &match?({:error, _, _}, &1))
 
     {success_count, failed}
-  end
-
-  @doc """
-  Query selecting one canonical notice per procurement for the sitemap.
-
-  Notices sharing a tender_id collapse to a single entry (preferring the
-  ContractNotice, else the earliest by publication date) so the sitemap never
-  advertises URLs that 301-redirect. Notices without a tender_id are each their
-  own canonical entry — `coalesce(tender_id, object_id)` keeps them distinct
-  (a plain `DISTINCT ON (tender_id)` would collapse all null tender_ids to one).
-  """
-  def canonical_notices_query do
-    from(t in TenderNotice,
-      where: not is_nil(t.slug),
-      distinct: [asc: fragment("coalesce(?, ?)", t.tender_id, t.object_id)],
-      order_by: [
-        asc: fragment("coalesce(?, ?)", t.tender_id, t.object_id),
-        desc: fragment("(? = 'ContractNotice')", t.notice_type),
-        asc: t.publication_date
-      ]
-    )
-  end
-
-  @doc """
-  Returns canonical tender notice slugs and updated_at for sitemap generation.
-  Supports pagination with limit and offset.
-  """
-  def list_sitemap_entries(limit \\ nil, offset \\ 0) do
-    from(t in subquery(canonical_notices_query()),
-      select: %{
-        slug: t.slug,
-        updated_at: t.updated_at,
-        submitting_offers_date: t.submitting_offers_date
-      },
-      order_by: [asc: t.object_id]
-    )
-    |> then(fn query ->
-      case limit do
-        nil -> query
-        n -> query |> limit(^n) |> offset(^offset)
-      end
-    end)
-    |> Repo.all()
-  end
-
-  @doc """
-  Returns the count of canonical tender notices for sitemap pagination.
-  """
-  def count_sitemap_entries do
-    canonical_notices_query()
-    |> subquery()
-    |> Repo.aggregate(:count)
-  end
-
-  @doc """
-  Returns the latest updated_at per sitemap page.
-  """
-  def sitemap_lastmods(per_page) do
-    from(t in subquery(canonical_notices_query()),
-      select: %{
-        page: fragment("(ROW_NUMBER() OVER (ORDER BY ?) - 1) / ? + 1", t.object_id, ^per_page),
-        updated_at: t.updated_at
-      }
-    )
-    |> subquery()
-    |> group_by([s], s.page)
-    |> select([s], {s.page, max(s.updated_at)})
-    |> order_by([s], s.page)
-    |> Repo.all()
-    |> Map.new()
   end
 
   @closed_notice_types [

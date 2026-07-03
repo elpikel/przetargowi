@@ -5,7 +5,7 @@ defmodule PrzetargowiWeb.SitemapController do
   alias Przetargowi.Judgements
   alias Przetargowi.Reports
   alias Przetargowi.SitemapCache
-  alias Przetargowi.Tenders
+  alias Przetargowi.Tenders.Hubs
 
   @base_url "https://przetargowi.pl"
   @urls_per_sitemap 2_000
@@ -48,22 +48,6 @@ defmodule PrzetargowiWeb.SitemapController do
     end
   end
 
-  # Tenders sitemap (paginated)
-  def tenders(conn, %{"page" => page_str}) do
-    case Integer.parse(page_str) do
-      {page, ""} when page >= 1 ->
-        xml = cached("tenders:#{page}", 3600, fn -> build_tenders_sitemap(page) end)
-
-        conn
-        |> put_resp_content_type("application/xml")
-        |> put_resp_header("cache-control", "public, max-age=3600")
-        |> send_resp(200, xml)
-
-      _ ->
-        send_resp(conn, 404, "Not found")
-    end
-  end
-
   # Reports sitemap (paginated)
   def reports(conn, %{"page" => page_str}) do
     case Integer.parse(page_str) do
@@ -83,7 +67,9 @@ defmodule PrzetargowiWeb.SitemapController do
   # Cache helper - returns cached XML or generates and caches it
   defp cached(key, ttl, generator) do
     case SitemapCache.get(key) do
-      {:ok, xml} -> xml
+      {:ok, xml} ->
+        xml
+
       :miss ->
         xml = generator.()
         SitemapCache.put(key, xml, ttl)
@@ -94,28 +80,28 @@ defmodule PrzetargowiWeb.SitemapController do
   # Build sitemap index listing all sub-sitemaps
   defp build_sitemap_index do
     judgement_pages = ceil(Judgements.count_sitemap_entries() / @urls_per_sitemap)
-    tender_pages = ceil(Tenders.count_sitemap_entries() / @urls_per_sitemap)
     report_pages = ceil(Reports.count_sitemap_entries() / @urls_per_sitemap)
 
     judgement_lastmods = Judgements.sitemap_lastmods(@urls_per_sitemap)
-    tender_lastmods = Tenders.sitemap_lastmods(@urls_per_sitemap)
     report_lastmods = Reports.sitemap_lastmods(@urls_per_sitemap)
 
     today = Date.to_iso8601(Date.utc_today())
 
+    # Individual tender pages are intentionally excluded — they are noindex, so
+    # advertising them in the sitemap sends Google a contradictory signal.
+    # Category hubs and regions (in sitemap-static.xml) are the tender surface.
     sitemaps =
       [{"#{@base_url}/sitemap-static.xml", Date.utc_today()}] ++
         for(
           page <- 1..max(judgement_pages, 1),
-          do: {"#{@base_url}/sitemap/judgements/#{page}", format_date(judgement_lastmods[page]) || today}
-        ) ++
-        for(
-          page <- 1..max(tender_pages, 1),
-          do: {"#{@base_url}/sitemap/tenders/#{page}", format_date(tender_lastmods[page]) || today}
+          do:
+            {"#{@base_url}/sitemap/judgements/#{page}",
+             format_date(judgement_lastmods[page]) || today}
         ) ++
         for(
           page <- 1..max(report_pages, 1),
-          do: {"#{@base_url}/sitemap/reports/#{page}", format_date(report_lastmods[page]) || today}
+          do:
+            {"#{@base_url}/sitemap/reports/#{page}", format_date(report_lastmods[page]) || today}
         )
 
     """
@@ -161,6 +147,11 @@ defmodule PrzetargowiWeb.SitemapController do
         %{loc: "#{@base_url}/przetargi/#{region}", priority: "0.7", changefreq: "daily"}
       end)
 
+    hub_urls =
+      Enum.map(Hubs.all_paths(), fn path ->
+        %{loc: "#{@base_url}#{path}", priority: "0.8", changefreq: "daily"}
+      end)
+
     blog_urls =
       Blog.list_sitemap_entries()
       |> Enum.map(fn entry ->
@@ -172,7 +163,7 @@ defmodule PrzetargowiWeb.SitemapController do
         }
       end)
 
-    urls = static_urls ++ region_urls ++ blog_urls
+    urls = static_urls ++ region_urls ++ hub_urls ++ blog_urls
     build_urlset(urls)
   end
 
@@ -188,29 +179,6 @@ defmodule PrzetargowiWeb.SitemapController do
           lastmod: format_date(entry.updated_at),
           priority: "0.8",
           changefreq: "monthly"
-        }
-      end)
-
-    build_urlset(urls)
-  end
-
-  # Build tenders sitemap for a specific page
-  defp build_tenders_sitemap(page) do
-    offset = (page - 1) * @urls_per_sitemap
-    now = DateTime.utc_now()
-
-    urls =
-      Tenders.list_sitemap_entries(@urls_per_sitemap, offset)
-      |> Enum.map(fn entry ->
-        expired =
-          entry.submitting_offers_date != nil &&
-            DateTime.before?(entry.submitting_offers_date, now)
-
-        %{
-          loc: "#{@base_url}/przetargi/#{entry.slug}",
-          lastmod: format_date(entry.updated_at),
-          priority: if(expired, do: "0.4", else: "0.7"),
-          changefreq: if(expired, do: "monthly", else: "weekly")
         }
       end)
 

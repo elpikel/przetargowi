@@ -5,6 +5,7 @@ defmodule PrzetargowiWeb.TenderController do
   alias Przetargowi.Payments
   alias Przetargowi.SearchLogs
   alias Przetargowi.Tenders
+  alias Przetargowi.Tenders.Hubs
   alias Przetargowi.Watchlist
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
@@ -102,6 +103,93 @@ defmodule PrzetargowiWeb.TenderController do
     else
       show_tender(conn, slug)
     end
+  end
+
+  # Category hub by order type (roboty budowlane / dostawy / usługi)
+  def hub_order_type(conn, %{"slug" => slug} = params) do
+    case Hubs.order_type_hub(slug) do
+      nil ->
+        render_404(conn)
+
+      hub ->
+        render_hub(
+          conn,
+          params,
+          [order_types: [hub.order_type]],
+          hub,
+          "/przetargi/rodzaj/#{slug}"
+        )
+    end
+  end
+
+  # Category hub by CPV industry (budowlane / medyczne / IT / ...)
+  def hub_category(conn, %{"slug" => slug} = params) do
+    case Hubs.category_hub(slug) do
+      nil ->
+        render_404(conn)
+
+      hub ->
+        render_hub(
+          conn,
+          params,
+          [cpv_prefixes: hub.cpv_prefixes],
+          hub,
+          "/przetargi/branza/#{slug}"
+        )
+    end
+  end
+
+  defp render_hub(conn, params, filter_opts, hub, path) do
+    page = parse_page(params["page"])
+
+    search_opts =
+      Keyword.merge(
+        [query: nil, regions: [], order_types: [], page: page, per_page: 20],
+        filter_opts
+      )
+
+    result = Tenders.search_tender_notices(search_opts)
+
+    {can_create_alert, is_premium} = get_alert_permissions(conn)
+    {watched_ids, can_add_to_watchlist} = get_watchlist_data(conn)
+
+    canonical =
+      if page > 1,
+        do: "https://przetargowi.pl#{path}?page=#{page}",
+        else: "https://przetargowi.pl#{path}"
+
+    conn
+    |> assign(:page_title, hub.page_title)
+    |> assign(:meta_description, hub.meta_description)
+    |> assign(:canonical_url, canonical)
+    |> then(fn conn ->
+      if page > 1, do: assign(conn, :meta_robots, "noindex, follow"), else: conn
+    end)
+    |> assign(:hub_title, hub.h1)
+    |> assign(:hub_intro, hub.intro)
+    |> render(:index,
+      notices: result.notices,
+      total_count: result.total_count,
+      page: result.page,
+      total_pages: result.total_pages,
+      query: "",
+      regions: [],
+      order_types: Keyword.get(search_opts, :order_types, []),
+      deadline_from: "",
+      deadline_to: "",
+      with_winner_analysis: false,
+      can_create_alert: can_create_alert,
+      is_premium: is_premium,
+      watched_ids: watched_ids,
+      can_add_to_watchlist: can_add_to_watchlist
+    )
+  end
+
+  defp render_404(conn) do
+    conn
+    |> put_status(:not_found)
+    |> put_view(html: PrzetargowiWeb.ErrorHTML)
+    |> render(:"404")
   end
 
   @region_names %{
@@ -269,6 +357,10 @@ defmodule PrzetargowiWeb.TenderController do
     |> assign(:meta_description, meta_description)
     |> assign(:canonical_url, canonical_url)
     |> assign(:og_url, canonical_url)
+    # Individual tender pages carry no unique search value at scale (they mirror
+    # the BZP notice). We keep them crawlable (follow) for on-site users but
+    # steer indexing to the category hubs, regions, blog and KIO instead.
+    |> assign(:meta_robots, "noindex, follow")
     |> render(:show,
       tender: tender,
       is_expired: is_expired,
