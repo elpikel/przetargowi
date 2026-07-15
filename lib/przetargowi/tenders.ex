@@ -786,11 +786,18 @@ defmodule Przetargowi.Tenders do
   @doc """
   Removes content from documents belonging to tenders older than the specified days.
   Returns the number of documents cleaned up.
+
+  Nulls content in batches so a large backlog cannot exceed the query timeout
+  (a single `update_all` over tens of thousands of TOASTed rows times out).
   """
-  def cleanup_old_document_content(days_old \\ 30) do
+  def cleanup_old_document_content(days_old \\ 30, batch_size \\ 500) do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-days_old, :day)
 
-    {count, _} =
+    cleanup_document_batches(cutoff_date, batch_size, 0)
+  end
+
+  defp cleanup_document_batches(cutoff_date, batch_size, acc) do
+    batch_ids =
       TenderDocument
       |> from(as: :doc)
       |> join(:inner, [doc: d], tn in TenderNotice,
@@ -799,10 +806,18 @@ defmodule Przetargowi.Tenders do
       )
       |> where([doc: d], not is_nil(d.content))
       |> where([tender_notice: tn], tn.publication_date < ^cutoff_date)
-      |> select([doc: d], d)
-      |> Repo.update_all(set: [content: nil, downloaded_at: nil])
+      |> select([doc: d], d.object_id)
+      |> limit(^batch_size)
 
-    count
+    {count, _} =
+      from(d in TenderDocument, where: d.object_id in subquery(batch_ids))
+      |> Repo.update_all([set: [content: nil, downloaded_at: nil]], timeout: 60_000)
+
+    if count > 0 do
+      cleanup_document_batches(cutoff_date, batch_size, acc + count)
+    else
+      acc
+    end
   end
 
   @doc """
