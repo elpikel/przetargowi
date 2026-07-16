@@ -1,8 +1,6 @@
 defmodule PrzetargowiWeb.TenderController do
   use PrzetargowiWeb, :controller
 
-  alias Przetargowi.Alerts
-  alias Przetargowi.Payments
   alias Przetargowi.SearchLogs
   alias Przetargowi.Tenders
   alias Przetargowi.Tenders.Hubs
@@ -412,16 +410,13 @@ defmodule PrzetargowiWeb.TenderController do
 
   defp parse_date(_), do: nil
 
+  # Alerts are free for every logged-in user. can_create is true when there is a
+  # user in scope; is_premium is kept for template compatibility and is always
+  # true (all features are free).
   defp get_alert_permissions(conn) do
     case conn.assigns[:current_scope] do
-      nil ->
-        {false, false}
-
-      scope ->
-        user = scope.user
-        is_premium = Payments.has_alerts_access?(user.id)
-        can_create = is_premium or Alerts.can_create_free_alert?(user.id)
-        {can_create, is_premium}
+      nil -> {false, false}
+      _scope -> {true, true}
     end
   end
 
@@ -431,10 +426,8 @@ defmodule PrzetargowiWeb.TenderController do
         {[], false}
 
       scope ->
-        user = scope.user
-        watched_ids = Watchlist.get_watched_tender_ids(user.id)
-        can_add = Watchlist.can_add_to_watchlist?(user.id)
-        {watched_ids, can_add}
+        watched_ids = Watchlist.get_watched_tender_ids(scope.user.id)
+        {watched_ids, true}
     end
   end
 
@@ -444,19 +437,13 @@ defmodule PrzetargowiWeb.TenderController do
         {false, false, nil}
 
       scope ->
-        user = scope.user
-        entry = Watchlist.get_entry_by_tender(user.id, tender_object_id)
+        entry = Watchlist.get_entry_by_tender(scope.user.id, tender_object_id)
         is_watching = entry != nil
-        can_add = Watchlist.can_add_to_watchlist?(user.id)
         entry_id = if entry, do: entry.id, else: nil
-        {is_watching, can_add, entry_id}
+        {is_watching, true, entry_id}
     end
   end
 
-  defp check_premium(conn) do
-    case conn.assigns[:current_scope] do
-      nil -> false
-      scope -> Payments.has_alerts_access?(scope.user.id)
-    end
-  end
+  # Competitor/winner analysis is free for everyone.
+  defp check_premium(_conn), do: true
 end

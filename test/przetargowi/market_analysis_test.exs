@@ -153,7 +153,13 @@ defmodule Przetargowi.MarketAnalysisTest do
         cpv_main: "45000000-7",
         notice_type: "ContractPerformingNotice",
         contractors_contract_details: [
-          %{part: 1, status: "contract_signed", contractor_name: "AMB BUDOWNICTWO", contractor_city: "Warszawa", contractor_nip: "1112223344"}
+          %{
+            part: 1,
+            status: "contract_signed",
+            contractor_name: "AMB BUDOWNICTWO",
+            contractor_city: "Warszawa",
+            contractor_nip: "1112223344"
+          }
         ]
       })
 
@@ -161,7 +167,13 @@ defmodule Przetargowi.MarketAnalysisTest do
         cpv_main: "45000000-7",
         notice_type: "ContractPerformingNotice",
         contractors_contract_details: [
-          %{part: 1, status: "contract_signed", contractor_name: "AMB Budownictwo", contractor_city: "Warszawa", contractor_nip: "1112223344"}
+          %{
+            part: 1,
+            status: "contract_signed",
+            contractor_name: "AMB Budownictwo",
+            contractor_city: "Warszawa",
+            contractor_nip: "1112223344"
+          }
         ]
       })
 
@@ -176,7 +188,13 @@ defmodule Przetargowi.MarketAnalysisTest do
         cpv_main: "45000000-7",
         notice_type: "ContractPerformingNotice",
         contractors_contract_details: [
-          %{part: 1, status: "contract_signed", contractor_name: "FIRMA BUDOWLANA SP. Z O.O.", contractor_city: "Krakow", contractor_nip: ""}
+          %{
+            part: 1,
+            status: "contract_signed",
+            contractor_name: "FIRMA BUDOWLANA SP. Z O.O.",
+            contractor_city: "Krakow",
+            contractor_nip: ""
+          }
         ]
       })
 
@@ -184,7 +202,13 @@ defmodule Przetargowi.MarketAnalysisTest do
         cpv_main: "45000000-7",
         notice_type: "ContractPerformingNotice",
         contractors_contract_details: [
-          %{part: 1, status: "contract_signed", contractor_name: "Firma Budowlana Sp. z o.o.", contractor_city: "Krakow", contractor_nip: ""}
+          %{
+            part: 1,
+            status: "contract_signed",
+            contractor_name: "Firma Budowlana Sp. z o.o.",
+            contractor_city: "Krakow",
+            contractor_nip: ""
+          }
         ]
       })
 

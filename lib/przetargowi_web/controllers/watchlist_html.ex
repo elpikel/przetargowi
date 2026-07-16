@@ -30,7 +30,9 @@ defmodule PrzetargowiWeb.WatchlistHTML do
     now = DateTime.utc_now()
 
     case DateTime.compare(datetime, now) do
-      :lt -> "text-error"
+      :lt ->
+        "text-error"
+
       _ ->
         days = DateTime.diff(datetime, now, :day)
 

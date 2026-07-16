@@ -75,7 +75,10 @@ defmodule PrzetargowiWeb.ProfileControllerTest do
       assert redirected_to(conn) == ~p"/profil-firmy"
     end
 
-    test "creates profile with filled representative and ignores empty ones", %{conn: conn, user: user} do
+    test "creates profile with filled representative and ignores empty ones", %{
+      conn: conn,
+      user: user
+    } do
       attrs =
         valid_profile_attributes()
         |> Map.delete(:user_id)

@@ -73,8 +73,11 @@ defmodule Przetargowi.Workers.SendWatchlistReminders do
   defp mark_entries_as_sent(entries, :seven_day) do
     Enum.each(entries, fn entry ->
       case Watchlist.mark_7_day_reminder_sent(entry) do
-        {:ok, _} -> :ok
-        {:error, reason} -> Logger.error("Failed to mark entry #{entry.id} as sent: #{inspect(reason)}")
+        {:ok, _} ->
+          :ok
+
+        {:error, reason} ->
+          Logger.error("Failed to mark entry #{entry.id} as sent: #{inspect(reason)}")
       end
     end)
   end
@@ -82,8 +85,11 @@ defmodule Przetargowi.Workers.SendWatchlistReminders do
   defp mark_entries_as_sent(entries, :one_day) do
     Enum.each(entries, fn entry ->
       case Watchlist.mark_1_day_reminder_sent(entry) do
-        {:ok, _} -> :ok
-        {:error, reason} -> Logger.error("Failed to mark entry #{entry.id} as sent: #{inspect(reason)}")
+        {:ok, _} ->
+          :ok
+
+        {:error, reason} ->
+          Logger.error("Failed to mark entry #{entry.id} as sent: #{inspect(reason)}")
       end
     end)
   end

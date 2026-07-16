@@ -1,23 +1,17 @@
 defmodule PrzetargowiWeb.WatchlistController do
   use PrzetargowiWeb, :controller
 
-  alias Przetargowi.Payments
   alias Przetargowi.Watchlist
-
-  plug :require_can_add_to_watchlist when action in [:create]
 
   def index(conn, _params) do
     user = conn.assigns.current_scope.user
     entries = Watchlist.list_user_watchlist(user.id)
-    is_premium = Payments.has_alerts_access?(user.id)
     count = length(entries)
-    limit = Watchlist.get_limit(user.id)
 
     render(conn, :index,
       entries: entries,
-      is_premium: is_premium,
       count: count,
-      limit: limit
+      limit: nil
     )
   end
 
@@ -73,26 +67,6 @@ defmodule PrzetargowiWeb.WatchlistController do
         conn
         |> put_flash(:error, "Nie udało się usunąć przetargu z obserwowanych.")
         |> redirect_back()
-    end
-  end
-
-  defp require_can_add_to_watchlist(conn, _opts) do
-    user = conn.assigns.current_scope.user
-    tender_object_id = conn.params["tender_object_id"]
-
-    # Allow through if already watching (will fail with duplicate error)
-    # or if user can add more to watchlist
-    if Watchlist.is_watching?(user.id, tender_object_id) or
-         Watchlist.can_add_to_watchlist?(user.id) do
-      conn
-    else
-      conn
-      |> put_flash(
-        :error,
-        "Osiągnąłeś limit obserwowanych przetargów. Wybierz plan premium, aby obserwować więcej."
-      )
-      |> redirect_back()
-      |> halt()
     end
   end
 

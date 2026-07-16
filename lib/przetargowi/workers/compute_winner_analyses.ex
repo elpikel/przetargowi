@@ -52,8 +52,12 @@ defmodule Przetargowi.Workers.ComputeWinnerAnalyses do
 
   defp compute(cpv_main, order_type, province) do
     case Tenders.compute_and_store_winner_analysis(cpv_main, order_type, province) do
-      {:ok, _} -> :ok
-      :skip -> :skip
+      {:ok, _} ->
+        :ok
+
+      :skip ->
+        :skip
+
       {:error, reason} ->
         Logger.warning(
           "Failed to compute winner analysis for #{cpv_main}/#{order_type}/#{province || "national"}: #{inspect(reason)}"

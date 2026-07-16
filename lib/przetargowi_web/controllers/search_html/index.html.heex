@@ -231,148 +231,120 @@
         <p class="text-sm text-base-content/60">Spróbuj wyszukiwania słów kluczowych.</p>
       </div>
     <% end %>
-
-    <%= if @rate_limited do %>
-      <div class="card-base p-12 text-center">
-        <.icon name="hero-lock-closed" class="size-12 text-warning mx-auto mb-4" />
-        <p class="text-base-content mb-2">Wykorzystałeś limit wyszukiwań</p>
-        <%= if @current_scope && @current_scope.user do %>
-          <p class="text-sm text-base-content/60 mb-6">
-            Aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
-          </p>
-          <a
-            href="/subskrypcja/nowa"
-            class="btn-gold px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
-          >
-            <.icon name="hero-sparkles" class="size-5" /> Aktywuj Premium
-          </a>
-        <% else %>
-          <p class="text-sm text-base-content/60 mb-6">
-            Załóż konto i aktywuj Premium, aby korzystać z wyszukiwarki bez ograniczeń.
-          </p>
-          <a
-            href="/rejestracja"
-            class="btn-gold px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2"
-          >
-            <.icon name="hero-user-plus" class="size-5" /> Załóż konto
-          </a>
-        <% end %>
+    
+<!-- Results -->
+    <%= if @results == [] do %>
+      <div class="text-center py-20">
+        <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
+          <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
+        </div>
+        <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
+        <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
       </div>
     <% else %>
-      <!-- Results -->
-      <%= if @results == [] do %>
-        <div class="text-center py-20">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
-            <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
-          </div>
-          <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
-          <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
-        </div>
-      <% else %>
-        <div class="space-y-5">
-          <%= for result <- @results do %>
-            <article class="result-card p-6">
-              <div class="flex items-start justify-between gap-4 mb-3">
-                <div class="flex items-center gap-3">
-                  <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
-                </div>
-                <div class="flex items-center gap-3 text-sm text-base-content/50">
-                  <%= if result.decision_date do %>
-                    <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
-                  <% end %>
-                  <%= if result.document_type do %>
-                    <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
-                      {result.document_type}
-                    </span>
-                  <% end %>
-                </div>
+      <div class="space-y-5">
+        <%= for result <- @results do %>
+          <article class="result-card p-6">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div class="flex items-center gap-3">
+                <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
               </div>
-
-              <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
-                <%= if result.resolution_method do %>
-                  <div class="flex items-center gap-1.5">
-                    <.icon name="hero-scale" class="size-4 text-secondary/70" />
-                    <span>{result.resolution_method}</span>
-                  </div>
+              <div class="flex items-center gap-3 text-sm text-base-content/50">
+                <%= if result.decision_date do %>
+                  <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
                 <% end %>
-                <%= if result.contracting_authority do %>
-                  <div class="flex items-center gap-1.5">
-                    <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
-                    <span>{result.contracting_authority}</span>
-                  </div>
+                <%= if result.document_type do %>
+                  <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
+                    {result.document_type}
+                  </span>
                 <% end %>
               </div>
+            </div>
 
-              <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
-                <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
+            <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
+              <%= if result.resolution_method do %>
+                <div class="flex items-center gap-1.5">
+                  <.icon name="hero-scale" class="size-4 text-secondary/70" />
+                  <span>{result.resolution_method}</span>
+                </div>
+              <% end %>
+              <%= if result.contracting_authority do %>
+                <div class="flex items-center gap-1.5">
+                  <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
+                  <span>{result.contracting_authority}</span>
+                </div>
+              <% end %>
+            </div>
+
+            <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
+              <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
+                <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
+                  <.icon name="hero-sparkles-solid" class="size-5" />
+                  <span>Dopasowany fragment</span>
+                </div>
+                <p class="text-base-content/80 leading-relaxed text-sm">
+                  {String.slice(result.matched_chunk, 0, 300)}{if String.length(
+                                                                    result.matched_chunk
+                                                                  ) > 300,
+                                                                  do: "..."}
+                </p>
+              </div>
+            <% else %>
+              <%= if result.meritum do %>
+                <div class="meritum-box rounded-xl p-5 mb-5">
                   <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                    <.icon name="hero-sparkles-solid" class="size-5" />
-                    <span>Dopasowany fragment</span>
+                    <.icon name="hero-light-bulb-solid" class="size-5" />
+                    <span>Meritum</span>
                   </div>
-                  <p class="text-base-content/80 leading-relaxed text-sm">
-                    {String.slice(result.matched_chunk, 0, 300)}{if String.length(
-                                                                      result.matched_chunk
-                                                                    ) > 300,
-                                                                    do: "..."}
+                  <p class="text-base-content/80 leading-relaxed">
+                    {result.meritum}
                   </p>
                 </div>
-              <% else %>
-                <%= if result.meritum do %>
-                  <div class="meritum-box rounded-xl p-5 mb-5">
-                    <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                      <.icon name="hero-light-bulb-solid" class="size-5" />
-                      <span>Meritum</span>
-                    </div>
-                    <p class="text-base-content/80 leading-relaxed">
-                      {result.meritum}
-                    </p>
-                  </div>
-                <% end %>
               <% end %>
+            <% end %>
 
-              <div class="flex items-center justify-end">
-                <a
-                  href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"}
-                  class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-                >
-                  Zobacz pełne orzeczenie <.icon name="hero-arrow-right" class="size-4" />
-                </a>
-              </div>
-            </article>
-          <% end %>
-        </div>
-      <% end %>
-      
+            <div class="flex items-center justify-end">
+              <a
+                href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"}
+                class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                Zobacz pełne orzeczenie <.icon name="hero-arrow-right" class="size-4" />
+              </a>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    <% end %>
+    
 <!-- Pagination -->
-      <%= if @total_pages > 1 do %>
-        <div class="mt-8 flex justify-center">
-          <nav class="flex items-center space-x-2">
-            <%= if @current_page > 1 do %>
-              <a
-                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
-                class="btn-outline px-4 py-2 rounded-lg text-sm"
-                rel="nofollow"
-              >
-                Poprzednia
-              </a>
-            <% end %>
+    <%= if @total_pages > 1 do %>
+      <div class="mt-8 flex justify-center">
+        <nav class="flex items-center space-x-2">
+          <%= if @current_page > 1 do %>
+            <a
+              href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
+              class="btn-outline px-4 py-2 rounded-lg text-sm"
+              rel="nofollow"
+            >
+              Poprzednia
+            </a>
+          <% end %>
 
-            <span class="px-3 py-2 text-base-content/60 text-sm">
-              Strona {@current_page} z {@total_pages}
-            </span>
+          <span class="px-3 py-2 text-base-content/60 text-sm">
+            Strona {@current_page} z {@total_pages}
+          </span>
 
-            <%= if @current_page < @total_pages do %>
-              <a
-                href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
-                class="btn-outline px-4 py-2 rounded-lg text-sm"
-                rel="nofollow"
-              >
-                Następna
-              </a>
-            <% end %>
-          </nav>
-        </div>
-      <% end %>
+          <%= if @current_page < @total_pages do %>
+            <a
+              href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
+              class="btn-outline px-4 py-2 rounded-lg text-sm"
+              rel="nofollow"
+            >
+              Następna
+            </a>
+          <% end %>
+        </nav>
+      </div>
     <% end %>
 
     <%= if @show_seo_content do %>
@@ -398,15 +370,17 @@
                   </span>
                 <% end %>
                 <%= if judgement.meritum do %>
-                  <p class="text-sm text-base-content/60 mt-3 line-clamp-3">{judgement.meritum}</p>
+                  <p class="text-sm text-base-content/60 mt-3 line-clamp-3">
+                    {judgement.meritum}
+                  </p>
                 <% end %>
               </a>
             <% end %>
           </div>
         </div>
       <% end %>
-
-      <!-- SEO Content -->
+      
+<!-- SEO Content -->
       <div class="mt-16 prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/70 prose-a:text-primary prose-li:text-base-content/70">
         <h2>Czym jest orzecznictwo KIO?</h2>
         <p>
@@ -420,10 +394,12 @@
         <p>Wyszukiwarka oferuje dwa tryby:</p>
         <ul>
           <li>
-            <strong>Wyszukiwanie słów kluczowych</strong> — klasyczne przeszukiwanie tekstu orzeczeń. Idealne, gdy znasz sygnaturę sprawy, nazwę zamawiającego lub konkretny przepis (np. &quot;art. 226 ust. 1 pkt 5&quot;).
+            <strong>Wyszukiwanie słów kluczowych</strong>
+            — klasyczne przeszukiwanie tekstu orzeczeń. Idealne, gdy znasz sygnaturę sprawy, nazwę zamawiającego lub konkretny przepis (np. &quot;art. 226 ust. 1 pkt 5&quot;).
           </li>
           <li>
-            <strong>Wyszukiwanie semantyczne (AI)</strong> — opisz swoją sytuację własnymi słowami, a algorytm AI znajdzie orzeczenia o podobnym znaczeniu. Nie musisz znać dokładnej terminologii prawnej — wystarczy opis problemu.
+            <strong>Wyszukiwanie semantyczne (AI)</strong>
+            — opisz swoją sytuację własnymi słowami, a algorytm AI znajdzie orzeczenia o podobnym znaczeniu. Nie musisz znać dokładnej terminologii prawnej — wystarczy opis problemu.
           </li>
         </ul>
         <p>
@@ -432,27 +408,62 @@
 
         <h2>Kiedy warto sprawdzić orzecznictwo KIO?</h2>
         <ul>
-          <li>Przed złożeniem <a href="/blog/jak-odwolac-sie-do-kio">odwołania do KIO</a> — aby ocenić szanse powodzenia na podstawie podobnych spraw</li>
-          <li>Przy przygotowaniu oferty przetargowej — aby uniknąć <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstszych błędów</a>, które prowadzą do odrzucenia</li>
-          <li>Gdy zamawiający <a href="/blog/uniewaznienie-przetargu-jak-sie-bronic">unieważnia postępowanie</a> — aby sprawdzić, czy przesłanki unieważnienia są zasadne</li>
-          <li>Przy sporządzaniu argumentacji prawnej — aby powołać się na dotychczasową linię orzeczniczą</li>
-          <li>Przy szacowaniu <a href="/blog/ile-kosztuje-odwolanie-do-kio-2026">kosztów odwołania do KIO</a> — aby podjąć racjonalną decyzję biznesową</li>
-          <li>Gdy chcesz wiedzieć, <a href="/blog/ile-czasu-ma-kio-na-rozpatrzenie-odwolania">ile czasu ma KIO na rozpatrzenie odwołania</a> — aby zaplanować harmonogram</li>
+          <li>
+            Przed złożeniem <a href="/blog/jak-odwolac-sie-do-kio">odwołania do KIO</a>
+            — aby ocenić szanse powodzenia na podstawie podobnych spraw
+          </li>
+          <li>
+            Przy przygotowaniu oferty przetargowej — aby uniknąć <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstszych błędów</a>, które prowadzą do odrzucenia
+          </li>
+          <li>
+            Gdy zamawiający
+            <a href="/blog/uniewaznienie-przetargu-jak-sie-bronic">unieważnia postępowanie</a>
+            — aby sprawdzić, czy przesłanki unieważnienia są zasadne
+          </li>
+          <li>
+            Przy sporządzaniu argumentacji prawnej — aby powołać się na dotychczasową linię orzeczniczą
+          </li>
+          <li>
+            Przy szacowaniu
+            <a href="/blog/ile-kosztuje-odwolanie-do-kio-2026">kosztów odwołania do KIO</a>
+            — aby podjąć racjonalną decyzję biznesową
+          </li>
+          <li>
+            Gdy chcesz wiedzieć,
+            <a href="/blog/ile-czasu-ma-kio-na-rozpatrzenie-odwolania">
+              ile czasu ma KIO na rozpatrzenie odwołania
+            </a>
+            — aby zaplanować harmonogram
+          </li>
         </ul>
 
         <h2>Jakie orzeczenia znajdziesz w bazie?</h2>
         <p>Baza zawiera orzeczenia dotyczące wszystkich aspektów zamówień publicznych, m.in.:</p>
         <ul>
-          <li><strong>Odrzucenie oferty</strong> — rażąco niska cena, niezgodność z SWZ, błędy formalne</li>
-          <li><strong>Wykluczenie wykonawcy</strong> — niespełnienie warunków udziału, JEDZ, podmiotowe środki dowodowe</li>
-          <li><strong>Wybór najkorzystniejszej oferty</strong> — kryteria oceny, waga ceny vs. jakości</li>
-          <li><strong>Unieważnienie postępowania</strong> — przesłanki z art. 255 i 256 ustawy Pzp</li>
-          <li><strong>Opis przedmiotu zamówienia</strong> — ograniczenie konkurencji, równoważność produktów</li>
+          <li>
+            <strong>Odrzucenie oferty</strong>
+            — rażąco niska cena, niezgodność z SWZ, błędy formalne
+          </li>
+          <li>
+            <strong>Wykluczenie wykonawcy</strong>
+            — niespełnienie warunków udziału, JEDZ, podmiotowe środki dowodowe
+          </li>
+          <li>
+            <strong>Wybór najkorzystniejszej oferty</strong>
+            — kryteria oceny, waga ceny vs. jakości
+          </li>
+          <li>
+            <strong>Unieważnienie postępowania</strong> — przesłanki z art. 255 i 256 ustawy Pzp
+          </li>
+          <li>
+            <strong>Opis przedmiotu zamówienia</strong>
+            — ograniczenie konkurencji, równoważność produktów
+          </li>
           <li><strong>Warunki umowy</strong> — klauzule abuzywne, waloryzacja wynagrodzenia</li>
         </ul>
       </div>
-
-      <!-- Related Blog Posts -->
+      
+<!-- Related Blog Posts -->
       <%= if @recent_articles != [] do %>
         <div class="mt-12">
           <h2 class="text-2xl font-bold text-base-content mb-6">

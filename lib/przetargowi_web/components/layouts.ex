@@ -64,12 +64,6 @@ defmodule PrzetargowiWeb.Layouts do
                 >
                   Blog
                 </a>
-                <a
-                  href="/#cennik"
-                  class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
-                >
-                  Cennik
-                </a>
               </nav>
             <% end %>
 
@@ -160,12 +154,6 @@ defmodule PrzetargowiWeb.Layouts do
               >
                 Blog
               </a>
-              <a
-                href="/#cennik"
-                class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
-              >
-                Cennik
-              </a>
             <% end %>
             <div class="pt-3 border-t border-base-300">
               <%= if @current_scope do %>
@@ -242,7 +230,6 @@ defmodule PrzetargowiWeb.Layouts do
                 <li><a href="/przetargi">Przetargi</a></li>
                 <li><a href="/raporty">Raporty</a></li>
                 <li><a href="/blog">Blog</a></li>
-                <li><a href="/#cennik">Cennik</a></li>
               </ul>
             </div>
             <div>

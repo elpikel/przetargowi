@@ -370,8 +370,6 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleTenderMistakes do
   end
 
   def down do
-    execute(
-      "DELETE FROM articles WHERE slug = 'najczestsze-bledy-oferty-przetargowe'"
-    )
+    execute("DELETE FROM articles WHERE slug = 'najczestsze-bledy-oferty-przetargowe'")
   end
 end

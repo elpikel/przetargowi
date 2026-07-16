@@ -58,8 +58,7 @@ defmodule PrzetargowiWeb.WatchlistControllerTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Już obserwujesz"
     end
 
-    test "shows error when quota exceeded", %{conn: conn, user: user} do
-      # Add 1 tender (free user limit)
+    test "allows adding many tenders (watchlist is unlimited)", %{conn: conn, user: user} do
       tender = tender_notice_fixture()
       watchlist_entry_fixture(user: user, tender: tender)
 
@@ -67,8 +66,8 @@ defmodule PrzetargowiWeb.WatchlistControllerTest do
 
       conn = post(conn, ~p"/obserwowane", tender_object_id: new_tender.object_id)
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "limit"
-      refute Watchlist.is_watching?(user.id, new_tender.object_id)
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "dodany do obserwowanych"
+      assert Watchlist.is_watching?(user.id, new_tender.object_id)
     end
 
     test "redirects if user is not logged in" do

@@ -141,7 +141,7 @@ defmodule Przetargowi.MarketAnalysis do
   defp compute_criteria(open_tenders) do
     all_criteria =
       open_tenders
-      |> Enum.flat_map(& &1.kryteria || [])
+      |> Enum.flat_map(&(&1.kryteria || []))
       |> Enum.filter(&(is_map(&1) && &1["name"]))
 
     if all_criteria == [] do
@@ -176,7 +176,9 @@ defmodule Przetargowi.MarketAnalysis do
         |> Enum.group_by(fn {name, _} -> normalize_criterion_name(name) end)
         |> Enum.map(fn {name, entries} ->
           weights = entries |> Enum.map(&elem(&1, 1)) |> Enum.filter(&(&1 != nil))
-          avg_weight = if weights != [], do: Float.round(Enum.sum(weights) / length(weights), 1), else: nil
+
+          avg_weight =
+            if weights != [], do: Float.round(Enum.sum(weights) / length(weights), 1), else: nil
 
           %{name: name, count: length(entries), avg_weight: avg_weight}
         end)
@@ -250,7 +252,10 @@ defmodule Przetargowi.MarketAnalysis do
     |> String.replace(~r/\s+/, " ")
     |> String.replace(~r/["""„]/, "")
     |> String.replace(~r/sp\.\s*z\s*o\.?\s*o\.?/, "")
-    |> String.replace(~r/sp[oó][łl]ka\s*(z\s*ograniczon[aą]\s*odpowiedzialno[sś]ci[aą]?|akcyjna|komandytowa|komandytowo-akcyjna|cywilna|jawna)/, "")
+    |> String.replace(
+      ~r/sp[oó][łl]ka\s*(z\s*ograniczon[aą]\s*odpowiedzialno[sś]ci[aą]?|akcyjna|komandytowa|komandytowo-akcyjna|cywilna|jawna)/,
+      ""
+    )
     |> String.replace(~r/\s*s\.?\s*a\.?\s*$/, "")
     |> String.trim()
   end

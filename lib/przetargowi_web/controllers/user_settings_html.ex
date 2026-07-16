@@ -3,12 +3,6 @@ defmodule PrzetargowiWeb.UserSettingsHTML do
 
   embed_templates "user_settings_html/*"
 
-  @plan_names %{
-    "alert" => "Alerty",
-    "wyszukiwarka" => "Wyszukiwarka",
-    "razem" => "Razem"
-  }
-
   @regions %{
     "02" => "Dolnośląskie",
     "04" => "Kujawsko-Pomorskie",
@@ -33,8 +27,6 @@ defmodule PrzetargowiWeb.UserSettingsHTML do
     "dostawy" => "Dostawy",
     "roboty_budowlane" => "Roboty budowlane"
   }
-
-  def format_plan_name(plan_type), do: Map.get(@plan_names, plan_type, "Nieznany plan")
 
   def format_region(region_code), do: Map.get(@regions, region_code, region_code)
 

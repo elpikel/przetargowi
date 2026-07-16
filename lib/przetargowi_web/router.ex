@@ -111,15 +111,6 @@ defmodule PrzetargowiWeb.Router do
     put "/ustawienia", UserSettingsController, :update
     get "/ustawienia/potwierdz-email/:token", UserSettingsController, :confirm_email
 
-    # Subscription management
-    get "/subskrypcja", SubscriptionController, :show
-    get "/subskrypcja/nowa", SubscriptionController, :new
-    post "/subskrypcja", SubscriptionController, :create
-    delete "/subskrypcja", SubscriptionController, :cancel
-    post "/subskrypcja/wznow", SubscriptionController, :reactivate
-    get "/subskrypcja/sukces", SubscriptionController, :payment_success
-    get "/subskrypcja/blad", SubscriptionController, :payment_error
-
     # Alerts
     get "/alerty", AlertController, :index
     post "/alerty", AlertController, :create
@@ -144,13 +135,6 @@ defmodule PrzetargowiWeb.Router do
     # Document filling
     get "/przetargi/:slug/wypelnij", DocumentFillController, :show
     post "/przetargi/:slug/wypelnij", DocumentFillController, :create
-  end
-
-  # Webhook endpoints (no CSRF protection)
-  scope "/webhooks", PrzetargowiWeb do
-    pipe_through :api
-
-    post "/stripe", WebhookController, :stripe
   end
 
   scope "/", PrzetargowiWeb do

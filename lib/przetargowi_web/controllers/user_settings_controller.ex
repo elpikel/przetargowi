@@ -2,16 +2,12 @@ defmodule PrzetargowiWeb.UserSettingsController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.Accounts
-  alias Przetargowi.Alerts
-  alias Przetargowi.Payments
   alias PrzetargowiWeb.UserAuth
 
   import PrzetargowiWeb.UserAuth, only: [require_sudo_mode: 2]
 
   plug :require_sudo_mode
   plug :assign_email_and_password_changesets
-  plug :assign_subscription
-  plug :assign_alerts
 
   def edit(conn, _params) do
     render(conn, :edit)
@@ -77,21 +73,5 @@ defmodule PrzetargowiWeb.UserSettingsController do
     conn
     |> assign(:email_changeset, Accounts.change_user_email(user))
     |> assign(:password_changeset, Accounts.change_user_password(user))
-  end
-
-  defp assign_subscription(conn, _opts) do
-    user = conn.assigns.current_scope.user
-    subscription = Payments.get_user_subscription(user.id)
-    assign(conn, :subscription, subscription)
-  end
-
-  defp assign_alerts(conn, _opts) do
-    user = conn.assigns.current_scope.user
-    has_alerts_access = Payments.has_alerts_access?(user.id)
-    alerts = if has_alerts_access, do: Alerts.list_user_alerts(user.id), else: []
-
-    conn
-    |> assign(:has_alerts_access, has_alerts_access)
-    |> assign(:alerts, alerts)
   end
 end

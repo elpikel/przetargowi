@@ -265,33 +265,22 @@
                         <span>Obserwujesz</span>
                       </.link>
                     <% else %>
-                      <%= if @can_add_to_watchlist do %>
-                        <form action={~p"/obserwowane"} method="post" class="inline">
-                          <input
-                            type="hidden"
-                            name="_csrf_token"
-                            value={Phoenix.Controller.get_csrf_token()}
-                          />
-                          <input type="hidden" name="tender_object_id" value={notice.object_id} />
-                          <button
-                            type="submit"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer text-sm font-medium"
-                            title="Dodaj do obserwowanych"
-                          >
-                            <.icon name="hero-star" class="size-4" />
-                            <span>Obserwuj</span>
-                          </button>
-                        </form>
-                      <% else %>
-                        <a
-                          href={~p"/subskrypcja/nowa"}
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-base-300 text-base-content/40 text-sm font-medium"
-                          title="Osiągnąłeś limit obserwowanych przetargów"
+                      <form action={~p"/obserwowane"} method="post" class="inline">
+                        <input
+                          type="hidden"
+                          name="_csrf_token"
+                          value={Phoenix.Controller.get_csrf_token()}
+                        />
+                        <input type="hidden" name="tender_object_id" value={notice.object_id} />
+                        <button
+                          type="submit"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning/20 border-2 border-warning text-warning hover:bg-warning/30 transition-colors cursor-pointer text-sm font-medium"
+                          title="Dodaj do obserwowanych"
                         >
                           <.icon name="hero-star" class="size-4" />
                           <span>Obserwuj</span>
-                        </a>
-                      <% end %>
+                        </button>
+                      </form>
                     <% end %>
                   <% end %>
                 </div>

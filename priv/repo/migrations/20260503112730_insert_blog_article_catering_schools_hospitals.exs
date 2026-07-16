@@ -391,8 +391,6 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleCateringSchoolsHospitals 
   end
 
   def down do
-    execute(
-      "DELETE FROM articles WHERE slug = 'catering-szkoly-szpitale-haccp-przetargi'"
-    )
+    execute("DELETE FROM articles WHERE slug = 'catering-szkoly-szpitale-haccp-przetargi'")
   end
 end

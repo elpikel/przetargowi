@@ -169,12 +169,12 @@ defmodule Przetargowi.WatchlistTest do
   end
 
   describe "can_add_to_watchlist?/1" do
-    test "returns true when user has less than limit" do
+    test "returns true for a user with no entries" do
       user = user_fixture()
       assert Watchlist.can_add_to_watchlist?(user.id)
     end
 
-    test "returns false when free user has 5 entries" do
+    test "returns true even with many entries (watchlist is unlimited)" do
       user = user_fixture()
 
       for _ <- 1..5 do
@@ -182,7 +182,7 @@ defmodule Przetargowi.WatchlistTest do
         watchlist_entry_fixture(user: user, tender: tender)
       end
 
-      refute Watchlist.can_add_to_watchlist?(user.id)
+      assert Watchlist.can_add_to_watchlist?(user.id)
     end
   end
 

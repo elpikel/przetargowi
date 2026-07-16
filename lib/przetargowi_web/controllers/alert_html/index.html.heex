@@ -65,26 +65,6 @@
           </div>
         <% end %>
       </div>
-
-      <%= unless @is_premium do %>
-        <div class="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
-          <div class="flex items-start gap-3">
-            <.icon name="hero-sparkles" class="size-5 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p class="text-sm text-base-content/80">
-                <span class="font-medium">Darmowy plan:</span>
-                1 alert. Wybierz plan Alerty lub Razem, aby tworzyć więcej alertów i korzystać ze słów kluczowych.
-              </p>
-              <a
-                href={~p"/subskrypcja/nowa"}
-                class="text-sm text-primary hover:text-primary/80 font-medium mt-1 inline-block"
-              >
-                Zobacz plany →
-              </a>
-            </div>
-          </div>
-        </div>
-      <% end %>
     <% end %>
 
     <div class="mt-8 text-center">

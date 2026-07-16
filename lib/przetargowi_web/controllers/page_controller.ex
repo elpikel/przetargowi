@@ -12,7 +12,6 @@ defmodule PrzetargowiWeb.PageController do
       "Przetargowi.pl - wyszukiwarka przetargów publicznych i orzeczeń KIO. Aktualne ogłoszenia o przetargach z BZP, wyroki KIO i orzecznictwo zamówień publicznych."
     )
     |> assign(:canonical_url, "https://przetargowi.pl")
-    |> assign(:plan_amounts, Przetargowi.Payments.plan_amounts())
     |> render(:home)
   end
 end

@@ -28,18 +28,6 @@ if api_key = System.get_env("OPENAI_API_KEY") do
   config :przetargowi, :openai_api_key, api_key
 end
 
-# Stripe configuration
-if stripe_api_key = System.get_env("STRIPE_API_KEY") do
-  config :stripity_stripe, api_key: stripe_api_key
-end
-
-# Stripe price IDs for each plan type
-config :przetargowi, :stripe,
-  price_id_alert: System.get_env("STRIPE_PRICE_ID_ALERT"),
-  price_id_wyszukiwarka: System.get_env("STRIPE_PRICE_ID_WYSZUKIWARKA"),
-  price_id_razem: System.get_env("STRIPE_PRICE_ID_RAZEM"),
-  webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET")
-
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

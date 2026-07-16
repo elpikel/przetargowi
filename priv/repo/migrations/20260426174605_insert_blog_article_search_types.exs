@@ -217,8 +217,6 @@ defmodule Przetargowi.Repo.Migrations.InsertBlogArticleSearchTypes do
   end
 
   def down do
-    execute(
-      "DELETE FROM articles WHERE slug = 'wyszukiwarka-orzeczen-kio-tryby-wyszukiwania'"
-    )
+    execute("DELETE FROM articles WHERE slug = 'wyszukiwarka-orzeczen-kio-tryby-wyszukiwania'")
   end
 end

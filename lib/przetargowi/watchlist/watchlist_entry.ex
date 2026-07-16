@@ -16,7 +16,11 @@ defmodule Przetargowi.Watchlist.WatchlistEntry do
     field :reminder_1_day_sent, :boolean, default: false
 
     belongs_to :user, User
-    belongs_to :tender_notice, TenderNotice, references: :object_id, foreign_key: :tender_object_id, define_field: false
+
+    belongs_to :tender_notice, TenderNotice,
+      references: :object_id,
+      foreign_key: :tender_object_id,
+      define_field: false
 
     timestamps(type: :utc_datetime)
   end

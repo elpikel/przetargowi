@@ -167,214 +167,289 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={assigns[:current_scope]}>
-    <div class="min-h-screen bg-base-200">
-      <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <h1 class="text-3xl font-bold mb-2">Analiza Rynku Przetargów</h1>
-        <p class="text-base-content/60 mb-8">
-          Wybierz województwo i kod CPV, aby zobaczyć analizę rynku zamówień publicznych.
-        </p>
+      <div class="min-h-screen bg-base-200">
+        <div class="container mx-auto px-4 py-8 max-w-7xl">
+          <h1 class="text-3xl font-bold mb-2">Analiza Rynku Przetargów</h1>
+          <p class="text-base-content/60 mb-8">
+            Wybierz województwo i kod CPV, aby zobaczyć analizę rynku zamówień publicznych.
+          </p>
 
-        <form phx-submit="filter" class="card bg-base-100 shadow-md mb-8">
-          <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div class="form-control">
-                <label class="label"><span class="label-text font-medium">Województwo</span></label>
-                <select name="province" class="select select-bordered w-full" value={@province}>
-                  <%= for {code, name} <- MarketAnalysis.provinces() do %>
-                    <option value={code} selected={code == @province}>{name}</option>
+          <form phx-submit="filter" class="card bg-base-100 shadow-md mb-8">
+            <div class="card-body">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="form-control">
+                  <label class="label"><span class="label-text font-medium">Województwo</span></label>
+                  <select name="province" class="select select-bordered w-full" value={@province}>
+                    <%= for {code, name} <- MarketAnalysis.provinces() do %>
+                      <option value={code} selected={code == @province}>{name}</option>
+                    <% end %>
+                  </select>
+                </div>
+
+                <div class="form-control relative" phx-click-away="cpv_close">
+                  <label class="label">
+                    <span class="label-text font-medium">Branża / kod CPV</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="cpv-input"
+                    name="cpv_query"
+                    value={@cpv_query}
+                    placeholder="Wpisz kod lub szukaj np. budowlane, informatyczne, medyczne..."
+                    class="input input-bordered w-full"
+                    phx-change="cpv_search"
+                    phx-focus="cpv_focus"
+                    phx-debounce="150"
+                    autocomplete="off"
+                  />
+                  <div
+                    :if={@show_suggestions}
+                    class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-72 overflow-y-auto"
+                  >
+                    <ul class="menu menu-sm p-1">
+                      <%= for {prefix, full_code, desc} <- @cpv_suggestions do %>
+                        <li>
+                          <a
+                            href="#"
+                            phx-click="cpv_select"
+                            phx-value-prefix={prefix}
+                            phx-value-code={full_code}
+                            phx-value-desc={desc}
+                            class="flex gap-2"
+                          >
+                            <span class="font-mono text-primary font-medium shrink-0">
+                              {full_code}
+                            </span>
+                            <span class="text-left flex-1 truncate">{desc}</span>
+                          </a>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                  Analizuj rynek
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div :if={@loading} class="flex justify-center py-12">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+
+          <div :if={@analysis && !@loading} id="dashboard-charts" phx-hook="MarketCharts">
+            <!-- Summary cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div class="stat bg-base-100 rounded-box shadow">
+                <div class="stat-title">Zamknięte postępowania</div>
+                <div class="stat-value text-primary">{@analysis.total_tenders}</div>
+                <div class="stat-desc">z wynikami</div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow">
+                <div class="stat-title">Podpisane kontrakty</div>
+                <div class="stat-value text-secondary">{@analysis.total_contracts}</div>
+                <div class="stat-desc">z wykonawcami</div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow">
+                <div class="stat-title">Aktywne przetargi</div>
+                <div class="stat-value text-accent">{@analysis.total_open}</div>
+                <div class="stat-desc">otwarte ogłoszenia</div>
+              </div>
+              <div class="stat bg-base-100 rounded-box shadow">
+                <div class="stat-title">Tylko kryterium ceny</div>
+                <div class="stat-value">
+                  {if @analysis.criteria.price_only_pct,
+                    do: "#{@analysis.criteria.price_only_pct}%",
+                    else: "b/d"}
+                </div>
+                <div class="stat-desc">postępowań</div>
+              </div>
+            </div>
+            
+    <!-- Charts row 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <!-- Top contractors chart -->
+              <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                  <h2 class="card-title text-lg">Top wykonawcy (wygrane kontrakty)</h2>
+                  <canvas id="contractors-chart" phx-update="ignore"></canvas>
+                  <p
+                    :if={@analysis.top_contractors == []}
+                    class="text-base-content/50 text-center py-8"
+                  >
+                    Brak danych o wykonawcach
+                  </p>
+                </div>
+              </div>
+              
+    <!-- Monthly trends -->
+              <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                  <h2 class="card-title text-lg">Trend miesięczny</h2>
+                  <canvas id="trends-chart" phx-update="ignore"></canvas>
+                </div>
+              </div>
+            </div>
+            
+    <!-- Charts row 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <!-- Criteria analysis -->
+              <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                  <h2 class="card-title text-lg">Kryteria oceny ofert</h2>
+                  <canvas id="criteria-chart" phx-update="ignore"></canvas>
+                  <p
+                    :if={@analysis.criteria.top_criteria == []}
+                    class="text-base-content/50 text-center py-8"
+                  >
+                    Brak danych o kryteriach
+                  </p>
+                </div>
+              </div>
+              
+    <!-- Price distribution (if available) -->
+              <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                  <h2 class="card-title text-lg">Wartości kontraktów</h2>
+                  <%= if @analysis.price_distribution.count > 0 do %>
+                    <canvas id="price-chart" phx-update="ignore"></canvas>
+                    <div class="text-sm text-base-content/60 mt-2">
+                      Min: {format_pln(@analysis.price_distribution.min)} |
+                      Mediana: {format_pln(@analysis.price_distribution.median)} |
+                      Max: {format_pln(@analysis.price_distribution.max)}
+                    </div>
+                  <% else %>
+                    <div class="flex flex-col items-center justify-center py-8 text-base-content/50">
+                      <p>Brak danych cenowych</p>
+                      <p class="text-xs mt-1">
+                        Wartości kontraktów nie są jeszcze dostępne dla tych postępowań
+                      </p>
+                    </div>
                   <% end %>
-                </select>
-              </div>
-
-              <div class="form-control relative" phx-click-away="cpv_close">
-                <label class="label">
-                  <span class="label-text font-medium">Branża / kod CPV</span>
-                </label>
-                <input
-                  type="text"
-                  id="cpv-input"
-                  name="cpv_query"
-                  value={@cpv_query}
-                  placeholder="Wpisz kod lub szukaj np. budowlane, informatyczne, medyczne..."
-                  class="input input-bordered w-full"
-                  phx-change="cpv_search"
-                  phx-focus="cpv_focus"
-                  phx-debounce="150"
-                  autocomplete="off"
-                />
-                <div
-                  :if={@show_suggestions}
-                  class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-72 overflow-y-auto"
-                >
-                  <ul class="menu menu-sm p-1">
-                    <%= for {prefix, full_code, desc} <- @cpv_suggestions do %>
-                      <li>
-                        <a
-                          href="#"
-                          phx-click="cpv_select"
-                          phx-value-prefix={prefix}
-                          phx-value-code={full_code}
-                          phx-value-desc={desc}
-                          class="flex gap-2"
-                        >
-                          <span class="font-mono text-primary font-medium shrink-0">{full_code}</span>
-                          <span class="text-left flex-1 truncate">{desc}</span>
-                        </a>
-                      </li>
-                    <% end %>
-                  </ul>
                 </div>
               </div>
-
-              <button type="submit" class="btn btn-primary">
-                Analizuj rynek
-              </button>
             </div>
-          </div>
-        </form>
-
-        <div :if={@loading} class="flex justify-center py-12">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-
-        <div :if={@analysis && !@loading} id="dashboard-charts" phx-hook="MarketCharts">
-          <!-- Summary cards -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="stat bg-base-100 rounded-box shadow">
-              <div class="stat-title">Zamknięte postępowania</div>
-              <div class="stat-value text-primary">{@analysis.total_tenders}</div>
-              <div class="stat-desc">z wynikami</div>
-            </div>
-            <div class="stat bg-base-100 rounded-box shadow">
-              <div class="stat-title">Podpisane kontrakty</div>
-              <div class="stat-value text-secondary">{@analysis.total_contracts}</div>
-              <div class="stat-desc">z wykonawcami</div>
-            </div>
-            <div class="stat bg-base-100 rounded-box shadow">
-              <div class="stat-title">Aktywne przetargi</div>
-              <div class="stat-value text-accent">{@analysis.total_open}</div>
-              <div class="stat-desc">otwarte ogłoszenia</div>
-            </div>
-            <div class="stat bg-base-100 rounded-box shadow">
-              <div class="stat-title">Tylko kryterium ceny</div>
-              <div class="stat-value">
-                {if @analysis.criteria.price_only_pct, do: "#{@analysis.criteria.price_only_pct}%", else: "b/d"}
-              </div>
-              <div class="stat-desc">postępowań</div>
-            </div>
-          </div>
-
-          <!-- Charts row 1 -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Top contractors chart -->
-            <div class="card bg-base-100 shadow">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Top wykonawcy (wygrane kontrakty)</h2>
-                <canvas id="contractors-chart" phx-update="ignore"></canvas>
-                <p :if={@analysis.top_contractors == []} class="text-base-content/50 text-center py-8">
-                  Brak danych o wykonawcach
-                </p>
-              </div>
-            </div>
-
-            <!-- Monthly trends -->
-            <div class="card bg-base-100 shadow">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Trend miesięczny</h2>
-                <canvas id="trends-chart" phx-update="ignore"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <!-- Charts row 2 -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Criteria analysis -->
-            <div class="card bg-base-100 shadow">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Kryteria oceny ofert</h2>
-                <canvas id="criteria-chart" phx-update="ignore"></canvas>
-                <p :if={@analysis.criteria.top_criteria == []} class="text-base-content/50 text-center py-8">
-                  Brak danych o kryteriach
-                </p>
-              </div>
-            </div>
-
-            <!-- Price distribution (if available) -->
-            <div class="card bg-base-100 shadow">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Wartości kontraktów</h2>
-                <%= if @analysis.price_distribution.count > 0 do %>
-                  <canvas id="price-chart" phx-update="ignore"></canvas>
-                  <div class="text-sm text-base-content/60 mt-2">
-                    Min: {format_pln(@analysis.price_distribution.min)} |
-                    Mediana: {format_pln(@analysis.price_distribution.median)} |
-                    Max: {format_pln(@analysis.price_distribution.max)}
-                  </div>
-                <% else %>
-                  <div class="flex flex-col items-center justify-center py-8 text-base-content/50">
-                    <p>Brak danych cenowych</p>
-                    <p class="text-xs mt-1">Wartości kontraktów nie są jeszcze dostępne dla tych postępowań</p>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tables -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Top contractors table -->
-            <div class="card bg-base-100 shadow">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Wiodący wykonawcy</h2>
-                <div class="overflow-x-auto">
-                  <table class="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Firma</th>
-                        <th>Miasto</th>
-                        <th>Wygrane</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <%= for {c, i} <- Enum.with_index(@analysis.top_contractors, 1) do %>
+            
+    <!-- Tables -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <!-- Top contractors table -->
+              <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                  <h2 class="card-title text-lg">Wiodący wykonawcy</h2>
+                  <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                      <thead>
                         <tr>
-                          <td>{i}</td>
-                          <td class="font-medium max-w-48 truncate" title={c.name}>{c.name}</td>
-                          <td>{c.city}</td>
-                          <td class="font-bold">{c.wins}</td>
+                          <th>#</th>
+                          <th>Firma</th>
+                          <th>Miasto</th>
+                          <th>Wygrane</th>
                         </tr>
-                      <% end %>
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        <%= for {c, i} <- Enum.with_index(@analysis.top_contractors, 1) do %>
+                          <tr>
+                            <td>{i}</td>
+                            <td class="font-medium max-w-48 truncate" title={c.name}>{c.name}</td>
+                            <td>{c.city}</td>
+                            <td class="font-bold">{c.wins}</td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p :if={@analysis.top_contractors == []} class="text-base-content/50 text-sm">
+                    Brak danych o wykonawcach w wybranych postępowaniach.
+                  </p>
                 </div>
-                <p :if={@analysis.top_contractors == []} class="text-base-content/50 text-sm">
-                  Brak danych o wykonawcach w wybranych postępowaniach.
-                </p>
+              </div>
+              
+    <!-- Top ordering parties table -->
+              <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                  <h2 class="card-title text-lg">Wiodący zamawiający</h2>
+                  <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Zamawiający</th>
+                          <th>Miasto</th>
+                          <th>Postępowań</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <%= for {p, i} <- Enum.with_index(@analysis.top_ordering_parties, 1) do %>
+                          <tr>
+                            <td>{i}</td>
+                            <td class="font-medium max-w-56 truncate" title={p.name}>{p.name}</td>
+                            <td>{p.city}</td>
+                            <td class="font-bold">{p.count}</td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <!-- Top ordering parties table -->
-            <div class="card bg-base-100 shadow">
+            
+    <!-- Segments -->
+            <div class="card bg-base-100 shadow mb-6">
               <div class="card-body">
-                <h2 class="card-title text-lg">Wiodący zamawiający</h2>
+                <h2 class="card-title text-lg">Segmenty zamówień</h2>
                 <div class="overflow-x-auto">
-                  <table class="table table-sm">
+                  <table class="table">
                     <thead>
                       <tr>
-                        <th>#</th>
-                        <th>Zamawiający</th>
-                        <th>Miasto</th>
+                        <th>Typ zamówienia</th>
                         <th>Postępowań</th>
+                        <th>Podpisanych kontraktów</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <%= for {p, i} <- Enum.with_index(@analysis.top_ordering_parties, 1) do %>
+                      <%= for s <- @analysis.best_segments do %>
                         <tr>
-                          <td>{i}</td>
-                          <td class="font-medium max-w-56 truncate" title={p.name}>{p.name}</td>
-                          <td>{p.city}</td>
-                          <td class="font-bold">{p.count}</td>
+                          <td class="font-medium">{s.order_type}</td>
+                          <td>{s.tender_count}</td>
+                          <td>{s.contract_count}</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+    <!-- Criteria table -->
+            <div :if={@analysis.criteria.top_criteria != []} class="card bg-base-100 shadow mb-6">
+              <div class="card-body">
+                <h2 class="card-title text-lg">Najczęstsze kryteria oceny</h2>
+                <p class="text-sm text-base-content/60 mb-4">
+                  Na podstawie {@analysis.criteria.total_tenders_with_criteria} ogłoszeń z określonymi kryteriami.
+                </p>
+                <div class="overflow-x-auto">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Kryterium</th>
+                        <th>Wystąpień</th>
+                        <th>Średnia waga</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for k <- @analysis.criteria.top_criteria do %>
+                        <tr>
+                          <td class="font-medium">{k.name}</td>
+                          <td>{k.count}</td>
+                          <td>
+                            <span :if={k.avg_weight} class="badge badge-outline">
+                              {k.avg_weight}%
+                            </span>
+                            <span :if={!k.avg_weight} class="text-base-content/40">b/d</span>
+                          </td>
                         </tr>
                       <% end %>
                     </tbody>
@@ -384,72 +459,11 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
             </div>
           </div>
 
-          <!-- Segments -->
-          <div class="card bg-base-100 shadow mb-6">
-            <div class="card-body">
-              <h2 class="card-title text-lg">Segmenty zamówień</h2>
-              <div class="overflow-x-auto">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Typ zamówienia</th>
-                      <th>Postępowań</th>
-                      <th>Podpisanych kontraktów</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <%= for s <- @analysis.best_segments do %>
-                      <tr>
-                        <td class="font-medium">{s.order_type}</td>
-                        <td>{s.tender_count}</td>
-                        <td>{s.contract_count}</td>
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div :if={!@analysis && !@loading && @cpv_prefix} class="text-center py-12">
+            <p class="text-lg text-base-content/60">Brak danych dla wybranego kodu CPV.</p>
           </div>
-
-          <!-- Criteria table -->
-          <div :if={@analysis.criteria.top_criteria != []} class="card bg-base-100 shadow mb-6">
-            <div class="card-body">
-              <h2 class="card-title text-lg">Najczęstsze kryteria oceny</h2>
-              <p class="text-sm text-base-content/60 mb-4">
-                Na podstawie {@analysis.criteria.total_tenders_with_criteria} ogłoszeń z określonymi kryteriami.
-              </p>
-              <div class="overflow-x-auto">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Kryterium</th>
-                      <th>Wystąpień</th>
-                      <th>Średnia waga</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <%= for k <- @analysis.criteria.top_criteria do %>
-                      <tr>
-                        <td class="font-medium">{k.name}</td>
-                        <td>{k.count}</td>
-                        <td>
-                          <span :if={k.avg_weight} class="badge badge-outline">{k.avg_weight}%</span>
-                          <span :if={!k.avg_weight} class="text-base-content/40">b/d</span>
-                        </td>
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div :if={!@analysis && !@loading && @cpv_prefix} class="text-center py-12">
-          <p class="text-lg text-base-content/60">Brak danych dla wybranego kodu CPV.</p>
         </div>
       </div>
-    </div>
     </Layouts.app>
     """
   end

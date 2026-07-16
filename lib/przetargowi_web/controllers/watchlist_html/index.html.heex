@@ -3,11 +3,7 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-display font-bold text-base-content">Obserwowane przetargi</h1>
       <div class="text-sm text-base-content/60">
-        <%= if @limit do %>
-          {@count} / {@limit}
-        <% else %>
-          {@count} przetargów
-        <% end %>
+        {@count} przetargów
       </div>
     </div>
 
@@ -82,26 +78,6 @@
           </div>
         <% end %>
       </div>
-
-      <%= unless @is_premium do %>
-        <div class="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
-          <div class="flex items-start gap-3">
-            <.icon name="hero-sparkles" class="size-5 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p class="text-sm text-base-content/80">
-                <span class="font-medium">Darmowy plan:</span>
-                {@limit} obserwowanych przetargów. Wybierz plan premium, aby obserwować bez limitu.
-              </p>
-              <a
-                href={~p"/subskrypcja/nowa"}
-                class="text-sm text-primary hover:text-primary/80 font-medium mt-1 inline-block"
-              >
-                Zobacz plany →
-              </a>
-            </div>
-          </div>
-        </div>
-      <% end %>
     <% end %>
 
     <div class="mt-8 text-center">

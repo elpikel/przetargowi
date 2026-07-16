@@ -52,12 +52,11 @@ config :esbuild,
       ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
     cd: Path.expand("../assets", __DIR__),
     env: %{
-      "NODE_PATH" =>
-        [
-          Path.expand("../assets/node_modules", __DIR__),
-          Path.expand("../deps", __DIR__),
-          Mix.Project.build_path()
-        ]
+      "NODE_PATH" => [
+        Path.expand("../assets/node_modules", __DIR__),
+        Path.expand("../deps", __DIR__),
+        Mix.Project.build_path()
+      ]
     }
   ]
 
@@ -110,14 +109,6 @@ config :przetargowi, Oban,
 
 # Configure HTTP client for UZP scraper
 config :przetargowi, :uzp_http_client, Przetargowi.UZP.HTTPClient
-
-# Configure Stripe client
-config :przetargowi, :stripe_client, Przetargowi.Stripe.Client
-
-# Stripe configuration placeholder (actual values set in runtime.exs)
-config :przetargowi, :stripe,
-  price_id: nil,
-  webhook_secret: nil
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

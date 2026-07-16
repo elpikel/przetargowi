@@ -37,9 +37,9 @@ defmodule PrzetargowiWeb.UserRegistrationController do
         conn
         |> put_flash(
           :info,
-          "Konto zostało potwierdzone. Aktywuj Premium, aby korzystać ze wszystkich funkcji."
+          "Konto zostało potwierdzone. Możesz teraz tworzyć alerty i obserwować przetargi."
         )
-        |> put_session(:user_return_to, ~p"/subskrypcja/nowa")
+        |> put_session(:user_return_to, ~p"/przetargi")
         |> UserAuth.log_in_user(user)
 
       :error ->

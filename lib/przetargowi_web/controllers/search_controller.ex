@@ -4,11 +4,9 @@ defmodule PrzetargowiWeb.SearchController do
   alias Przetargowi.Blog
   alias Przetargowi.Embeddings
   alias Przetargowi.Judgements
-  alias Przetargowi.Payments
   alias Przetargowi.SearchLogs
 
   @per_page 10
-  @max_searches_free 3
   @semantic_results_limit 20
 
   def index(conn, params) do
@@ -18,26 +16,9 @@ defmodule PrzetargowiWeb.SearchController do
     offset = (page - 1) * @per_page
     filters = extract_filters(params)
 
-    is_search = query != "" or has_filters?(filters)
-    has_premium = has_premium_access?(conn)
-    search_count = get_session(conn, :search_count) || 0
-
-    # Check rate limit for non-premium users
-    if not has_premium and is_search and search_count >= @max_searches_free do
-      render_rate_limited(conn, query, filters, search_mode)
-    else
-      # Increment search count for non-premium users
-      conn =
-        if not has_premium and is_search do
-          put_session(conn, :search_count, search_count + 1)
-        else
-          conn
-        end
-
-      case search_mode do
-        "semantic" -> perform_semantic_search(conn, query, filters)
-        _ -> perform_keyword_search(conn, query, filters, page, offset)
-      end
+    case search_mode do
+      "semantic" -> perform_semantic_search(conn, query, filters)
+      _ -> perform_keyword_search(conn, query, filters, page, offset)
     end
   end
 
@@ -320,49 +301,8 @@ defmodule PrzetargowiWeb.SearchController do
     end)
   end
 
-  defp has_premium_access?(conn) do
-    case conn.assigns[:current_scope] do
-      %{user: %{id: user_id}} when not is_nil(user_id) ->
-        Payments.has_search_access?(user_id)
-
-      _ ->
-        false
-    end
-  end
-
   defp has_filters?(filters) do
     Enum.any?(filters, fn {_k, v} -> v != "" end)
-  end
-
-  defp render_rate_limited(conn, query, filters, search_mode) do
-    filter_options = Judgements.get_filter_options()
-
-    breadcrumbs = [
-      %{name: "Strona główna", url: "https://przetargowi.pl"},
-      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"}
-    ]
-
-    conn
-    |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka orzeczeń Krajowej Izby Odwoławczej")
-    |> assign(
-      :meta_description,
-      "Orzecznictwo KIO wyszukiwarka — wyroki i orzeczenia Krajowej Izby Odwoławczej, zamówienia publiczne."
-    )
-    |> assign(:breadcrumbs, breadcrumbs)
-    |> assign(:query, query)
-    |> assign(:search_mode, search_mode)
-    |> assign(:filters, filters)
-    |> assign(:filter_options, filter_options)
-    |> assign(:results, [])
-    |> assign(:total_count, 0)
-    |> assign(:current_page, 1)
-    |> assign(:total_pages, 0)
-    |> assign(:rate_limited, true)
-    |> assign(:semantic_error, nil)
-    |> assign(:recent_judgements, [])
-    |> assign(:recent_articles, [])
-    |> assign(:show_seo_content, false)
-    |> render(:index)
   end
 
   defp parse_page(page_str) do

@@ -6,11 +6,8 @@ defmodule Przetargowi.Watchlist do
 
   import Ecto.Query
 
-  alias Przetargowi.Payments
   alias Przetargowi.Repo
   alias Przetargowi.Watchlist.WatchlistEntry
-
-  @free_limit 1
 
   @doc """
   Lists all watchlist entries for a user with preloaded tender data.
@@ -107,28 +104,15 @@ defmodule Przetargowi.Watchlist do
 
   @doc """
   Checks if a user can add more items to their watchlist.
-  Free users: max #{@free_limit} entries
-  Premium users: unlimited
+  The watchlist is free and unlimited for all logged-in users.
   """
-  def can_add_to_watchlist?(user_id) do
-    if Payments.has_alerts_access?(user_id) do
-      true
-    else
-      count_user_watchlist(user_id) < @free_limit
-    end
-  end
+  def can_add_to_watchlist?(_user_id), do: true
 
   @doc """
   Returns the watchlist limit for a user.
-  Returns nil for premium users (unlimited).
+  Always nil — the watchlist is unlimited.
   """
-  def get_limit(user_id) do
-    if Payments.has_alerts_access?(user_id) do
-      nil
-    else
-      @free_limit
-    end
-  end
+  def get_limit(_user_id), do: nil
 
   @doc """
   Gets watchlist entries that need 7-day reminders sent.

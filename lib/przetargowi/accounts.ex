@@ -386,8 +386,6 @@ defmodule Przetargowi.Accounts do
     end)
   end
 
-  ## Premium subscription
-
   @doc """
   Gets a single user by ID.
 
@@ -403,54 +401,4 @@ defmodule Przetargowi.Accounts do
 
   """
   def get_user(id), do: Repo.get(User, id)
-
-  @doc """
-  Upgrades a user to premium status.
-
-  ## Examples
-
-      iex> upgrade_to_premium(user)
-      {:ok, %User{is_premium: true}}
-
-      iex> upgrade_to_premium(user_id)
-      {:ok, %User{is_premium: true}}
-
-  """
-  def upgrade_to_premium(%User{} = user) do
-    user
-    |> Ecto.Changeset.change(is_premium: true)
-    |> Repo.update()
-  end
-
-  def upgrade_to_premium(user_id) when is_integer(user_id) do
-    case get_user(user_id) do
-      nil -> {:error, :not_found}
-      user -> upgrade_to_premium(user)
-    end
-  end
-
-  @doc """
-  Downgrades a user from premium status.
-
-  ## Examples
-
-      iex> downgrade_to_free(user)
-      {:ok, %User{is_premium: false}}
-
-      iex> downgrade_to_free(user_id)
-      {:ok, %User{is_premium: false}}
-
-  """
-  def downgrade_to_free(%User{} = user) do
-    user
-    |> Ecto.Changeset.change(is_premium: false)
-    |> Repo.update()
-  end
-
-  def downgrade_to_free(user_id) when is_integer(user_id) do
-    case get_user(user_id) do
-      nil -> {:error, :not_found}
-      user -> downgrade_to_free(user)
-    end
-  end
 end
