@@ -49,7 +49,7 @@ defmodule Przetargowi.Workers.SendAlerts do
       Logger.info("Found #{length(notices)} notices for #{email}, sending email")
 
       email
-      |> AlertEmail.compose(notices, tender_category)
+      |> AlertEmail.compose(notices, category_label(tender_category))
       |> Mailer.deliver()
       |> case do
         {:ok, _} ->
@@ -73,23 +73,49 @@ defmodule Przetargowi.Workers.SendAlerts do
     |> from(as: :tender_notice)
     |> where(
       [tender_notice: tn],
-      tn.organization_province == ^province_code and
-        tn.order_type == ^order_type and
-        tn.notice_type == "ContractNotice" and
+      tn.notice_type == "ContractNotice" and
         tn.submitting_offers_date >= ^DateTime.utc_now()
     )
+    |> filter_by_province(province_code)
+    |> filter_by_order_type(order_type)
     |> select([tender_notice: tn], tn)
     |> order_by([tender_notice: tn], asc: tn.submitting_offers_date)
     |> limit(10)
     |> Repo.all()
   end
 
+  defp filter_by_province(query, nil), do: query
+
+  defp filter_by_province(query, province_code) do
+    where(query, [tender_notice: tn], tn.organization_province == ^province_code)
+  end
+
+  defp filter_by_order_type(query, nil), do: query
+
+  defp filter_by_order_type(query, order_type) do
+    where(query, [tender_notice: tn], tn.order_type == ^order_type)
+  end
+
+  # The alert form submits the order_type code ("Delivery"/"Services"/"Works"),
+  # which the controller stores verbatim in the rules. Legacy alerts may hold the
+  # Polish label instead, so accept both. Anything else (incl. nil) applies no filter.
   defp to_order_type(tender_category) do
     case tender_category do
+      code when code in ["Delivery", "Services", "Works"] -> code
       "Dostawy" -> "Delivery"
       "Usługi" -> "Services"
       "Roboty budowlane" -> "Works"
       _ -> nil
+    end
+  end
+
+  # Human-readable Polish label for the email subject/body.
+  defp category_label(tender_category) do
+    case to_order_type(tender_category) do
+      "Delivery" -> "Dostawy"
+      "Services" -> "Usługi"
+      "Works" -> "Roboty budowlane"
+      _ -> "wybrane kategorie"
     end
   end
 
