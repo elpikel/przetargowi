@@ -15,6 +15,61 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
     judgement
   end
 
+  describe "GET /orzeczenie/:slug indexability" do
+    test "thin page with no content is marked noindex", %{conn: conn} do
+      judgement = create_judgement(%{})
+
+      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+
+      assert response =~ ~s(<meta name="robots" content="noindex, follow">)
+    end
+
+    test "page with real content stays indexable", %{conn: conn} do
+      judgement = create_judgement(%{content_html: "<p>#{String.duplicate("treść ", 200)}</p>"})
+
+      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+
+      assert response =~ ~s(<meta name="robots" content="index, follow">)
+    end
+  end
+
+  describe "GET /orzeczenie/:slug unique content" do
+    test "renders an original narrative summary", %{conn: conn} do
+      judgement =
+        create_judgement(%{
+          content_html: "<p>#{String.duplicate("treść ", 200)}</p>",
+          resolution_method: "oddalone",
+          procedure_type: "przetarg nieograniczony"
+        })
+
+      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+
+      assert response =~ "Streszczenie orzeczenia"
+      assert response =~ "oddaliła odwołanie"
+    end
+
+    test "links related rulings with followable internal links", %{conn: conn} do
+      related =
+        create_judgement(%{
+          content_html: "<p>content</p>",
+          issuing_authority: "KIO",
+          thematic_issues: ["rażąco niska cena"]
+        })
+
+      judgement =
+        create_judgement(%{
+          content_html: "<p>#{String.duplicate("treść ", 200)}</p>",
+          issuing_authority: "KIO",
+          thematic_issues: ["rażąco niska cena"]
+        })
+
+      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+
+      assert response =~ "Podobne orzeczenia KIO"
+      assert response =~ "/orzeczenie/#{related.slug}"
+    end
+  end
+
   describe "GET /orzeczenie/:slug metadata links" do
     test "links chairman to an exact chairman filter, not a full-text query", %{conn: conn} do
       judgement = create_judgement(%{chairman: "Maria Kacprzyk"})

@@ -806,6 +806,46 @@ defmodule Przetargowi.Judgements do
   end
 
   @doc """
+  Returns judgements related to the given one for internal linking.
+
+  Prefers rulings that share thematic issues, then falls back to the same
+  issuing authority. Only content-bearing pages with a slug are returned so we
+  never link to thin/empty stubs. These links are followable on purpose — they
+  build crawl paths and topical depth between the pages we want indexed.
+  """
+  def list_related_judgements(judgement, limit \\ 6) do
+    issues = judgement.thematic_issues || []
+
+    match =
+      case judgement.issuing_authority do
+        nil ->
+          dynamic([j], fragment("? && ?::text[]", j.thematic_issues, ^issues))
+
+        authority ->
+          dynamic(
+            [j],
+            fragment("? && ?::text[]", j.thematic_issues, ^issues) or
+              j.issuing_authority == ^authority
+          )
+      end
+
+    Judgement
+    |> where([j], j.id != ^judgement.id and not is_nil(j.slug))
+    |> where([j], not is_nil(j.content_html) or (not is_nil(j.meritum) and j.meritum != ""))
+    |> where(^match)
+    |> order_by([j], desc_nulls_last: j.decision_date)
+    |> limit(^limit)
+    |> select([j], %{
+      slug: j.slug,
+      signature: j.signature,
+      decision_date: j.decision_date,
+      resolution_method: j.resolution_method,
+      meritum: j.meritum
+    })
+    |> Repo.all()
+  end
+
+  @doc """
   Returns recent judgements for display on landing pages.
   """
   def list_recent_judgements(limit \\ 6) do

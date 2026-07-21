@@ -2,6 +2,7 @@ defmodule PrzetargowiWeb.JudgementController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.Judgements
+  alias Przetargowi.Judgements.Summary
 
   defp build_meta_description(judgement) do
     signature = judgement.signature || "orzeczenie"
@@ -24,6 +25,17 @@ defmodule PrzetargowiWeb.JudgementController do
     |> String.trim()
     |> String.slice(0, 155)
     |> Kernel.<>("...")
+  end
+
+  # Thin/empty rulings (no fetched content) are kept out of the index so they
+  # stop dragging the domain's quality signal down. Once content is fetched and
+  # the page carries real value, it becomes indexable again automatically.
+  defp maybe_noindex(conn, judgement) do
+    if Summary.indexable?(judgement) do
+      conn
+    else
+      assign(conn, :meta_robots, "noindex, follow")
+    end
   end
 
   def show(conn, %{"slug" => slug}) do
@@ -60,6 +72,8 @@ defmodule PrzetargowiWeb.JudgementController do
         }
 
         meta_description = build_meta_description(judgement)
+        narrative = Summary.narrative(judgement)
+        related_judgements = Judgements.list_related_judgements(judgement)
         url_identifier = judgement.slug || judgement.id
         canonical_url = "https://przetargowi.pl/orzeczenie/#{url_identifier}"
 
@@ -81,8 +95,11 @@ defmodule PrzetargowiWeb.JudgementController do
         |> assign(:meta_description, meta_description)
         |> assign(:canonical_url, canonical_url)
         |> assign(:og_url, canonical_url)
+        |> maybe_noindex(judgement)
         |> assign(:breadcrumbs, breadcrumbs)
         |> assign(:judgement, view_judgement)
+        |> assign(:narrative, narrative)
+        |> assign(:related_judgements, related_judgements)
         |> render(:show)
     end
   end
