@@ -490,6 +490,39 @@ defmodule Przetargowi.JudgementsTest do
     end
   end
 
+  describe "list_recent_judgements/1" do
+    test "returns newest judgements ordered by decision_date desc nulls last" do
+      {:ok, old} = create_judgement(%{decision_date: ~D[2024-01-01], slug: "old"})
+      {:ok, newest} = create_judgement(%{decision_date: ~D[2026-09-28], slug: "newest"})
+      {:ok, null_date} = create_judgement(%{decision_date: nil, slug: "null-date"})
+
+      result = Judgements.list_recent_judgements(3)
+
+      assert [first, second, third] = result
+      assert first.id == newest.id
+      assert second.id == old.id
+      # null-date goes last, not first
+      assert third.id == null_date.id
+    end
+
+    test "excludes judgements without a slug" do
+      {:ok, with_slug} = create_judgement(%{decision_date: ~D[2026-01-01], slug: "has-slug"})
+      {:ok, no_slug} = create_judgement(%{decision_date: ~D[2026-06-01]})
+
+      # force slug to nil since upsert_from_list may auto-generate one
+      import Ecto.Query
+
+      from(j in Przetargowi.Judgements.Judgement, where: j.id == ^no_slug.id)
+      |> Repo.update_all(set: [slug: nil])
+
+      result = Judgements.list_recent_judgements(10)
+      ids = Enum.map(result, & &1.id)
+
+      assert with_slug.id in ids
+      refute no_slug.id in ids
+    end
+  end
+
   # Helper function to create test judgements
   defp create_judgement(attrs \\ %{}) do
     default_attrs = %{

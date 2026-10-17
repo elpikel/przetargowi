@@ -851,7 +851,7 @@ defmodule Przetargowi.Judgements do
   def list_recent_judgements(limit \\ 6) do
     Judgement
     |> where([j], not is_nil(j.slug))
-    |> order_by([j], desc: j.decision_date)
+    |> order_by([j], desc_nulls_last: j.decision_date)
     |> limit(^limit)
     |> select([j], %{
       id: j.id,
