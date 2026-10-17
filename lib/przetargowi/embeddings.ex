@@ -10,13 +10,22 @@ defmodule Przetargowi.Embeddings do
 
   @doc """
   Creates chunks for a judgement's deliberation text.
-  Deletes existing chunks first, then creates new ones.
+  Skips if chunks already exist.
   """
   def create_chunks_for_judgement(%Judgement{} = judgement) do
-    # Delete existing chunks
-    delete_chunks_for_judgement(judgement.id)
+    existing_count =
+      Chunk
+      |> where([c], c.judgement_id == ^judgement.id)
+      |> Repo.aggregate(:count, :id)
 
-    # Create new chunks
+    if existing_count > 0 do
+      {:ok, :already_chunked}
+    else
+      create_chunks_for_judgement_force(judgement)
+    end
+  end
+
+  defp create_chunks_for_judgement_force(%Judgement{} = judgement) do
     case judgement.deliberation do
       nil ->
         {:ok, []}

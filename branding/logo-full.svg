@@ -1,0 +1,11 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1200" fill="#12233d"/>
+  <svg x="375" y="215" width="450" height="450" viewBox="0 0 32 32"><g fill="none" stroke="#c9a227" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M16 6v12M16 6l-7 2.5v.5l2 6c0 1.5-1.5 2.5-2 2.5s-2-1-2-2.5l2-6v-.5M16 6l7 2.5v.5l-2 6c0 1.5 1.5 2.5 2 2.5s2-1 2-2.5l-2-6v-.5"/>
+  <path d="M12 26h8M16 18v8"/>
+</g></svg>
+  <text x="600" y="850" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif"
+        font-size="150" font-weight="700" letter-spacing="-4" fill="#fefcf8">przetargowi<tspan fill="#c9a227">.pl</tspan></text>
+  <text x="600" y="960" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif"
+        font-size="52" font-weight="400" letter-spacing="6" fill="#c9a227">ORZECZNICTWO KIO · PRZETARGI</text>
+</svg>

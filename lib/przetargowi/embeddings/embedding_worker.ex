@@ -54,6 +54,9 @@ defmodule Przetargowi.Embeddings.EmbeddingWorker do
       results =
         Enum.map(judgements, fn judgement ->
           case Embeddings.create_chunks_for_judgement(judgement) do
+            {:ok, :already_chunked} ->
+              :ok
+
             {:ok, chunks} ->
               Logger.debug("Created #{length(chunks)} chunks for judgement #{judgement.id}")
               :ok
