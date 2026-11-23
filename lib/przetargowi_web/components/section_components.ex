@@ -112,7 +112,13 @@ defmodule PrzetargowiWeb.SectionComponents do
 
   def stat_tiles(assigns) do
     ~H"""
-    <section id={@id} class="grid sm:grid-cols-3 gap-4 mb-8">
+    <section
+      id={@id}
+      class={[
+        "grid gap-4 mb-8",
+        if(length(@items) == 2, do: "sm:grid-cols-2", else: "sm:grid-cols-3")
+      ]}
+    >
       <div :for={{label, value} <- @items} class="card-base p-5">
         <div class="text-sm text-base-content/60 mb-1">{label}</div>
         <div class="text-2xl font-bold text-base-content tabular-nums">{value}</div>

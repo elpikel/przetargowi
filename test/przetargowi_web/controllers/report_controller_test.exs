@@ -52,6 +52,13 @@ defmodule PrzetargowiWeb.ReportControllerTest do
       assert Enum.count(LazyHTML.query(document, "#report-faq details")) > 0
     end
 
+    test "marks Raporty as the active top-menu section", %{conn: conn} do
+      document = page(conn, "/raporty")
+
+      assert LazyHTML.attribute(LazyHTML.query(document, "body"), "data-nav") == ["raporty"]
+      assert "/raporty" in hrefs(document, ~s(nav [data-nav-item="raporty"]))
+    end
+
     test "is indexable with a self-referencing canonical", %{conn: conn} do
       document = page(conn, "/raporty")
 

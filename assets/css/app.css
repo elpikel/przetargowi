@@ -194,6 +194,16 @@ h1 {
   border-bottom: 1px solid #e4e7ec;
 }
 
+/* Active top-menu item: <body data-nav> is set from the request path in root.html.heex */
+body[data-nav="orzecznictwo-kio"] [data-nav-item="orzecznictwo-kio"],
+body[data-nav="przetargi"] [data-nav-item="przetargi"],
+body[data-nav="analiza-rynku"] [data-nav-item="analiza-rynku"],
+body[data-nav="raporty"] [data-nav-item="raporty"],
+body[data-nav="blog"] [data-nav-item="blog"] {
+  color: var(--color-base-content);
+  font-weight: 600;
+}
+
 /* ===== Input Fields ===== */
 
 .search-input {

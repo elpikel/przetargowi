@@ -7,6 +7,23 @@ defmodule PrzetargowiWeb.Layouts do
 
   embed_templates "layouts/*"
 
+  @nav_sections %{
+    "orzecznictwo-kio" => "orzecznictwo-kio",
+    "orzeczenie" => "orzecznictwo-kio",
+    "przetargi" => "przetargi",
+    "analiza-rynku" => "analiza-rynku",
+    "raporty" => "raporty",
+    "blog" => "blog"
+  }
+
+  @doc """
+  Returns the top-menu section the current request belongs to (or `nil`),
+  based on the first path segment. Rendered as `data-nav` on `<body>` so the
+  matching `data-nav-item` link is highlighted via CSS.
+  """
+  def active_nav(%Plug.Conn{path_info: [segment | _]}), do: Map.get(@nav_sections, segment)
+  def active_nav(_conn), do: nil
+
   attr :flash, :map, required: true, doc: "the map of flash messages"
 
   attr :current_scope, :map,
@@ -36,30 +53,35 @@ defmodule PrzetargowiWeb.Layouts do
               <nav class="hidden md:flex items-center gap-7">
                 <a
                   href="/orzecznictwo-kio"
+                  data-nav-item="orzecznictwo-kio"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
                   Orzeczenia
                 </a>
                 <a
                   href="/przetargi"
+                  data-nav-item="przetargi"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
                   Przetargi
                 </a>
                 <a
                   href="/analiza-rynku"
+                  data-nav-item="analiza-rynku"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
                   Analiza rynku
                 </a>
                 <a
                   href="/raporty"
+                  data-nav-item="raporty"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
                   Raporty
                 </a>
                 <a
                   href="/blog"
+                  data-nav-item="blog"
                   class="text-sm font-medium text-base-content/60 hover:text-base-content transition-colors"
                 >
                   Blog
@@ -126,30 +148,35 @@ defmodule PrzetargowiWeb.Layouts do
             <%= unless @hide_nav do %>
               <a
                 href="/orzecznictwo-kio"
+                data-nav-item="orzecznictwo-kio"
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
                 Orzeczenia
               </a>
               <a
                 href="/przetargi"
+                data-nav-item="przetargi"
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
                 Przetargi
               </a>
               <a
                 href="/analiza-rynku"
+                data-nav-item="analiza-rynku"
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
                 Analiza rynku
               </a>
               <a
                 href="/raporty"
+                data-nav-item="raporty"
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
                 Raporty
               </a>
               <a
                 href="/blog"
+                data-nav-item="blog"
                 class="block text-sm font-medium text-base-content/70 hover:text-base-content py-2"
               >
                 Blog

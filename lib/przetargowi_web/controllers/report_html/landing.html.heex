@@ -20,8 +20,7 @@
         items={[
           {"Raportów w archiwum", format_count(@summary.total)},
           {"Najnowszy raport",
-           if(@summary.latest_month, do: format_report_date(@summary.latest_month), else: "—")},
-          {"Województw z własnym raportem", map_size(@summary.by_region)}
+           if(@summary.latest_month, do: format_report_date(@summary.latest_month), else: "—")}
         ]}
       />
 
