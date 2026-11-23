@@ -64,10 +64,7 @@ defmodule PrzetargowiWeb.BlogController do
 
         conn
         |> assign(:page_title, article.title)
-        |> assign(
-          :meta_description,
-          article.meta_description || article.excerpt || String.slice(article.content, 0, 155)
-        )
+        |> assign(:meta_description, article.meta_description)
         |> assign(:canonical_url, canonical_url)
         |> assign(:og_url, canonical_url)
         |> assign(:og_type, "article")
@@ -94,7 +91,7 @@ defmodule PrzetargowiWeb.BlogController do
       "@context" => "https://schema.org",
       "@type" => "Article",
       "headline" => article.title,
-      "description" => article.meta_description || article.excerpt,
+      "description" => article.meta_description,
       "author" => %{
         "@type" => "Organization",
         "name" => article.author,

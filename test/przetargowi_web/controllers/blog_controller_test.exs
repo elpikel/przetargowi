@@ -19,23 +19,8 @@ defmodule PrzetargowiWeb.BlogControllerTest do
   <p>Koniec.</p>
   """
 
-  defp create_article(attrs \\ %{}) do
-    {:ok, article} =
-      Blog.create_article(
-        Map.merge(
-          %{
-            title: "Wadium w przetargu",
-            slug: "wadium-test-#{System.unique_integer([:positive])}",
-            excerpt: "Opis",
-            content: @content,
-            published: true
-          },
-          attrs
-        )
-      )
-
-    article
-  end
+  # A real article that has a FAQ section
+  @slug "wadium-w-przetargu-formy-gwarancja-zwrot-i-zatrzymanie"
 
   describe "BlogHTML.prepare_content/1" do
     test "gives every h2 a linkable id and lists them as the table of contents" do
@@ -72,12 +57,62 @@ defmodule PrzetargowiWeb.BlogControllerTest do
     end
   end
 
-  describe "GET /blog/:slug" do
-    test "renders a table of contents linking to the sections", %{conn: conn} do
-      article = create_article()
+  describe "Blog" do
+    test "loads articles from priv/blog, newest first" do
+      articles = Blog.list_articles(limit: 100)
 
+      assert length(articles) == Blog.count_articles()
+      assert length(articles) == length(Path.wildcard("priv/blog/*.html"))
+
+      dates = Enum.map(articles, & &1.published_at)
+      assert dates == Enum.sort(dates, {:desc, DateTime})
+    end
+
+    test "every article has the fields the pages need" do
+      for article <- Blog.list_articles(limit: 100) do
+        assert article.title != "", article.slug
+        assert article.excerpt not in [nil, ""], article.slug
+        assert article.meta_description not in [nil, ""], article.slug
+        assert article.content =~ "<h2", article.slug
+        assert Blog.get_article_by_slug(article.slug) == article
+      end
+    end
+
+    test "no article links to a retired URL" do
+      for article <- Blog.list_articles(limit: 100) do
+        refute article.content =~ ~s(href="/szukaj), article.slug
+        refute article.content =~ ~s(href="/orzeczenie/), article.slug
+      end
+    end
+
+    test "paginates with limit and offset" do
+      [first, second | _] = Blog.list_articles(limit: 100)
+
+      assert Blog.list_articles(limit: 1) == [first]
+      assert Blog.list_articles(limit: 1, offset: 1) == [second]
+    end
+  end
+
+  describe "GET /blog" do
+    test "lists articles", %{conn: conn} do
+      [newest | _] = Blog.list_articles()
+
+      response = conn |> get(~p"/blog") |> html_response(200)
+
+      assert response =~ "/blog/#{newest.slug}"
+    end
+  end
+
+  describe "GET /blog/:slug" do
+    test "every article renders", %{conn: conn} do
+      for article <- Blog.list_articles(limit: 100) do
+        assert conn |> get(~p"/blog/#{article.slug}") |> html_response(200), article.slug
+      end
+    end
+
+    test "renders a table of contents linking to the sections", %{conn: conn} do
       document =
-        conn |> get(~p"/blog/#{article.slug}") |> html_response(200) |> LazyHTML.from_document()
+        conn |> get(~p"/blog/#{@slug}") |> html_response(200) |> LazyHTML.from_document()
 
       hrefs = document |> LazyHTML.query("#article-toc a") |> LazyHTML.attribute("href")
 
@@ -86,12 +121,10 @@ defmodule PrzetargowiWeb.BlogControllerTest do
     end
 
     test "emits FAQPage structured data when the article has a FAQ section", %{conn: conn} do
-      article = create_article()
-
-      response = conn |> get(~p"/blog/#{article.slug}") |> html_response(200)
+      response = conn |> get(~p"/blog/#{@slug}") |> html_response(200)
 
       assert response =~ ~s("@type":"FAQPage")
-      assert response =~ "Czy wadium można uzupełnić?"
+      assert response =~ "Czy wadium można wnieść gotówką w kasie zamawiającego?"
     end
 
     test "returns 404 for an unknown article instead of redirecting", %{conn: conn} do

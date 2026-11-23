@@ -23,18 +23,11 @@ defmodule PrzetargowiWeb.LlmsControllerTest do
     end
   end
 
-  test "GET /llms.txt lists published blog articles", %{conn: conn} do
-    {:ok, _} =
-      Blog.create_article(%{
-        title: "Testowy poradnik",
-        slug: "testowy-poradnik",
-        excerpt: "Krótki opis",
-        content: "<p>Treść</p>",
-        published: true
-      })
-
+  test "GET /llms.txt lists every blog article", %{conn: conn} do
     body = conn |> get("/llms.txt") |> response(200)
 
-    assert body =~ "[Testowy poradnik](https://przetargowi.pl/blog/testowy-poradnik): Krótki opis"
+    for article <- Blog.list_articles(limit: 50) do
+      assert body =~ "[#{article.title}](https://przetargowi.pl/blog/#{article.slug})"
+    end
   end
 end
