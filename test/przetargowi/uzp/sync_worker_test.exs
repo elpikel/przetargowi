@@ -199,6 +199,33 @@ defmodule Przetargowi.UZP.SyncWorkerTest do
     end
   end
 
+  describe "perform/1 with mode: full" do
+    @tag :capture_log
+    test "still fetches content for known rulings when the list scan fails" do
+      {:ok, _} =
+        Judgements.upsert_from_list(%{
+          uzp_id: "12345",
+          signature: "KIO 1234/24",
+          synced_at: DateTime.utc_now()
+        })
+
+      Przetargowi.UZP.HTTPClientMock
+      |> stub(:post, fn _url, _body -> {:error, %Req.TransportError{reason: :timeout}} end)
+      |> stub(:get, fn url ->
+        if String.contains?(url, "/Home/Details/"),
+          do: {:ok, %{status: 200, body: @details_page_html}},
+          else: {:ok, %{status: 200, body: @content_html}}
+      end)
+
+      # the failed scan is still reported, so the job is retried
+      assert {:error, _} = perform_job(SyncWorker, %{"mode" => "full"})
+
+      judgement = Judgements.get_judgement_by_uzp_id("12345")
+      assert %DateTime{} = judgement.details_synced_at
+      assert judgement.chairman == "Jan Kowalski"
+    end
+  end
+
   describe "job scheduling" do
     test "job is created with correct queue" do
       job_changeset = SyncWorker.new(%{mode: "full"})

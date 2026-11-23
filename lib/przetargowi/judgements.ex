@@ -127,6 +127,13 @@ defmodule Przetargowi.Judgements do
   Updates a judgement with details page data.
   """
   def update_with_details(%Judgement{} = judgement, attrs) do
+    # Storing details is what marks a ruling as fetched; stamp it here so the
+    # marker cannot be forgotten by a caller.
+    attrs =
+      Map.put_new_lazy(attrs, :details_synced_at, fn ->
+        DateTime.truncate(DateTime.utc_now(), :second)
+      end)
+
     judgement
     |> Judgement.details_changeset(attrs)
     |> Repo.update()
@@ -164,7 +171,7 @@ defmodule Przetargowi.Judgements do
       if query != "" do
         base_query |> where([j], ^build_search_conditions(query))
       else
-        base_query
+        browsable(base_query, filters)
       end
 
     base_query
@@ -195,12 +202,24 @@ defmodule Przetargowi.Judgements do
       if query != "" do
         base_query |> where([j], ^build_search_conditions(query))
       else
-        base_query
+        browsable(base_query, filters)
       end
 
     base_query
     |> apply_filters(filters)
     |> Repo.aggregate(:count, :id)
+  end
+
+  # Rulings appear in the source list a while before their content is fetched.
+  # Until then they have nothing to show, so they are left out of browsing
+  # lists; searching for one by signature still finds it.
+  defp browsable(query), do: where(query, [j], not is_nil(j.details_synced_at))
+
+  # Applies to plain browsing only; an explicit filter is a search.
+  defp browsable(query, filters) do
+    if Enum.all?(filters, fn {_key, value} -> value in [nil, ""] end),
+      do: browsable(query),
+      else: query
   end
 
   defp build_search_conditions(query) do
@@ -718,6 +737,75 @@ defmodule Przetargowi.Judgements do
     |> Repo.aggregate(:count)
   end
 
+  @normalized_resolution_methods [
+    "oddalone",
+    "uwzględnione",
+    "uwzględnione w części",
+    "umorzone",
+    "umorzone (wycofanie)",
+    "umorzone (uwzględnienie zarzutów)",
+    "odrzucone",
+    "zwrócone",
+    "postanowienie",
+    "odmowa uchylenia zakazu",
+    "uchylenie zakazu"
+  ]
+
+  @doc """
+  Rewrites non-standard resolution methods to their standard form and returns
+  the number of rulings changed.
+  """
+  def renormalize_resolution_methods do
+    renormalize(
+      :resolution_method,
+      @normalized_resolution_methods,
+      &normalize_resolution_method/1
+    )
+  end
+
+  @doc """
+  Rewrites non-standard procedure types to their standard form and returns the
+  number of rulings changed.
+  """
+  def renormalize_procedure_types do
+    renormalize(:procedure_type, @normalized_procedure_types, &normalize_procedure_type/1)
+  end
+
+  # Works value by value rather than row by row: each distinct non-standard
+  # value is normalized once and written with a single UPDATE. A value the
+  # normalizer does not recognise comes back unchanged and is left alone.
+  #
+  # This always finishes. The earlier row-batch loop ("fetch 100 rulings that
+  # need fixing, fix them, repeat until none are left") never did once a
+  # single unrecognised value existed: those rulings still "needed fixing"
+  # after every pass, so the daily sync job spun forever.
+  defp renormalize(field, standard_values, normalizer) do
+    Judgement
+    |> where([j], not is_nil(field(j, ^field)) and field(j, ^field) not in ^standard_values)
+    |> distinct(true)
+    |> select([j], field(j, ^field))
+    |> Repo.all()
+    |> Enum.reduce(0, fn value, changed ->
+      case normalizer.(value) do
+        ^value ->
+          changed
+
+        normalized ->
+          {count, _} =
+            Judgement
+            |> where([j], field(j, ^field) == ^value)
+            |> Repo.update_all(
+              set: [
+                {field, normalized},
+                {:updated_at, DateTime.truncate(DateTime.utc_now(), :second)}
+              ]
+            )
+
+          changed + count
+      end
+    end)
+  end
+
   @doc """
   Updates procedure type by judgement ID.
   """
@@ -877,6 +965,7 @@ defmodule Przetargowi.Judgements do
   def list_recent_judgements(limit \\ 6) do
     Judgement
     |> where([j], not is_nil(j.slug))
+    |> browsable()
     |> order_by([j], desc_nulls_last: j.decision_date)
     |> limit(^limit)
     |> select([j], %{

@@ -341,8 +341,8 @@ defmodule Przetargowi.JudgementsTest do
     end
 
     test "ignores empty filter values" do
-      {:ok, j1} = create_judgement(%{document_type: "Wyrok"})
-      {:ok, j2} = create_judgement(%{document_type: "Postanowienie"})
+      {:ok, j1} = create_fetched_judgement(%{document_type: "Wyrok"})
+      {:ok, j2} = create_fetched_judgement(%{document_type: "Postanowienie"})
 
       result =
         Judgements.search_judgements("", filters: %{document_type: "", issuing_authority: ""})
@@ -594,11 +594,74 @@ defmodule Przetargowi.JudgementsTest do
     end
   end
 
+  describe "renormalizing stored values" do
+    defp with_details(details) do
+      {:ok, judgement} = create_judgement()
+      {:ok, judgement} = Judgements.update_with_details(judgement, details)
+      judgement
+    end
+
+    test "rewrites known variants and leaves standard values alone" do
+      variant = with_details(%{resolution_method: "Oddala"})
+      standard = with_details(%{resolution_method: "uwzględnione"})
+
+      assert Judgements.renormalize_resolution_methods() == 1
+
+      assert Judgements.get_judgement(variant.id).resolution_method == "oddalone"
+      assert Judgements.get_judgement(standard.id).resolution_method == "uwzględnione"
+    end
+
+    test "finishes when a value is not recognised, leaving it as it is" do
+      unknown = with_details(%{resolution_method: "wyrok oddalone"})
+      odd_procedure = with_details(%{procedure_type: "tryb nieznany"})
+
+      assert Judgements.renormalize_resolution_methods() == 0
+      assert Judgements.renormalize_procedure_types() == 0
+
+      assert Judgements.get_judgement(unknown.id).resolution_method == "wyrok oddalone"
+      assert Judgements.get_judgement(odd_procedure.id).procedure_type == "tryb nieznany"
+    end
+
+    test "rewrites procedure type variants" do
+      judgement = with_details(%{procedure_type: "Przetarg podstawowy"})
+
+      assert Judgements.renormalize_procedure_types() == 1
+      assert Judgements.get_judgement(judgement.id).procedure_type == "tryb podstawowy"
+    end
+  end
+
+  describe "rulings whose content has not been fetched yet" do
+    test "are left out of browsing lists but found by a search" do
+      {:ok, fetched} = create_fetched_judgement(%{signature: "KIO 100/26"})
+      {:ok, pending} = create_judgement(%{signature: "KIO 200/26"})
+
+      browse = Enum.map(Judgements.search_judgements(""), & &1.id)
+      assert fetched.id in browse
+      refute pending.id in browse
+      assert Judgements.count_search_results("") == 1
+
+      recent = Enum.map(Judgements.list_recent_judgements(10), & &1.id)
+      assert fetched.id in recent
+      refute pending.id in recent
+
+      assert [found] = Judgements.search_judgements("KIO 200/26")
+      assert found.id == pending.id
+    end
+
+    test "storing details marks a ruling as fetched" do
+      {:ok, judgement} = create_judgement()
+      assert judgement.details_synced_at == nil
+
+      {:ok, judgement} = Judgements.update_with_details(judgement, %{chairman: "Jan Kowalski"})
+      assert %DateTime{} = judgement.details_synced_at
+    end
+  end
+
   describe "list_recent_judgements/1" do
     test "returns newest judgements ordered by decision_date desc nulls last" do
-      {:ok, old} = create_judgement(%{decision_date: ~D[2024-01-01], slug: "old"})
-      {:ok, newest} = create_judgement(%{decision_date: ~D[2026-09-28], slug: "newest"})
-      {:ok, null_date} = create_judgement(%{decision_date: nil, slug: "null-date"})
+      {:ok, old} = create_fetched_judgement(%{decision_date: ~D[2024-01-01], slug: "old"})
+      {:ok, newest} = create_fetched_judgement(%{decision_date: ~D[2026-09-28], slug: "newest"})
+      {:ok, null_date} = create_fetched_judgement(%{decision_date: nil, slug: "null-date"})
 
       result = Judgements.list_recent_judgements(3)
 
@@ -610,8 +673,10 @@ defmodule Przetargowi.JudgementsTest do
     end
 
     test "excludes judgements without a slug" do
-      {:ok, with_slug} = create_judgement(%{decision_date: ~D[2026-01-01], slug: "has-slug"})
-      {:ok, no_slug} = create_judgement(%{decision_date: ~D[2026-06-01]})
+      {:ok, with_slug} =
+        create_fetched_judgement(%{decision_date: ~D[2026-01-01], slug: "has-slug"})
+
+      {:ok, no_slug} = create_fetched_judgement(%{decision_date: ~D[2026-06-01]})
 
       # force slug to nil since upsert_from_list may auto-generate one
       import Ecto.Query
@@ -628,6 +693,12 @@ defmodule Przetargowi.JudgementsTest do
   end
 
   # Helper function to create test judgements
+  # A ruling whose details have been stored, as the sync leaves it
+  defp create_fetched_judgement(attrs) do
+    {:ok, judgement} = create_judgement(attrs)
+    Judgements.update_with_details(judgement, %{})
+  end
+
   defp create_indexable_judgement do
     {:ok, judgement} = create_judgement()
     Judgements.update_with_details(judgement, %{meritum: String.duplicate("istota sprawy ", 10)})

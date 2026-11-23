@@ -45,15 +45,21 @@ defmodule Przetargowi.UZP.SyncWorker do
     end
   end
 
+  # The list scan can fail part-way (the source site times out now and then).
+  # Rulings found before the failure must still get their content, otherwise
+  # they sit in the database as empty pages until a later run happens to
+  # succeed. So the content fetch always runs; a list failure is reported at
+  # the end, which makes Oban retry the job and the scan resume.
   defp sync_full(args) do
-    with :ok <- sync_list_pages(args),
-         :ok <- sync_details(),
+    list_result = sync_list_pages(args)
+
+    with :ok <- sync_details(),
          :ok <- fix_document_types(),
          :ok <- fix_resolution_methods(),
          :ok <- fix_procedure_types() do
       Logger.info("SyncWorker completed, enqueueing EmbeddingWorker")
       Oban.insert(EmbeddingWorker.new(%{}))
-      :ok
+      list_result
     end
   end
 
@@ -394,85 +400,15 @@ defmodule Przetargowi.UZP.SyncWorker do
   end
 
   defp fix_resolution_methods do
-    Logger.info("Starting resolution method fix")
-    total = Judgements.count_judgements_needing_resolution_method_fix()
-    Logger.info("Found #{total} judgements needing resolution method fix")
-
-    fix_resolution_method_batch(1, 0)
-  end
-
-  defp fix_resolution_method_batch(batch_num, total_fixed) do
-    judgements = Judgements.judgements_needing_resolution_method_fix(100)
-
-    if length(judgements) == 0 do
-      Logger.info("Resolution method fix completed, total fixed: #{total_fixed}")
-      :ok
-    else
-      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
-
-      results =
-        Enum.map(judgements, fn %{id: id, resolution_method: resolution_method} ->
-          normalized = Judgements.normalize_resolution_method(resolution_method)
-
-          case Judgements.update_resolution_method_by_id(id, normalized) do
-            {:ok, _} ->
-              print_progress(".")
-              :ok
-
-            {:error, reason} ->
-              print_progress("x")
-              Logger.warning("Failed to update resolution method for #{id}: #{inspect(reason)}")
-              {:error, reason}
-          end
-        end)
-
-      IO.puts("")
-      success_count = Enum.count(results, &(&1 == :ok))
-      Logger.info("Batch completed: #{success_count} fixed")
-
-      fix_resolution_method_batch(batch_num + 1, total_fixed + success_count)
-    end
+    changed = Judgements.renormalize_resolution_methods()
+    Logger.info("Resolution method fix completed, #{changed} judgements changed")
+    :ok
   end
 
   defp fix_procedure_types do
-    Logger.info("Starting procedure type fix")
-    total = Judgements.count_judgements_needing_procedure_type_fix()
-    Logger.info("Found #{total} judgements needing procedure type fix")
-
-    fix_procedure_type_batch(1, 0)
-  end
-
-  defp fix_procedure_type_batch(batch_num, total_fixed) do
-    judgements = Judgements.judgements_needing_procedure_type_fix(100)
-
-    if length(judgements) == 0 do
-      Logger.info("Procedure type fix completed, total fixed: #{total_fixed}")
-      :ok
-    else
-      IO.puts("\n[Batch #{batch_num}] Processing #{length(judgements)} judgements...")
-
-      results =
-        Enum.map(judgements, fn %{id: id, procedure_type: procedure_type} ->
-          normalized = Judgements.normalize_procedure_type(procedure_type)
-
-          case Judgements.update_procedure_type_by_id(id, normalized) do
-            {:ok, _} ->
-              print_progress(".")
-              :ok
-
-            {:error, reason} ->
-              print_progress("x")
-              Logger.warning("Failed to update procedure type for #{id}: #{inspect(reason)}")
-              {:error, reason}
-          end
-        end)
-
-      IO.puts("")
-      success_count = Enum.count(results, &(&1 == :ok))
-      Logger.info("Batch completed: #{success_count} fixed")
-
-      fix_procedure_type_batch(batch_num + 1, total_fixed + success_count)
-    end
+    changed = Judgements.renormalize_procedure_types()
+    Logger.info("Procedure type fix completed, #{changed} judgements changed")
+    :ok
   end
 
   defp print_progress(char) do

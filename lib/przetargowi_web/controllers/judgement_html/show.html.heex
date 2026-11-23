@@ -73,8 +73,20 @@
             <% else %>
               <div class="bg-base-200/50 rounded-xl p-6 border border-base-300 text-center flex-1 flex flex-col items-center justify-center">
                 <.icon name="hero-document" class="size-12 text-base-content/30 mb-3" />
-                <p class="text-base-content/50">Treść dokumentu nie została jeszcze pobrana.</p>
-                <p class="text-sm text-base-content/40 mt-1">Spróbuj ponownie później.</p>
+                <p class="text-base-content/70">
+                  Treść tego orzeczenia nie została jeszcze pobrana z bazy Urzędu Zamówień Publicznych.
+                </p>
+                <p class="text-sm text-base-content/60 mt-1">
+                  Zwykle pojawia się w ciągu doby. Do tego czasu orzeczenie jest dostępne <a
+                    href={@judgement.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    class="text-primary hover:underline"
+                    id="judgement-source-link"
+                  >
+                    w bazie UZP
+                  </a>.
+                </p>
               </div>
             <% end %>
           </div>
@@ -298,7 +310,7 @@
                       class="block hover:text-primary transition-colors"
                     >
                       <span class="font-medium text-base-content">
-                        {related.signature}
+                        {Przetargowi.Judgements.Judgement.display_signature(related.signature)}
                       </span>
                       <%= if related.decision_date do %>
                         <span class="block text-xs text-base-content/50">

@@ -166,18 +166,24 @@ defmodule PrzetargowiWeb.SectionComponents do
       "result-card group relative focus-within:border-primary",
       if(@compact, do: "p-5", else: "p-5 sm:p-6")
     ]}>
-      <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-2">
-        <h3 class={["font-semibold", if(@compact, do: "text-base", else: "text-lg")]}>
-          <a
-            href={@href}
-            class="text-primary group-hover:underline underline-offset-4 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
-          >
-            {@title}
-          </a>
-        </h3>
-        <div :if={@meta != []} class="flex flex-wrap items-center gap-3 text-sm text-base-content/60">
-          {render_slot(@meta)}
-        </div>
+      <%!-- Title on its own line: tender titles run long, and sharing the row
+           with the date squeezed them into half the card. --%>
+      <h3 class={[
+        "font-semibold [text-wrap:pretty]",
+        if(@compact, do: "text-base", else: "text-lg")
+      ]}>
+        <a
+          href={@href}
+          class="text-primary group-hover:underline underline-offset-4 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+        >
+          {@title}
+        </a>
+      </h3>
+      <div
+        :if={@meta != []}
+        class="mt-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/60"
+      >
+        {render_slot(@meta)}
       </div>
       <div class="text-base-content/70 leading-relaxed">{render_slot(@inner_block)}</div>
       <div class="mt-3 flex flex-wrap items-center justify-between gap-3">

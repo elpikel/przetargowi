@@ -59,7 +59,8 @@ defmodule PrzetargowiWeb.JudgementController do
           deliberation: judgement.deliberation,
           meritum: judgement.meritum,
           content_html: judgement.content_html,
-          pdf_url: judgement.pdf_url
+          pdf_url: judgement.pdf_url,
+          source_url: "https://orzeczenia.uzp.gov.pl/Home/Details/#{judgement.uzp_id}"
         }
 
         topics = Topics.for_issues(view_judgement.thematic_issues)

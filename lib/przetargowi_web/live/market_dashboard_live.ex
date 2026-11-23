@@ -310,6 +310,10 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
                     this.input.addEventListener("focus", open)
                     this.input.addEventListener("click", open)
 
+                    // Clicked before the page finished connecting: the field already
+                    // has focus, so no focus or click event is coming. Open it now.
+                    if (document.activeElement === this.input) open()
+
                     this.input.addEventListener("input", () => {
                       this.isOpen = true
                       clearTimeout(this.timer)
