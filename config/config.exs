@@ -86,6 +86,9 @@ config :przetargowi, Oban,
   queues: [default: 10, uzp_sync: 1, embeddings: 1, tenders: 1, documents: 1, alerts: 5],
   plugins: [
     Oban.Plugins.Pruner,
+    # Returns jobs stuck in `executing` (e.g. killed by a deploy) to the queue.
+    # The longest job, the daily rulings sync, normally finishes well within this.
+    {Oban.Plugins.Lifeline, rescue_after: :timer.hours(2)},
     {Oban.Plugins.Cron,
      crontab: [
        {"0 6 * * *", Przetargowi.UZP.SyncWorker, args: %{mode: "full"}},

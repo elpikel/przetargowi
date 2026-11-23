@@ -4,123 +4,163 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
   alias Przetargowi.Cpv
   alias Przetargowi.MarketAnalysis
 
+  @faqs [
+    %{
+      question: "Skąd pochodzą dane w analizie rynku?",
+      answer:
+        "Z ogłoszeń publikowanych w Biuletynie Zamówień Publicznych: ogłoszeń o zamówieniu, o wyniku postępowania i o wykonaniu umowy. Analiza obejmuje do tysiąca najnowszych rozstrzygniętych postępowań w wybranej branży i województwie."
+    },
+    %{
+      question: "Jak sprawdzić, kto wygrywa przetargi w mojej branży?",
+      answer:
+        "Wybierz branżę według kodu CPV i, opcjonalnie, województwo. Zobaczysz listę wykonawców z największą liczbą podpisanych umów, łączną wartość ich kontraktów oraz zamawiających, którzy ogłaszają najwięcej postępowań."
+    },
+    %{
+      question: "Co oznacza odsetek postępowań tylko z kryterium ceny?",
+      answer:
+        "To udział ogłoszeń, w których cena jest jedynym kryterium oceny ofert. Im jest wyższy, tym bardziej o wyniku decyduje sama cena, a mniej doświadczenie, termin czy gwarancja."
+    },
+    %{
+      question: "Czym jest kod CPV?",
+      answer:
+        "CPV (Wspólny Słownik Zamówień) to unijna klasyfikacja przedmiotu zamówienia. Każde ogłoszenie ma kod główny, np. 45 oznacza roboty budowlane, 33 — urządzenia medyczne i farmaceutyki, 72 — usługi informatyczne."
+    },
+    %{
+      question: "Czy analiza rynku jest bezpłatna?",
+      answer: "Tak. Analiza jest dostępna bezpłatnie i nie wymaga rejestracji."
+    }
+  ]
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:page_title, "Analiza Rynku Przetargów Publicznych")
+     |> assign(:page_title, "Analiza rynku przetargów — kto wygrywa zamówienia publiczne")
      |> assign(
        :meta_description,
-       "Sprawdź rynek zamówień publicznych w Polsce. Analiza branż, wykonawców, zamawiających i trendów przetargowych wg kodów CPV i województw."
+       "Sprawdź rynek zamówień publicznych w Polsce: kto wygrywa przetargi, za ile, którzy zamawiający ogłaszają najwięcej i jakie kryteria stosują — według branży (CPV) i województwa."
      )
      |> assign(:canonical_url, "https://przetargowi.pl/analiza-rynku")
+     |> assign(:faqs, @faqs)
      |> assign(:province, "")
-     |> assign(:cpv_query, "")
      |> assign(:cpv_prefix, nil)
      |> assign(:cpv_code, nil)
+     |> assign(:cpv_label, "")
      |> assign(:cpv_suggestions, [])
-     |> assign(:show_suggestions, false)
+     |> assign(:cpv_open, false)
+     |> assign(:cpv_error, false)
      |> assign(:analysis, nil)
      |> assign(:loading, false)}
   end
 
+  # The URL is the state: every change of province or industry patches it, and
+  # this callback (re)runs the analysis. With no industry in the URL the first
+  # one on the list is used, so the page never opens empty.
   @impl true
   def handle_params(params, _uri, socket) do
-    province = params["wojewodztwo"] || ""
-    cpv_param = params["cpv"] || ""
+    province = valid_province(params["wojewodztwo"])
 
-    socket = assign(socket, :province, province)
+    case resolve_cpv(params["cpv"]) do
+      {:ok, {prefix, code, label}} ->
+        {:noreply,
+         socket
+         |> assign(:province, province)
+         |> assign(:cpv_prefix, prefix)
+         |> assign(:cpv_code, code)
+         |> assign(:cpv_label, label)
+         |> assign(:cpv_open, false)
+         |> assign(:cpv_error, false)
+         |> assign(:loading, true)
+         |> start_async(:analyze, fn -> MarketAnalysis.analyze(prefix, province) end)}
 
-    socket =
-      if cpv_param != "" do
-        # Resolve full code and prefix from whatever was in the URL
-        {prefix, full_code, label} = resolve_cpv(cpv_param)
-
-        socket
-        |> assign(:cpv_query, label)
-        |> assign(:cpv_prefix, prefix)
-        |> assign(:cpv_code, full_code)
-        |> assign(:loading, true)
-        |> start_async(:analyze, fn -> MarketAnalysis.analyze(prefix, province) end)
-      else
-        assign(socket, :cpv_query, "")
-      end
-
-    {:noreply, socket}
+      :error ->
+        {:noreply,
+         socket
+         |> assign(:province, province)
+         |> assign(:cpv_prefix, nil)
+         |> assign(:cpv_code, nil)
+         |> assign(:cpv_label, "")
+         |> assign(:cpv_open, false)
+         |> assign(:cpv_error, true)
+         |> assign(:analysis, nil)
+         |> assign(:loading, false)}
+    end
   end
 
-  defp resolve_cpv(code) do
-    case Cpv.find(code) do
-      {prefix, full_code, desc} -> {prefix, full_code, "#{full_code} — #{desc}"}
-      nil -> {code, code, code}
+  defp valid_province(code) do
+    if Enum.any?(MarketAnalysis.provinces(), fn {known, _name} -> known == code end),
+      do: code,
+      else: ""
+  end
+
+  defp default_cpv, do: List.first(Cpv.all())
+
+  defp resolve_cpv(param) when param in [nil, ""], do: {:ok, labelled(default_cpv())}
+
+  defp resolve_cpv(param) do
+    case Cpv.find(param) do
+      nil ->
+        # Older links carried a bare numeric prefix that is not on the list
+        digits = String.replace(param, ~r/[^0-9]/, "")
+        if String.length(digits) >= 2, do: {:ok, {digits, digits, digits}}, else: :error
+
+      entry ->
+        {:ok, labelled(entry)}
     end
+  end
+
+  defp labelled({prefix, code, description}), do: {prefix, code, "#{code} — #{description}"}
+
+  defp analysis_path(province, cpv_code) do
+    {_prefix, default_code, _desc} = default_cpv()
+
+    params =
+      %{}
+      |> then(&if(cpv_code in [nil, default_code], do: &1, else: Map.put(&1, :cpv, cpv_code)))
+      |> then(&if(province == "", do: &1, else: Map.put(&1, :wojewodztwo, province)))
+
+    ~p"/analiza-rynku?#{params}"
   end
 
   @impl true
-  def handle_event("filter", params, socket) do
-    province = params["province"] || socket.assigns.province
-    cpv_query = params["cpv_query"] || socket.assigns.cpv_query
-    cpv_code = socket.assigns[:cpv_code]
-
-    # Use stored full code from autocomplete selection, or extract from input
-    cpv_for_url =
-      cond do
-        cpv_code && cpv_code != "" -> cpv_code
-        true -> extract_cpv_prefix(cpv_query)
-      end
-
-    if cpv_for_url do
-      {:noreply,
-       socket
-       |> assign(:show_suggestions, false)
-       |> push_patch(to: ~p"/analiza-rynku?#{%{wojewodztwo: province, cpv: cpv_for_url}}")}
-    else
-      {:noreply,
-       socket
-       |> assign(:province, province)
-       |> assign(:cpv_query, cpv_query)
-       |> assign(:analysis, nil)}
-    end
+  def handle_event("province", %{"province" => province}, socket) do
+    {:noreply,
+     push_patch(socket, to: analysis_path(valid_province(province), socket.assigns.cpv_code))}
   end
 
-  def handle_event("cpv_search", %{"cpv_query" => query}, socket) do
-    limit = if String.trim(query) == "", do: 100, else: 15
-    suggestions = Cpv.search(query, limit)
-
+  # Opening the list shows every industry, whatever is currently selected
+  def handle_event("cpv_open", _params, socket) do
     {:noreply,
      socket
-     |> assign(:cpv_query, query)
-     |> assign(:cpv_suggestions, suggestions)
-     |> assign(:show_suggestions, suggestions != [])}
+     |> assign(:cpv_suggestions, Cpv.all())
+     |> assign(:cpv_open, true)
+     |> assign(:cpv_error, false)}
   end
 
-  # Fallback for form-level change events
-  def handle_event("cpv_search", _params, socket) do
-    {:noreply, socket}
-  end
+  def handle_event("cpv_search", %{"query" => query}, socket) do
+    suggestions =
+      if String.trim(query) == "", do: Cpv.all(), else: Cpv.search(query, 30)
 
-  def handle_event("cpv_focus", _params, socket) do
-    query = socket.assigns.cpv_query
-    limit = if query == "" or query == nil, do: 100, else: 15
-    suggestions = Cpv.search(query, limit)
-
-    {:noreply,
-     socket
-     |> assign(:cpv_suggestions, suggestions)
-     |> assign(:show_suggestions, true)}
+    {:noreply, socket |> assign(:cpv_suggestions, suggestions) |> assign(:cpv_open, true)}
   end
 
   def handle_event("cpv_close", _params, socket) do
-    {:noreply, assign(socket, :show_suggestions, false)}
+    {:noreply, assign(socket, :cpv_open, false)}
   end
 
-  def handle_event("cpv_select", %{"prefix" => prefix, "code" => code, "desc" => desc}, socket) do
-    {:noreply,
-     socket
-     |> assign(:cpv_query, "#{code} — #{desc}")
-     |> assign(:cpv_prefix, prefix)
-     |> assign(:cpv_code, code)
-     |> assign(:show_suggestions, false)}
+  def handle_event("cpv_select", %{"code" => code}, socket) do
+    {:noreply, push_patch(socket, to: analysis_path(socket.assigns.province, code))}
+  end
+
+  # Enter picks the best match for what was typed; nothing matching is an error
+  def handle_event("cpv_enter", %{"query" => query}, socket) do
+    case String.trim(query) != "" && Cpv.search(query, 1) do
+      [{_prefix, code, _desc}] ->
+        {:noreply, push_patch(socket, to: analysis_path(socket.assigns.province, code))}
+
+      _ ->
+        {:noreply, socket |> assign(:cpv_open, false) |> assign(:cpv_error, true)}
+    end
   end
 
   @impl true
@@ -134,17 +174,6 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
 
   def handle_async(:analyze, {:exit, _reason}, socket) do
     {:noreply, assign(socket, loading: false)}
-  end
-
-  defp extract_cpv_prefix(query) do
-    # Handle "45 — Roboty budowlane" format from autocomplete
-    cleaned =
-      query
-      |> String.split(~r/[\s—\-]/, parts: 2)
-      |> List.first("")
-      |> String.replace(~r/[^0-9]/, "")
-
-    if String.length(cleaned) >= 2, do: cleaned, else: nil
   end
 
   defp serialize_for_js(analysis) do
@@ -168,112 +197,205 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={assigns[:current_scope]}>
       <div class="hero-backdrop min-h-screen bg-base-200">
-        <div class="container mx-auto px-4 py-8 max-w-7xl">
-          <h1 class="text-3xl font-bold mb-2">Analiza Rynku Przetargów</h1>
-          <p class="text-base-content/60 mb-8">
-            Wybierz województwo i kod CPV, aby zobaczyć analizę rynku zamówień publicznych.
-          </p>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <.hub_header
+            crumbs={[{"Strona główna", "/"}, {"Analiza rynku", nil}]}
+            title="Analiza rynku przetargów"
+            lead="Sprawdź, kto wygrywa zamówienia publiczne w Twojej branży i regionie, za ile, którzy zamawiający ogłaszają najwięcej postępowań i jakie kryteria oceny ofert stosują."
+          />
 
-          <form phx-submit="filter" class="card bg-base-100 shadow-md mb-8">
-            <div class="card-body">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div class="form-control">
-                  <label class="label"><span class="label-text font-medium">Województwo</span></label>
-                  <select name="province" class="select select-bordered w-full" value={@province}>
-                    <%= for {code, name} <- MarketAnalysis.provinces() do %>
-                      <option value={code} selected={code == @province}>{name}</option>
-                    <% end %>
-                  </select>
-                </div>
+          <div class="card-base p-5 mb-8 grid gap-4 md:grid-cols-3" id="analysis-controls">
+            <form phx-change="province" id="province-form">
+              <label
+                for="province-select"
+                class="block text-sm font-medium text-base-content/70 mb-2"
+              >
+                Województwo
+              </label>
+              <select
+                id="province-select"
+                name="province"
+                class="search-input w-full px-4 py-3 rounded-lg"
+              >
+                <option
+                  :for={{code, name} <- MarketAnalysis.provinces()}
+                  value={code}
+                  selected={code == @province}
+                >
+                  {name}
+                </option>
+              </select>
+            </form>
 
-                <div class="form-control relative" phx-click-away="cpv_close">
-                  <label class="label">
-                    <span class="label-text font-medium">Branża / kod CPV</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="cpv-input"
-                    name="cpv_query"
-                    value={@cpv_query}
-                    placeholder="Wpisz kod lub szukaj np. budowlane, informatyczne, medyczne..."
-                    class="input input-bordered w-full"
-                    phx-change="cpv_search"
-                    phx-focus="cpv_focus"
-                    phx-debounce="150"
-                    autocomplete="off"
-                  />
-                  <div
-                    :if={@show_suggestions}
-                    class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-72 overflow-y-auto"
+            <div
+              id="cpv-combobox"
+              phx-hook=".CpvCombobox"
+              data-label={@cpv_label}
+              class="md:col-span-2 relative"
+            >
+              <label for="cpv-input" class="block text-sm font-medium text-base-content/70 mb-2">
+                Branża / kod CPV
+              </label>
+              <input
+                type="text"
+                id="cpv-input"
+                value={@cpv_label}
+                placeholder="Wpisz kod lub nazwę branży, np. budowlane, informatyczne, medyczne…"
+                autocomplete="off"
+                role="combobox"
+                aria-expanded={to_string(@cpv_open)}
+                aria-controls="cpv-options"
+                aria-invalid={to_string(@cpv_error)}
+                class={[
+                  "search-input w-full px-4 py-3 rounded-lg",
+                  @cpv_error && "is-invalid"
+                ]}
+              />
+              <p :if={@cpv_error} id="cpv-error" class="mt-2 text-sm text-error">
+                Nie znaleziono takiej branży. Wybierz pozycję z listy.
+              </p>
+              <ul
+                :if={@cpv_open}
+                id="cpv-options"
+                role="listbox"
+                class="absolute top-full left-0 right-0 z-50 mt-1 p-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-80 overflow-y-auto"
+              >
+                <li :for={{_prefix, full_code, desc} <- @cpv_suggestions}>
+                  <button
+                    type="button"
+                    data-cpv-option
+                    role="option"
+                    aria-selected={to_string(full_code == @cpv_code)}
+                    phx-click="cpv_select"
+                    phx-value-code={full_code}
+                    class={[
+                      "w-full flex gap-3 px-3 py-2 rounded-md text-sm text-left hover:bg-base-200 transition-colors",
+                      full_code == @cpv_code && "bg-primary/5"
+                    ]}
                   >
-                    <ul class="menu menu-sm p-1">
-                      <%= for {prefix, full_code, desc} <- @cpv_suggestions do %>
-                        <li>
-                          <a
-                            href="#"
-                            phx-click="cpv_select"
-                            phx-value-prefix={prefix}
-                            phx-value-code={full_code}
-                            phx-value-desc={desc}
-                            class="flex gap-2"
-                          >
-                            <span class="font-mono text-primary font-medium shrink-0">
-                              {full_code}
-                            </span>
-                            <span class="text-left flex-1 truncate">{desc}</span>
-                          </a>
-                        </li>
-                      <% end %>
-                    </ul>
-                  </div>
-                </div>
+                    <span class="font-mono text-primary font-medium shrink-0">{full_code}</span>
+                    <span class="flex-1 truncate text-base-content/80">{desc}</span>
+                  </button>
+                </li>
+                <li :if={@cpv_suggestions == []} class="px-3 py-2 text-sm text-base-content/60">
+                  Brak pasujących branż
+                </li>
+              </ul>
+              <script :type={Phoenix.LiveView.ColocatedHook} name=".CpvCombobox">
+                // Industry picker. The server renders the option list; this hook only
+                // decides when the list is open and what the text field shows:
+                // opening clears the field and lists everything, leaving without
+                // choosing puts the current selection back.
+                export default {
+                  mounted() {
+                    this.input = this.el.querySelector("input")
+                    this.isOpen = false
+                    this.timer = null
 
-                <button type="submit" class="btn btn-primary">
-                  Analizuj rynek
-                </button>
-              </div>
+                    const open = () => {
+                      if (this.isOpen) return
+                      this.isOpen = true
+                      this.input.value = ""
+                      this.pushEvent("cpv_open", {})
+                    }
+
+                    this.close = () => {
+                      if (!this.isOpen) return
+                      this.isOpen = false
+                      clearTimeout(this.timer)
+                      this.input.value = this.el.dataset.label
+                      this.pushEvent("cpv_close", {})
+                    }
+
+                    this.input.addEventListener("focus", open)
+                    this.input.addEventListener("click", open)
+
+                    this.input.addEventListener("input", () => {
+                      this.isOpen = true
+                      clearTimeout(this.timer)
+                      this.timer = setTimeout(
+                        () => this.pushEvent("cpv_search", {query: this.input.value}),
+                        120
+                      )
+                    })
+
+                    this.input.addEventListener("keydown", event => {
+                      if (event.key === "Escape") {
+                        this.close()
+                        this.input.blur()
+                      } else if (event.key === "Enter") {
+                        event.preventDefault()
+                        clearTimeout(this.timer)
+                        this.isOpen = false
+                        this.pushEvent("cpv_enter", {query: this.input.value})
+                        this.input.blur()
+                      }
+                    })
+
+                    // Choosing an option: the server patches the URL. Leave the field
+                    // so that the next click on it opens the list again.
+                    this.el.addEventListener("click", event => {
+                      if (event.target.closest("[data-cpv-option]")) {
+                        this.isOpen = false
+                        this.input.blur()
+                      }
+                    })
+
+                    this.onOutsidePress = event => {
+                      if (!this.el.contains(event.target)) this.close()
+                    }
+                    document.addEventListener("mousedown", this.onOutsidePress)
+
+                    this.el.addEventListener("focusout", event => {
+                      if (event.relatedTarget && !this.el.contains(event.relatedTarget)) this.close()
+                    })
+                  },
+
+                  // After any server update the closed field shows the selection
+                  updated() {
+                    if (!this.isOpen) this.input.value = this.el.dataset.label
+                  },
+
+                  destroyed() {
+                    document.removeEventListener("mousedown", this.onOutsidePress)
+                    clearTimeout(this.timer)
+                  }
+                }
+              </script>
             </div>
-          </form>
+          </div>
 
           <div :if={@loading} class="flex justify-center py-12">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <span class="loading loading-spinner loading-lg text-primary" id="analysis-loading">
+            </span>
           </div>
 
           <div :if={@analysis && !@loading} id="dashboard-charts" phx-hook="MarketCharts">
-            <!-- Summary cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div class="stat bg-base-100 rounded-box shadow">
-                <div class="stat-title">Zamknięte postępowania</div>
-                <div class="stat-value text-primary">{@analysis.total_tenders}</div>
-                <div class="stat-desc">z wynikami</div>
-              </div>
-              <div class="stat bg-base-100 rounded-box shadow">
-                <div class="stat-title">Podpisane kontrakty</div>
-                <div class="stat-value text-secondary">{@analysis.total_contracts}</div>
-                <div class="stat-desc">z wykonawcami</div>
-              </div>
-              <div class="stat bg-base-100 rounded-box shadow">
-                <div class="stat-title">Aktywne przetargi</div>
-                <div class="stat-value text-accent">{@analysis.total_open}</div>
-                <div class="stat-desc">otwarte ogłoszenia</div>
-              </div>
-              <div class="stat bg-base-100 rounded-box shadow">
-                <div class="stat-title">Tylko kryterium ceny</div>
-                <div class="stat-value">
-                  {if @analysis.criteria.price_only_pct,
-                    do: "#{@analysis.criteria.price_only_pct}%",
-                    else: "b/d"}
-                </div>
-                <div class="stat-desc">postępowań</div>
-              </div>
-            </div>
+            <.stat_tiles
+              id="analysis-figures"
+              items={[
+                {"Rozstrzygnięte postępowania w analizie", @analysis.total_tenders},
+                {"Podpisane umowy z wykonawcami", @analysis.total_contracts},
+                {"Otwarte przetargi w tej branży", @analysis.total_open}
+              ]}
+            />
+            <p class="-mt-4 mb-8 text-sm text-base-content/60" id="analysis-price-only">
+              <%= if @analysis.criteria.price_only_pct do %>
+                W <strong class="text-base-content">{@analysis.criteria.price_only_pct}%</strong>
+                ogłoszeń cena jest jedynym kryterium oceny ofert.
+              <% else %>
+                Brak danych o kryteriach oceny ofert dla tego wyboru.
+              <% end %>
+            </p>
             
     <!-- Charts row 1 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <!-- Top contractors chart -->
-              <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                  <h2 class="card-title text-lg">Top wykonawcy (wygrane kontrakty)</h2>
+              <div class="card-base">
+                <div class="p-6">
+                  <h2 class="text-lg font-semibold text-base-content mb-4">
+                    Top wykonawcy (wygrane kontrakty)
+                  </h2>
                   <canvas id="contractors-chart" phx-update="ignore"></canvas>
                   <p
                     :if={@analysis.top_contractors == []}
@@ -285,9 +407,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
               </div>
               
     <!-- Monthly trends -->
-              <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                  <h2 class="card-title text-lg">Trend miesięczny</h2>
+              <div class="card-base">
+                <div class="p-6">
+                  <h2 class="text-lg font-semibold text-base-content mb-4">Trend miesięczny</h2>
                   <canvas id="trends-chart" phx-update="ignore"></canvas>
                 </div>
               </div>
@@ -296,9 +418,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
     <!-- Charts row 2 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <!-- Criteria analysis -->
-              <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                  <h2 class="card-title text-lg">Kryteria oceny ofert</h2>
+              <div class="card-base">
+                <div class="p-6">
+                  <h2 class="text-lg font-semibold text-base-content mb-4">Kryteria oceny ofert</h2>
                   <canvas id="criteria-chart" phx-update="ignore"></canvas>
                   <p
                     :if={@analysis.criteria.top_criteria == []}
@@ -310,9 +432,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
               </div>
               
     <!-- Price distribution (if available) -->
-              <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                  <h2 class="card-title text-lg">Wartości kontraktów</h2>
+              <div class="card-base">
+                <div class="p-6">
+                  <h2 class="text-lg font-semibold text-base-content mb-4">Wartości kontraktów</h2>
                   <%= if @analysis.price_distribution.count > 0 do %>
                     <canvas id="price-chart" phx-update="ignore"></canvas>
                     <div class="text-sm text-base-content/60 mt-2">
@@ -335,9 +457,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
     <!-- Tables -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <!-- Top contractors table -->
-              <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                  <h2 class="card-title text-lg">Wiodący wykonawcy</h2>
+              <div class="card-base">
+                <div class="p-6">
+                  <h2 class="text-lg font-semibold text-base-content mb-4">Wiodący wykonawcy</h2>
                   <div class="overflow-x-auto">
                     <table class="table table-sm">
                       <thead>
@@ -367,9 +489,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
               </div>
               
     <!-- Top ordering parties table -->
-              <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                  <h2 class="card-title text-lg">Wiodący zamawiający</h2>
+              <div class="card-base">
+                <div class="p-6">
+                  <h2 class="text-lg font-semibold text-base-content mb-4">Wiodący zamawiający</h2>
                   <div class="overflow-x-auto">
                     <table class="table table-sm">
                       <thead>
@@ -397,9 +519,9 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
             </div>
             
     <!-- Segments -->
-            <div class="card bg-base-100 shadow mb-6">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Segmenty zamówień</h2>
+            <div class="card-base mb-6">
+              <div class="p-6">
+                <h2 class="text-lg font-semibold text-base-content mb-4">Segmenty zamówień</h2>
                 <div class="overflow-x-auto">
                   <table class="table">
                     <thead>
@@ -424,9 +546,11 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
             </div>
             
     <!-- Criteria table -->
-            <div :if={@analysis.criteria.top_criteria != []} class="card bg-base-100 shadow mb-6">
-              <div class="card-body">
-                <h2 class="card-title text-lg">Najczęstsze kryteria oceny</h2>
+            <div :if={@analysis.criteria.top_criteria != []} class="card-base mb-6">
+              <div class="p-6">
+                <h2 class="text-lg font-semibold text-base-content mb-4">
+                  Najczęstsze kryteria oceny
+                </h2>
                 <p class="text-sm text-base-content/60 mb-4">
                   Na podstawie {@analysis.criteria.total_tenders_with_criteria} ogłoszeń z określonymi kryteriami.
                 </p>
@@ -460,7 +584,33 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
           </div>
 
           <div :if={!@analysis && !@loading && @cpv_prefix} class="text-center py-12">
-            <p class="text-lg text-base-content/60">Brak danych dla wybranego kodu CPV.</p>
+            <p class="text-lg text-base-content/60">Brak danych dla wybranej branży.</p>
+          </div>
+
+          <div class="mt-14 space-y-10" id="analysis-editorial">
+            <.prose_card
+              id="analysis-overview"
+              title="Jak czytać analizę rynku zamówień publicznych"
+              paragraphs={[
+                "Analiza pokazuje, jak wygląda rynek zamówień publicznych w wybranej branży i województwie: ile postępowań rozstrzygnięto, ile umów podpisano, kto je wygrywał i za jakie kwoty. Powstaje z ogłoszeń Biuletynu Zamówień Publicznych, w tym ogłoszeń o wyniku postępowania i o wykonaniu umowy.",
+                "Lista wiodących wykonawców pozwala ocenić konkurencję przed złożeniem oferty, a lista zamawiających — wskazać instytucje, które regularnie kupują w Twojej branży. Rozkład wartości kontraktów i udział postępowań rozstrzyganych wyłącznie ceną podpowiadają, czy na danym rynku wygrywa się ceną, czy także doświadczeniem i jakością.",
+                "Aktualne postępowania w wybranej branży znajdziesz w wyszukiwarce przetargów, a miesięczne podsumowania dla województw — w raportach przetargowych."
+              ]}
+            />
+            <p class="-mt-4 text-sm">
+              <a href="/przetargi" class="text-primary font-medium hover:underline">
+                Aktualne przetargi publiczne
+              </a>
+              <span class="text-base-content/40 mx-2">·</span>
+              <a href="/raporty" class="text-primary font-medium hover:underline">
+                Raporty przetargowe
+              </a>
+              <span class="text-base-content/40 mx-2">·</span>
+              <a href="/orzecznictwo-kio" class="text-primary font-medium hover:underline">
+                Orzecznictwo KIO
+              </a>
+            </p>
+            <.faq_section id="analysis-faq" faqs={@faqs} />
           </div>
         </div>
       </div>

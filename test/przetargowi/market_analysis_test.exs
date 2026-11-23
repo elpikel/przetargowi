@@ -12,7 +12,7 @@ defmodule Przetargowi.MarketAnalysisTest do
       notice_number: "2026/BZP/#{System.unique_integer([:positive])}",
       bzp_number: "BZP-#{System.unique_integer([:positive])}",
       is_tender_amount_below_eu: true,
-      publication_date: ~U[2026-03-15 10:00:00Z],
+      publication_date: DateTime.add(DateTime.utc_now(), -30, :day) |> DateTime.truncate(:second),
       cpv_codes: ["45000000-7"],
       cpv_main: "45000000-7",
       order_type: "Works",
@@ -57,12 +57,21 @@ defmodule Przetargowi.MarketAnalysisTest do
 
     test "counts open tenders separately" do
       insert_tender!(%{cpv_main: "45000000-7", notice_type: "ContractPerformingNotice"})
-      insert_tender!(%{cpv_main: "45000000-7", notice_type: "ContractNotice"})
-      insert_tender!(%{cpv_main: "45000000-7", notice_type: "ContractNotice"})
+      open_deadline = DateTime.add(DateTime.utc_now(), 14, :day)
+      passed_deadline = DateTime.add(DateTime.utc_now(), -14, :day)
+
+      for deadline <- [open_deadline, open_deadline, passed_deadline] do
+        insert_tender!(%{
+          cpv_main: "45000000-7",
+          notice_type: "ContractNotice",
+          submitting_offers_date: deadline
+        })
+      end
 
       result = MarketAnalysis.analyze("45")
 
       assert result.total_tenders == 1
+      # only contract notices whose deadline has not passed are open
       assert result.total_open == 2
     end
 

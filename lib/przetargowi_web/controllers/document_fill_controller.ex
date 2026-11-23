@@ -18,7 +18,7 @@ defmodule PrzetargowiWeb.DocumentFillController do
         |> redirect(to: ~p"/przetargi")
 
       tender ->
-        documents = Tenders.get_documents_by_tender_id(tender.tender_id)
+        documents = Tenders.list_documents_by_tender_id(tender.tender_id)
         fillable_documents = Enum.filter(documents, &fillable?/1)
         profiles = Profiles.list_profiles_by_user(user.id)
         primary_profile = Profiles.get_primary_profile(user.id)

@@ -751,6 +751,30 @@ defmodule Przetargowi.Tenders do
   # Document functions
 
   @doc """
+  Lists a tender's published documents without their file content.
+
+  `content` holds the downloaded file itself and can be many megabytes per
+  document. Pages that only show names and links must use this function;
+  `get_documents_by_tender_id/1` loads the files and is for filling them in.
+  """
+  def list_documents_by_tender_id(tender_id) do
+    TenderDocument
+    |> from(as: :document)
+    |> where([document: d], d.tender_id == ^tender_id)
+    |> where([document: d], d.state == "Published")
+    |> order_by([document: d], asc: d.published_date)
+    |> select([document: d], %{
+      object_id: d.object_id,
+      tender_id: d.tender_id,
+      name: d.name,
+      file_name: d.file_name,
+      url: d.url,
+      published_date: d.published_date
+    })
+    |> Repo.all()
+  end
+
+  @doc """
   Gets all documents for a tender by tender_id.
   """
   def get_documents_by_tender_id(tender_id) do

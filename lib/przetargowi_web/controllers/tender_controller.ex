@@ -426,7 +426,7 @@ defmodule PrzetargowiWeb.TenderController do
     # Get documents for this tender
     documents =
       if tender.tender_id do
-        Tenders.get_documents_by_tender_id(tender.tender_id)
+        Tenders.list_documents_by_tender_id(tender.tender_id)
       else
         []
       end

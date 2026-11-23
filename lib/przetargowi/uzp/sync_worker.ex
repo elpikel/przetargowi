@@ -4,10 +4,14 @@ defmodule Przetargowi.UZP.SyncWorker do
   Runs daily to fetch new judgements from list pages and their details.
   """
 
+  # Only one sync at a time — but only for six hours. With an unbounded period
+  # a job left in `executing` by a restart mid-run blocked every later daily
+  # job as a "duplicate", silently stopping the sync for good. (Oban's Lifeline
+  # plugin, enabled in config, also rescues such orphaned jobs.)
   use Oban.Worker,
     queue: :uzp_sync,
     max_attempts: 3,
-    unique: [period: :infinity, states: [:available, :scheduled, :executing]]
+    unique: [period: 6 * 60 * 60, states: [:available, :scheduled, :executing]]
 
   alias Przetargowi.Embeddings.EmbeddingWorker
   alias Przetargowi.Judgements
@@ -17,6 +21,12 @@ defmodule Przetargowi.UZP.SyncWorker do
   require Logger
 
   @delay_between_requests 100
+
+  # The source lists rulings newest-published first. One page with nothing new
+  # is not proof that everything older is already stored: a run interrupted
+  # part-way leaves a gap behind pages that were saved. So keep reading until
+  # this many pages in a row (10 rulings each) contain nothing new.
+  @known_pages_before_stop 30
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
@@ -31,12 +41,12 @@ defmodule Przetargowi.UZP.SyncWorker do
       "detect_document_type" -> detect_document_types()
       "fix_resolution_method" -> fix_resolution_methods()
       "fix_procedure_type" -> fix_procedure_types()
-      "full" -> sync_full()
+      "full" -> sync_full(args)
     end
   end
 
-  defp sync_full do
-    with :ok <- sync_list_pages(%{}),
+  defp sync_full(args) do
+    with :ok <- sync_list_pages(args),
          :ok <- sync_details(),
          :ok <- fix_document_types(),
          :ok <- fix_resolution_methods(),
@@ -47,12 +57,13 @@ defmodule Przetargowi.UZP.SyncWorker do
     end
   end
 
-  defp sync_list_pages(_args) do
+  defp sync_list_pages(args) do
     Logger.info("Starting UZP list sync")
+    known_pages_before_stop = Map.get(args, "known_pages", @known_pages_before_stop)
 
     result =
       Stream.iterate(1, &(&1 + 1))
-      |> Enum.reduce_while({:ok, 0, nil}, fn page, {:ok, count, prev_uzp_ids} ->
+      |> Enum.reduce_while({:ok, 0, nil, 0}, fn page, {:ok, count, prev_uzp_ids, known_pages} ->
         Process.sleep(@delay_between_requests)
 
         case sync_page(page) do
@@ -60,17 +71,22 @@ defmodule Przetargowi.UZP.SyncWorker do
             Logger.info("No results on page #{page}, stopping")
             {:halt, {:ok, count}}
 
-          {:ok, _total, 0, _uzp_ids} ->
-            Logger.info("Page #{page}: all judgements already in DB, stopping")
-            {:halt, {:ok, count}}
-
           {:ok, total, new_count, uzp_ids} ->
-            if prev_uzp_ids != nil and MapSet.equal?(prev_uzp_ids, uzp_ids) do
-              Logger.info("Page #{page} same as previous page, stopping")
-              {:halt, {:ok, count}}
-            else
-              Logger.info("Synced page #{page}: #{new_count} new of #{total} judgements")
-              {:cont, {:ok, count + new_count, uzp_ids}}
+            known_pages = if new_count == 0, do: known_pages + 1, else: 0
+
+            cond do
+              prev_uzp_ids != nil and MapSet.equal?(prev_uzp_ids, uzp_ids) ->
+                Logger.info("Page #{page} same as previous page, stopping")
+                {:halt, {:ok, count}}
+
+              known_pages >= known_pages_before_stop ->
+                Logger.info("Page #{page}: #{known_pages} pages in a row already in DB, stopping")
+
+                {:halt, {:ok, count}}
+
+              true ->
+                Logger.info("Synced page #{page}: #{new_count} new of #{total} judgements")
+                {:cont, {:ok, count + new_count, uzp_ids, known_pages}}
             end
 
           {:error, reason} ->

@@ -81,6 +81,72 @@ defmodule Przetargowi.UZP.SyncWorkerTest do
       assert judgement.signature == "KIO 1234/24"
     end
 
+    defp list_page(uzp_id, signature) do
+      """
+      <input type="hidden" value="1,1,0,0,0" id="resultCounts" />
+      <div class="search-list-item">
+        <p><label>Organ wydający:</label> Krajowa Izba Odwoławcza</p>
+        <p><label>Rodzaj dokumentu:</label> Wyrok</p>
+        <p><label>Sygnatura:</label> #{signature}</p>
+        <p><label>Data wydania:</label> 15-12-2024</p>
+        <a class="link-details" href="/Home/Details/#{uzp_id}">Wyświetl szczegóły</a>
+      </div>
+      """
+    end
+
+    defp page_number(body) do
+      [_, page] = Regex.run(~r/Pg=(\d+)/, body)
+      String.to_integer(page)
+    end
+
+    test "reads past a page it already has and picks up a ruling behind it" do
+      {:ok, _} =
+        Judgements.upsert_from_list(%{
+          uzp_id: "100",
+          signature: "KIO 100/24",
+          synced_at: DateTime.utc_now()
+        })
+
+      stub(Przetargowi.UZP.HTTPClientMock, :post, fn _url, body ->
+        html =
+          case page_number(body) do
+            1 -> list_page("100", "KIO 100/24")
+            2 -> list_page("99", "KIO 99/24")
+            _ -> @empty_list_html
+          end
+
+        {:ok, %{status: 200, body: html}}
+      end)
+
+      assert :ok = perform_job(SyncWorker, %{"mode" => "list"})
+
+      assert Judgements.exists_by_uzp_id?("99")
+    end
+
+    test "stops after the configured number of pages in a row with nothing new" do
+      for id <- 1..5 do
+        {:ok, _} =
+          Judgements.upsert_from_list(%{
+            uzp_id: "#{id}",
+            signature: "KIO #{id}/24",
+            synced_at: DateTime.utc_now()
+          })
+      end
+
+      test_pid = self()
+
+      stub(Przetargowi.UZP.HTTPClientMock, :post, fn _url, body ->
+        page = page_number(body)
+        send(test_pid, {:requested, page})
+        {:ok, %{status: 200, body: list_page("#{page}", "KIO #{page}/24")}}
+      end)
+
+      assert :ok = perform_job(SyncWorker, %{"mode" => "list", "known_pages" => 3})
+
+      assert_received {:requested, 3}
+      refute_received {:requested, 4}
+    end
+
     @tag :capture_log
     test "handles HTTP errors gracefully" do
       Przetargowi.UZP.HTTPClientMock

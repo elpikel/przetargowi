@@ -27,20 +27,24 @@ defmodule Przetargowi.MarketAnalysis do
   def analyze(cpv_prefix, province \\ nil) do
     tenders = fetch_closed_tenders(cpv_prefix, province)
     contracts = extract_signed_contracts(tenders)
-    open_tenders = fetch_open_tenders(cpv_prefix, province)
+    notices = fetch_contract_notices(cpv_prefix, province)
 
     %{
       total_tenders: length(tenders),
       total_contracts: length(contracts),
-      total_open: length(open_tenders),
+      total_open: count_open_tenders(cpv_prefix, province),
       price_distribution: compute_price_distribution(contracts),
-      criteria: compute_criteria(open_tenders),
+      criteria: compute_criteria(notices),
       top_contractors: compute_top_contractors(contracts),
       top_ordering_parties: compute_top_ordering_parties(tenders),
       trends: compute_monthly_trends(tenders),
       best_segments: compute_best_segments(tenders)
     }
   end
+
+  # Both queries select only the columns the analysis reads. A full tender
+  # row carries its HTML body and other large fields; loading 2,000 of them
+  # per analysis was what made this page slow.
 
   defp fetch_closed_tenders(cpv_prefix, province) do
     cpv_like = cpv_prefix <> "%"
@@ -52,19 +56,49 @@ defmodule Przetargowi.MarketAnalysis do
     |> order_by([tn: tn], desc: tn.publication_date)
     |> limit(1000)
     |> maybe_filter_province(province)
+    |> select(
+      [tn: tn],
+      struct(tn, [
+        :object_id,
+        :order_type,
+        :publication_date,
+        :organization_name,
+        :organization_city,
+        :contractors_contract_details
+      ])
+    )
     |> Repo.all()
   end
 
-  defp fetch_open_tenders(cpv_prefix, province) do
+  # A sample of the last year's contract notices, for the award-criteria
+  # figures. Deliberately unordered: asking for "the newest 1,000" makes the
+  # database walk the whole publication-date index discarding other industries.
+  defp fetch_contract_notices(cpv_prefix, province) do
+    cpv_like = cpv_prefix <> "%"
+    year_ago = DateTime.add(DateTime.utc_now(), -365, :day)
+
+    TenderNotice
+    |> from(as: :tn)
+    |> where([tn: tn], tn.notice_type == "ContractNotice")
+    |> where([tn: tn], like(tn.cpv_main, ^cpv_like))
+    |> where([tn: tn], tn.publication_date >= ^year_ago)
+    |> limit(1000)
+    |> maybe_filter_province(province)
+    |> select([tn: tn], struct(tn, [:object_id, :kryteria]))
+    |> Repo.all()
+  end
+
+  # Tenders that can still be bid on: contract notices whose deadline has not passed.
+  defp count_open_tenders(cpv_prefix, province) do
     cpv_like = cpv_prefix <> "%"
 
     TenderNotice
     |> from(as: :tn)
     |> where([tn: tn], tn.notice_type == "ContractNotice")
     |> where([tn: tn], like(tn.cpv_main, ^cpv_like))
-    |> limit(1000)
+    |> where([tn: tn], tn.submitting_offers_date >= ^DateTime.utc_now())
     |> maybe_filter_province(province)
-    |> Repo.all()
+    |> Repo.aggregate(:count)
   end
 
   defp maybe_filter_province(query, nil), do: query

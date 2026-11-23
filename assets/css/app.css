@@ -153,7 +153,7 @@ h1 {
 
 .badge-sa {
   background: #2347d9;
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .badge-sn {
@@ -212,6 +212,12 @@ h1 {
   border-color: #2347d9;
   box-shadow: 0 0 0 4px rgba(35, 71, 217, 0.12);
   outline: none;
+}
+
+.search-input.is-invalid,
+.search-input.is-invalid:focus {
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.12);
 }
 
 .search-input::placeholder {
@@ -1041,7 +1047,7 @@ h1 {
 
 .report-ranking-item:nth-child(1) .report-ranking-position {
   background: linear-gradient(135deg, #2347d9 0%, #1d3bb8 100%);
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .report-ranking-item:nth-child(2) .report-ranking-position {
@@ -1147,8 +1153,8 @@ h1 {
 
 .report-upsell-section .upsell-content .cta-button {
   display: inline-block;
-  background: linear-gradient(135deg, #2347d9 0%, #1d3bb8 100%);
-  color: #0f172a;
+  background: #2347d9;
+  color: #ffffff;
   font-family: 'Inter', system-ui, sans-serif;
   font-weight: 600;
   font-size: 1rem;

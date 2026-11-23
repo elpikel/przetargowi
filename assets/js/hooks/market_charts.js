@@ -1,15 +1,16 @@
 import Chart from "chart.js/auto"
 
+// One accent hue plus neutrals, matching the rest of the site
 const COLORS = {
-  primary: "#570df8",
-  secondary: "#f000b8",
-  accent: "#37cdbe",
-  warning: "#fbbd23",
-  info: "#3abff8",
-  success: "#36d399",
+  primary: "#2347d9",
+  secondary: "#0f172a",
+  accent: "#5a78e6",
+  warning: "#b45309",
+  info: "#7c93ec",
+  success: "#15803d",
   bars: [
-    "#570df8", "#f000b8", "#37cdbe", "#fbbd23", "#3abff8",
-    "#36d399", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4"
+    "#2347d9", "#3b5fe0", "#5a78e6", "#7c93ec", "#9fb0f2",
+    "#0f172a", "#334155", "#64748b", "#94a3b8", "#cbd5e1"
   ]
 }
 
