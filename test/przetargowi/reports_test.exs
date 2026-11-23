@@ -221,14 +221,21 @@ defmodule Przetargowi.ReportsTest do
       assert "Delivery" in options.order_types
     end
 
-    test "returns empty lists when no reports exist" do
+    test "offers every filter even when no reports exist" do
       options = Reports.get_filter_options()
 
-      assert options.regions == []
-      assert options.report_types == []
-      assert options.years == []
-      assert options.months == []
-      assert options.order_types == []
+      assert length(options.regions) == 16
+      assert options.report_types == ~w(detailed region_summary industry_summary overall)
+      assert options.years == [Date.utc_today().year]
+      assert options.months == Enum.to_list(1..12)
+      assert options.order_types == ~w(Delivery Services Works)
+    end
+
+    test "lists the years that have reports, newest first" do
+      create_report(%{report_month: ~D[2025-03-01]})
+      create_report(%{region: "slaskie", report_month: ~D[2026-03-01]})
+
+      assert Reports.get_filter_options().years == [2026, 2025]
     end
   end
 

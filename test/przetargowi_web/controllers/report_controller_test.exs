@@ -75,6 +75,30 @@ defmodule PrzetargowiWeb.ReportControllerTest do
     end
   end
 
+  describe "report filters" do
+    test "are all present even when there are no reports yet", %{conn: conn} do
+      document = page(conn, "/raporty?q=")
+
+      for name <- ~w(region report_type year month order_type) do
+        assert Enum.count(LazyHTML.query(document, ~s(select[name="#{name}"]))) == 1, name
+      end
+
+      assert Enum.count(LazyHTML.query(document, ~s(select[name="region"] option))) == 17
+      assert Enum.count(LazyHTML.query(document, ~s(select[name="month"] option))) == 13
+    end
+
+    test "narrow the list", %{conn: conn} do
+      wanted = create_report(%{region: "mazowieckie", order_type: "Works"})
+      other = create_report(%{region: "mazowieckie", order_type: "Delivery"})
+
+      document = page(conn, "/raporty?region=mazowieckie&order_type=Works")
+      links = hrefs(document, "#report-results h3 a")
+
+      assert "/raporty/#{wanted.slug}" in links
+      refute "/raporty/#{other.slug}" in links
+    end
+  end
+
   describe "GET /raporty/:region (hub)" do
     test "lists only that region's reports, newest first", %{conn: conn} do
       older = create_report(%{report_month: ~D[2026-09-30]})

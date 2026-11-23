@@ -27,7 +27,7 @@
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
             <!-- Region filter -->
             <%= if @filter_options.regions != [] do %>
-              <select name="region" class="select select-bordered w-full">
+              <select name="region" class="search-input w-full px-4 py-3 rounded-lg">
                 <option value="">Wszystkie regiony</option>
                 <%= for region <- @filter_options.regions do %>
                   <option value={region} selected={@filters.region == region}>
@@ -39,7 +39,7 @@
             
 <!-- Report type filter -->
             <%= if @filter_options.report_types != [] do %>
-              <select name="report_type" class="select select-bordered w-full">
+              <select name="report_type" class="search-input w-full px-4 py-3 rounded-lg">
                 <option value="">Wszystkie typy</option>
                 <%= for type <- @filter_options.report_types do %>
                   <option value={type} selected={@filters.report_type == type}>
@@ -51,7 +51,7 @@
             
 <!-- Year filter -->
             <%= if @filter_options.years != [] do %>
-              <select name="year" class="select select-bordered w-full">
+              <select name="year" class="search-input w-full px-4 py-3 rounded-lg">
                 <option value="">Wszystkie lata</option>
                 <%= for year <- @filter_options.years do %>
                   <option value={year} selected={@filters.year == to_string(year)}>
@@ -63,7 +63,7 @@
             
 <!-- Month filter -->
             <%= if @filter_options.months != [] do %>
-              <select name="month" class="select select-bordered w-full">
+              <select name="month" class="search-input w-full px-4 py-3 rounded-lg">
                 <option value="">Wszystkie miesiące</option>
                 <%= for month <- @filter_options.months do %>
                   <option value={month} selected={@filters.month == to_string(month)}>
@@ -75,7 +75,7 @@
             
 <!-- Order type filter -->
             <%= if @filter_options.order_types != [] do %>
-              <select name="order_type" class="select select-bordered w-full">
+              <select name="order_type" class="search-input w-full px-4 py-3 rounded-lg">
                 <option value="">Wszystkie kategorie</option>
                 <%= for order_type <- @filter_options.order_types do %>
                   <option value={order_type} selected={@filters.order_type == order_type}>

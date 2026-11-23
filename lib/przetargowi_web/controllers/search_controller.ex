@@ -37,12 +37,16 @@ defmodule PrzetargowiWeb.SearchController do
     filters = extract_filters(params)
 
     case search_mode do
-      "semantic" -> perform_semantic_search(conn, query, filters)
+      # AI search needs something to compare against. Until a query is typed
+      # the page lists the newest rulings, like the keyword mode, instead of
+      # an empty result box.
+      "semantic" when query != "" -> perform_semantic_search(conn, query, filters)
+      "semantic" -> perform_keyword_search(conn, query, filters, page, offset, "semantic")
       _ -> perform_keyword_search(conn, query, filters, page, offset)
     end
   end
 
-  defp perform_keyword_search(conn, query, filters, page, offset) do
+  defp perform_keyword_search(conn, query, filters, page, offset, mode \\ "keyword") do
     # Fetch judgements and count from database
     results =
       Judgements.search_judgements(query, limit: @per_page, offset: offset, filters: filters)
@@ -84,7 +88,7 @@ defmodule PrzetargowiWeb.SearchController do
     |> assign(:meta_robots, "noindex, follow")
     |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:query, query)
-    |> assign(:search_mode, "keyword")
+    |> assign(:search_mode, mode)
     |> assign(:filters, filters)
     |> assign(:filter_options, filter_options)
     |> assign(:results, view_results)
@@ -127,118 +131,93 @@ defmodule PrzetargowiWeb.SearchController do
       %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/orzecznictwo-kio"}
     ]
 
-    if query == "" do
-      # No query for semantic search
-      conn
-      |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka semantyczna z AI")
-      |> assign(
-        :meta_description,
-        "Orzecznictwo KIO wyszukiwarka z AI — znajdź podobne wyroki Krajowej Izby Odwoławczej i orzeczenia zamówień publicznych."
-      )
-      |> assign(:breadcrumbs, breadcrumbs)
-      |> assign(:query, query)
-      |> assign(:search_mode, "semantic")
-      |> assign(:filters, filters)
-      |> assign(:filter_options, filter_options)
-      |> assign(:results, [])
-      |> assign(:total_count, 0)
-      |> assign(:current_page, 1)
-      |> assign(:total_pages, 0)
-      |> assign(:rate_limited, false)
-      |> assign(:semantic_error, nil)
-      |> assign(:recent_judgements, Judgements.list_recent_judgements(6))
-      |> assign(:recent_articles, Blog.list_recent_articles(3))
-      |> assign(:show_seo_content, true)
-      |> render(:index)
-    else
-      # Fetch more results to account for filtering
-      fetch_limit = @semantic_results_limit * 3
+    # Fetch more results to account for filtering
+    fetch_limit = @semantic_results_limit * 3
 
-      case Embeddings.search_similar(query, fetch_limit) do
-        {:ok, chunks} ->
-          # Transform chunks to view format with judgement info
-          view_results =
-            chunks
-            |> transform_semantic_results()
-            |> apply_filters_to_results(filters)
-            |> Enum.take(@semantic_results_limit)
+    case Embeddings.search_similar(query, fetch_limit) do
+      {:ok, chunks} ->
+        # Transform chunks to view format with judgement info
+        view_results =
+          chunks
+          |> transform_semantic_results()
+          |> apply_filters_to_results(filters)
+          |> Enum.take(@semantic_results_limit)
 
-          # Log semantic search query
-          SearchLogs.log_search(%{
-            query: query,
-            source: "kio",
-            filters: Map.put(filters, :mode, "semantic"),
-            user_id: SearchLogs.get_user_id(conn)
-          })
+        # Log semantic search query
+        SearchLogs.log_search(%{
+          query: query,
+          source: "kio",
+          filters: Map.put(filters, :mode, "semantic"),
+          user_id: SearchLogs.get_user_id(conn)
+        })
 
-          conn
-          |> assign(:page_title, "#{query} — orzecznictwo KIO")
-          |> assign(
-            :meta_description,
-            "Orzecznictwo KIO wyszukiwarka: semantyczne wyniki dla #{query}"
-          )
-          |> assign(:breadcrumbs, breadcrumbs)
-          |> assign(:query, query)
-          |> assign(:search_mode, "semantic")
-          |> assign(:filters, filters)
-          |> assign(:filter_options, filter_options)
-          |> assign(:results, view_results)
-          |> assign(:total_count, length(view_results))
-          |> assign(:current_page, 1)
-          |> assign(:total_pages, 1)
-          |> assign(:rate_limited, false)
-          |> assign(:semantic_error, nil)
-          |> assign(:recent_judgements, [])
-          |> assign(:recent_articles, [])
-          |> assign(:show_seo_content, false)
-          |> render(:index)
+        conn
+        |> assign(:page_title, "#{query} — orzecznictwo KIO")
+        |> assign(
+          :meta_description,
+          "Orzecznictwo KIO wyszukiwarka: semantyczne wyniki dla #{query}"
+        )
+        |> assign(:breadcrumbs, breadcrumbs)
+        |> assign(:query, query)
+        |> assign(:search_mode, "semantic")
+        |> assign(:filters, filters)
+        |> assign(:filter_options, filter_options)
+        |> assign(:results, view_results)
+        |> assign(:total_count, length(view_results))
+        |> assign(:current_page, 1)
+        |> assign(:total_pages, 1)
+        |> assign(:rate_limited, false)
+        |> assign(:semantic_error, nil)
+        |> assign(:recent_judgements, [])
+        |> assign(:recent_articles, [])
+        |> assign(:show_seo_content, false)
+        |> render(:index)
 
-        {:error, :missing_api_key} ->
-          conn
-          |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
-          |> assign(
-            :meta_description,
-            "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej."
-          )
-          |> assign(:breadcrumbs, breadcrumbs)
-          |> assign(:query, query)
-          |> assign(:search_mode, "semantic")
-          |> assign(:filters, filters)
-          |> assign(:filter_options, filter_options)
-          |> assign(:results, [])
-          |> assign(:total_count, 0)
-          |> assign(:current_page, 1)
-          |> assign(:total_pages, 0)
-          |> assign(:rate_limited, false)
-          |> assign(:semantic_error, "Wyszukiwanie semantyczne jest tymczasowo niedostępne.")
-          |> assign(:recent_judgements, [])
-          |> assign(:recent_articles, [])
-          |> assign(:show_seo_content, false)
-          |> render(:index)
+      {:error, :missing_api_key} ->
+        conn
+        |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
+        |> assign(
+          :meta_description,
+          "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej."
+        )
+        |> assign(:breadcrumbs, breadcrumbs)
+        |> assign(:query, query)
+        |> assign(:search_mode, "semantic")
+        |> assign(:filters, filters)
+        |> assign(:filter_options, filter_options)
+        |> assign(:results, [])
+        |> assign(:total_count, 0)
+        |> assign(:current_page, 1)
+        |> assign(:total_pages, 0)
+        |> assign(:rate_limited, false)
+        |> assign(:semantic_error, "Wyszukiwanie semantyczne jest tymczasowo niedostępne.")
+        |> assign(:recent_judgements, [])
+        |> assign(:recent_articles, [])
+        |> assign(:show_seo_content, false)
+        |> render(:index)
 
-        {:error, _reason} ->
-          conn
-          |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
-          |> assign(
-            :meta_description,
-            "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej."
-          )
-          |> assign(:breadcrumbs, breadcrumbs)
-          |> assign(:query, query)
-          |> assign(:search_mode, "semantic")
-          |> assign(:filters, filters)
-          |> assign(:filter_options, filter_options)
-          |> assign(:results, [])
-          |> assign(:total_count, 0)
-          |> assign(:current_page, 1)
-          |> assign(:total_pages, 0)
-          |> assign(:rate_limited, false)
-          |> assign(:semantic_error, "Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.")
-          |> assign(:recent_judgements, [])
-          |> assign(:recent_articles, [])
-          |> assign(:show_seo_content, false)
-          |> render(:index)
-      end
+      {:error, _reason} ->
+        conn
+        |> assign(:page_title, "Orzecznictwo KIO — wyszukiwarka")
+        |> assign(
+          :meta_description,
+          "Orzecznictwo KIO wyszukiwarka — znajdź wyroki Krajowej Izby Odwoławczej."
+        )
+        |> assign(:breadcrumbs, breadcrumbs)
+        |> assign(:query, query)
+        |> assign(:search_mode, "semantic")
+        |> assign(:filters, filters)
+        |> assign(:filter_options, filter_options)
+        |> assign(:results, [])
+        |> assign(:total_count, 0)
+        |> assign(:current_page, 1)
+        |> assign(:total_pages, 0)
+        |> assign(:rate_limited, false)
+        |> assign(:semantic_error, "Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.")
+        |> assign(:recent_judgements, [])
+        |> assign(:recent_articles, [])
+        |> assign(:show_seo_content, false)
+        |> render(:index)
     end
   end
 

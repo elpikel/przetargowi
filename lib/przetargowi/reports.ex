@@ -8,27 +8,17 @@ defmodule Przetargowi.Reports do
   alias Przetargowi.Repo
   alias Przetargowi.Reports.TenderReport
 
+  @regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
+
   @doc """
-  Returns available filter options based on existing reports.
+  Options for the report filters.
+
+  Regions, report types, order types and months are fixed lists, so the
+  filters are always there — they used to be read from the stored reports and
+  simply vanished when a list came back empty. Only the years depend on the
+  data, falling back to the current year.
   """
   def get_filter_options do
-    regions =
-      from(r in TenderReport,
-        where: not is_nil(r.region),
-        select: r.region,
-        distinct: true,
-        order_by: r.region
-      )
-      |> Repo.all()
-
-    report_types =
-      from(r in TenderReport,
-        select: r.report_type,
-        distinct: true,
-        order_by: r.report_type
-      )
-      |> Repo.all()
-
     years =
       from(r in TenderReport,
         where: not is_nil(r.year),
@@ -38,29 +28,12 @@ defmodule Przetargowi.Reports do
       )
       |> Repo.all()
 
-    months =
-      from(r in TenderReport,
-        select: fragment("EXTRACT(MONTH FROM ?)::integer", r.report_month),
-        distinct: true,
-        order_by: fragment("1")
-      )
-      |> Repo.all()
-
-    order_types =
-      from(r in TenderReport,
-        where: not is_nil(r.order_type),
-        select: r.order_type,
-        distinct: true,
-        order_by: r.order_type
-      )
-      |> Repo.all()
-
     %{
-      regions: regions,
-      report_types: report_types,
-      years: years,
-      months: months,
-      order_types: order_types
+      regions: @regions,
+      report_types: ~w(detailed region_summary industry_summary overall),
+      years: if(years == [], do: [Date.utc_today().year], else: years),
+      months: Enum.to_list(1..12),
+      order_types: ~w(Delivery Services Works)
     }
   end
 

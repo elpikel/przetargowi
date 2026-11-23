@@ -95,4 +95,24 @@ defmodule PrzetargowiWeb.SearchControllerTest do
       assert response =~ ~s(<meta name="robots" content="noindex, follow">)
     end
   end
+
+  describe "results on page load" do
+    test "keyword search lists rulings before anything is typed", %{conn: conn} do
+      judgement = create_judgement(%{meritum: "Istota sprawy"})
+
+      response = conn |> get("/orzecznictwo-kio/szukaj") |> html_response(200)
+
+      assert response =~ "/orzecznictwo-kio/#{judgement.slug}"
+    end
+
+    test "AI search lists the newest rulings until a query is typed", %{conn: conn} do
+      judgement = create_judgement(%{meritum: "Istota sprawy"})
+
+      conn = get(conn, "/orzecznictwo-kio/szukaj?mode=semantic")
+      response = html_response(conn, 200)
+
+      assert response =~ "/orzecznictwo-kio/#{judgement.slug}"
+      assert conn.assigns.search_mode == "semantic"
+    end
+  end
 end
