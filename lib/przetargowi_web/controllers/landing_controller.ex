@@ -70,7 +70,7 @@ defmodule PrzetargowiWeb.LandingController do
     |> assign(:recent_judgements, Judgements.list_recent_judgements(9))
     |> assign(:recent_articles, Blog.list_recent_articles(3))
     |> assign(:outcomes, Judgements.outcome_summary(:all))
-    |> assign(:year_counts, Judgements.year_counts(:all, 6))
+    |> assign(:year_counts, Judgements.year_counts(:all, 100))
     |> assign(:total_count, total_count)
     |> render(:orzecznictwo_kio)
   end
@@ -204,7 +204,7 @@ defmodule PrzetargowiWeb.LandingController do
       |> assign(:current_page, page)
       |> assign(:total_pages, total_pages)
       |> assign(:outcomes, Judgements.outcome_summary(topic.issues))
-      |> assign(:year_counts, Judgements.year_counts(topic.issues, 6))
+      |> assign(:year_counts, Judgements.year_counts(topic.issues, 100))
       |> assign(:top_provisions, Judgements.top_provisions(topic.issues, 8))
       |> render(:topic)
     end

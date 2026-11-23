@@ -37,7 +37,20 @@ defmodule Przetargowi.Judgements do
   Gets a single judgement by slug.
   """
   def get_judgement_by_slug(slug) do
-    Repo.get_by(Judgement, slug: slug)
+    case Repo.get_by(Judgement, slug: slug) do
+      nil -> get_by_legacy_joined_slug(slug)
+      judgement -> judgement
+    end
+  end
+
+  # Joint-case slugs used to be generated without a separator
+  # ("kio-2728-23kio-2729-23"). Resolve those old URLs to the corrected slug;
+  # the controller then redirects because the slug differs.
+  defp get_by_legacy_joined_slug(slug) do
+    case Regex.replace(~r/(\d)(kio)/, slug, "\\1-\\2") do
+      ^slug -> nil
+      separated -> Repo.get_by(Judgement, slug: separated)
+    end
   end
 
   @doc """
@@ -739,6 +752,9 @@ defmodule Przetargowi.Judgements do
     end)
     |> Repo.all()
   end
+
+  @doc "When a ruling was last added or changed — the last-modified time of the KIO list pages."
+  def latest_update, do: Repo.aggregate(Judgement, :max, :updated_at)
 
   @doc """
   Returns the count of judgements with slugs for sitemap pagination.

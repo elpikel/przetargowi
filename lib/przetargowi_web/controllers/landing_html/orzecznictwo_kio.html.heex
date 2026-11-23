@@ -19,7 +19,7 @@
         id="kio-figures"
         items={[
           {"Orzeczeń w bazie", format_count(@total_count)},
-          {"Odwołania uwzględnione (z rozpoznanych merytorycznie)",
+          {"Skuteczność odwołań: uwzględnione wśród rozpoznanych merytorycznie",
            "#{@outcomes.upheld_rate || 0}%"},
           {"Zagadnień z omówieniem i statystyką", length(@topics)}
         ]}
@@ -35,7 +35,7 @@
       <section class="mb-14 grid lg:grid-cols-2 gap-6" id="kio-stats">
         <.side_card
           title="Jak KIO rozstrzyga odwołania?"
-          lead={"Rozstrzygnięcia w #{format_count(@outcomes.total)} orzeczeniach z naszej bazy."}
+          lead={"Udział każdego rozstrzygnięcia we wszystkich #{format_count(@outcomes.total)} orzeczeniach ze znanym wynikiem, łącznie z umorzeniami, odrzuceniami i zwrotami."}
         >
           <.outcome_stats outcomes={@outcomes} id="kio-outcomes" />
           <a
@@ -50,7 +50,7 @@
           title="Orzeczenia w bazie według lat"
           lead="Baza jest aktualizowana na bieżąco na podstawie orzeczeń publikowanych przez Urząd Zamówień Publicznych."
         >
-          <.count_list rows={Enum.map(@year_counts, fn {year, count} -> {year, nil, count} end)} />
+          <.count_list id="kio-years" rows={year_rows(@year_counts, @total_count)} />
         </.side_card>
       </section>
 

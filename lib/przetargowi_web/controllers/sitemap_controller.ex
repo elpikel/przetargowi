@@ -6,6 +6,7 @@ defmodule PrzetargowiWeb.SitemapController do
   alias Przetargowi.Judgements.Topics
   alias Przetargowi.Reports
   alias Przetargowi.SitemapCache
+  alias Przetargowi.Tenders
   alias Przetargowi.Tenders.Hubs
 
   @base_url "https://przetargowi.pl"
@@ -128,11 +129,29 @@ defmodule PrzetargowiWeb.SitemapController do
 
   # Build static pages sitemap
   defp build_static_sitemap do
+    # List pages change when their data does, so their last-modified date is
+    # the date of the newest ruling or tender notice — not "today".
+    kio_lastmod = format_date(Judgements.latest_update())
+    tender_lastmod = format_date(Tenders.latest_publication())
+
+    kio = fn path, priority ->
+      %{loc: "#{@base_url}#{path}", lastmod: kio_lastmod, priority: priority, changefreq: "daily"}
+    end
+
+    tender = fn path, priority ->
+      %{
+        loc: "#{@base_url}#{path}",
+        lastmod: tender_lastmod,
+        priority: priority,
+        changefreq: "daily"
+      }
+    end
+
     static_urls = [
       %{loc: @base_url, priority: "1.0", changefreq: "daily"},
-      %{loc: "#{@base_url}/orzecznictwo-kio", priority: "0.9", changefreq: "daily"},
-      %{loc: "#{@base_url}/orzecznictwo-kio/statystyki", priority: "0.8", changefreq: "weekly"},
-      %{loc: "#{@base_url}/przetargi", priority: "0.9", changefreq: "daily"},
+      kio.("/orzecznictwo-kio", "0.9"),
+      kio.("/orzecznictwo-kio/statystyki", "0.8"),
+      tender.("/przetargi", "0.9"),
       %{loc: "#{@base_url}/analiza-rynku", priority: "0.8", changefreq: "weekly"},
       %{loc: "#{@base_url}/ustawa-pzp", priority: "0.8", changefreq: "yearly"},
       %{loc: "#{@base_url}/blog", priority: "0.8", changefreq: "weekly"},
@@ -143,15 +162,9 @@ defmodule PrzetargowiWeb.SitemapController do
       %{loc: "#{@base_url}/polityka-prywatnosci", priority: "0.3", changefreq: "yearly"}
     ]
 
-    region_urls =
-      Enum.map(@regions, fn region ->
-        %{loc: "#{@base_url}/przetargi/#{region}", priority: "0.7", changefreq: "daily"}
-      end)
-
-    hub_urls =
-      Enum.map(Hubs.all_paths(), fn path ->
-        %{loc: "#{@base_url}#{path}", priority: "0.8", changefreq: "daily"}
-      end)
+    region_urls = Enum.map(@regions, &tender.("/przetargi/#{&1}", "0.7"))
+    hub_urls = Enum.map(Hubs.all_paths(), &tender.(&1, "0.8"))
+    topic_urls = Enum.map(Topics.all_paths(), &kio.(&1, "0.9"))
 
     blog_urls =
       Blog.list_sitemap_entries()
@@ -162,11 +175,6 @@ defmodule PrzetargowiWeb.SitemapController do
           priority: "0.7",
           changefreq: "monthly"
         }
-      end)
-
-    topic_urls =
-      Enum.map(Topics.all_paths(), fn path ->
-        %{loc: "#{@base_url}#{path}", priority: "0.9", changefreq: "daily"}
       end)
 
     urls = static_urls ++ topic_urls ++ region_urls ++ hub_urls ++ blog_urls

@@ -18,10 +18,33 @@ defmodule PrzetargowiWeb.LandingHTML do
 
   @doc "Heading for a ruling in a list, e.g. \"Wyrok KIO 1234/25\"."
   def ruling_heading(%{document_type: type, signature: signature}) when is_binary(type) do
-    "#{String.capitalize(type)} #{signature}"
+    "#{String.capitalize(type)} #{Przetargowi.Judgements.Judgement.display_signature(signature)}"
   end
 
-  def ruling_heading(%{signature: signature}), do: signature
+  def ruling_heading(%{signature: signature}),
+    do: Przetargowi.Judgements.Judgement.display_signature(signature)
+
+  @doc "Appeals decided on the merits (upheld + dismissed) in an outcome summary."
+  def merits_count(outcomes) do
+    outcomes.groups
+    |> Enum.filter(&(&1.key in [:upheld, :dismissed]))
+    |> Enum.map(& &1.count)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Rows for the "by year" list that add up to the total: the most recent years,
+  then the remaining years as one row, then rulings without a usable date.
+  """
+  def year_rows(year_counts, total, shown \\ 6) do
+    {recent, older} = Enum.split(year_counts, shown)
+    older_count = older |> Enum.map(&elem(&1, 1)) |> Enum.sum()
+    dated = year_counts |> Enum.map(&elem(&1, 1)) |> Enum.sum()
+
+    Enum.map(recent, fn {year, count} -> {year, nil, count} end) ++
+      if(older_count > 0, do: [{"wcześniejsze lata", nil, older_count}], else: []) ++
+      if(total > dated, do: [{"bez daty", nil, total - dated}], else: [])
+  end
 
   def excerpt(nil, _length), do: nil
 

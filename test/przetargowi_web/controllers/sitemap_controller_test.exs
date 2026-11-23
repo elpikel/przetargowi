@@ -56,6 +56,28 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
       assert body =~ "/przetargi/branza/medyczne</loc>"
     end
 
+    test "list pages carry the date of their newest data as last-modified", %{conn: conn} do
+      insert_judgement(%{signature: "KIO 900/24"})
+
+      body = conn |> get(~p"/sitemap-static.xml") |> response(200)
+      today = Date.to_iso8601(Date.utc_today())
+
+      assert body =~
+               ~r{<loc>https://przetargowi.pl/orzecznictwo-kio/wadium</loc>\s*<lastmod>#{today}</lastmod>}
+    end
+
+    test "blog articles carry their own last-modified date, not today's", %{conn: conn} do
+      body = conn |> get(~p"/sitemap-static.xml") |> response(200)
+
+      article = Przetargowi.Blog.get_article_by_slug("jak-odwolac-sie-do-kio")
+      date = Calendar.strftime(article.updated_at, "%Y-%m-%d")
+
+      assert date != Date.to_iso8601(Date.utc_today())
+
+      assert body =~
+               ~r{<loc>https://przetargowi.pl/blog/jak-odwolac-sie-do-kio</loc>\s*<lastmod>#{date}</lastmod>}
+    end
+
     test "includes KIO topic hubs", %{conn: conn} do
       conn = get(conn, ~p"/sitemap-static.xml")
       body = response(conn, 200)

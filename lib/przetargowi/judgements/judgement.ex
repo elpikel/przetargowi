@@ -54,10 +54,34 @@ defmodule Przetargowi.Judgements.Judgement do
     judgement
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> drop_future_decision_date()
     |> maybe_generate_slug()
     |> unique_constraint(:uzp_id)
     |> unique_constraint(:slug)
   end
+
+  # A decision dated in the future is a typo in the source document. Storing
+  # no date is better than showing a wrong one in titles and sort order.
+  defp drop_future_decision_date(changeset) do
+    case get_change(changeset, :decision_date) do
+      %Date{} = date ->
+        if Date.compare(date, Date.utc_today()) == :gt,
+          do: put_change(changeset, :decision_date, nil),
+          else: changeset
+
+      _ ->
+        changeset
+    end
+  end
+
+  @doc """
+  Signature as shown to readers. Joint cases are stored with "|" between the
+  signatures; readers get "KIO 2728/23, KIO 2729/23".
+  """
+  def display_signature(signature) when is_binary(signature),
+    do: signature |> String.split("|") |> Enum.map_join(", ", &String.trim/1)
+
+  def display_signature(other), do: other
 
   defp maybe_generate_slug(changeset) do
     case get_change(changeset, :signature) do
@@ -69,7 +93,8 @@ defmodule Przetargowi.Judgements.Judgement do
   def generate_slug(signature) when is_binary(signature) do
     signature
     |> String.downcase()
-    |> String.replace(~r/[\/\\]/, "-")
+    # "/" inside a signature and "|" between the signatures of a joint case
+    |> String.replace(~r/[\/\\|,;]/, "-")
     |> String.replace(~r/\s+/, "-")
     |> String.replace(~r/[^a-z0-9\-]/, "")
     |> String.replace(~r/-+/, "-")
@@ -89,6 +114,7 @@ defmodule Przetargowi.Judgements.Judgement do
       :synced_at
     ])
     |> validate_required([:uzp_id, :signature])
+    |> drop_future_decision_date()
     |> maybe_generate_slug()
     |> unique_constraint(:uzp_id)
     |> unique_constraint(:slug)

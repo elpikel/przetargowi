@@ -242,6 +242,9 @@ defmodule Przetargowi.Tenders do
     where(query, ^conditions)
   end
 
+  @doc "When the newest tender notice was published — the last-modified time of the tender list pages."
+  def latest_publication, do: Repo.aggregate(TenderNotice, :max, :publication_date)
+
   @doc """
   The most recently closed tenders matching the hub filters. Shown instead of
   an empty list when a hub currently has no open tenders.

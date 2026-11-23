@@ -8,20 +8,16 @@
           {@topic.name, nil}
         ]}
         title={"#{@topic.name} — orzecznictwo KIO"}
-        lead={@topic.lead}
+        lead={List.first(@topic.body) || @topic.lead}
       />
 
       <.stat_tiles
         id="topic-figures"
         items={[
           {"Orzeczeń w bazie", format_count(@total_count)},
-          {"Odwołania uwzględnione (z rozpoznanych merytorycznie)",
+          {"Skuteczność odwołań: uwzględnione wśród rozpoznanych merytorycznie",
            if(@outcomes.upheld_rate, do: "#{@outcomes.upheld_rate}%", else: "—")},
-          {"Orzeczenia z ostatniego roku w bazie",
-           case @year_counts do
-             [{year, count} | _] -> "#{format_count(count)} (#{year})"
-             [] -> "—"
-           end}
+          {"Odwołań rozpoznanych merytorycznie", format_count(merits_count(@outcomes))}
         ]}
       />
 
@@ -61,7 +57,7 @@
           <.side_card
             :if={@outcomes.total > 0}
             title="Jak rozstrzyga KIO?"
-            lead="Wynik postępowania w sprawach oznaczonych tym zagadnieniem."
+            lead="Udział każdego rozstrzygnięcia we wszystkich orzeczeniach z tym zagadnieniem, łącznie z umorzeniami, odrzuceniami i zwrotami."
           >
             <.outcome_stats outcomes={@outcomes} id="topic-outcomes" />
           </.side_card>
@@ -86,7 +82,7 @@
           </.side_card>
 
           <.side_card :if={@year_counts != []} title="Orzeczenia według lat">
-            <.count_list rows={Enum.map(@year_counts, fn {year, count} -> {year, nil, count} end)} />
+            <.count_list id="topic-years" rows={year_rows(@year_counts, @total_count)} />
           </.side_card>
         </aside>
       </div>
@@ -96,7 +92,7 @@
         <.prose_card
           id="topic-overview"
           title={"#{@topic.name} w orzecznictwie Krajowej Izby Odwoławczej"}
-          paragraphs={@topic.body}
+          paragraphs={Enum.drop(@topic.body, 1)}
           guide={@topic.blog}
         />
         <.faq_section id="topic-faq" faqs={@topic.faqs} />

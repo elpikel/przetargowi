@@ -4,10 +4,10 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="max-w-3xl mx-auto text-center">
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] mb-6 text-base-content">
-          Wygrywaj przetargi dzięki danym i&nbsp;automatyzacji
+          Wyszukiwarka przetargów i&nbsp;orzeczeń KIO
         </h1>
         <p class="text-lg sm:text-xl text-base-content/70 mb-12 leading-relaxed max-w-2xl mx-auto">
-          Wyszukiwarka AI orzeczeń KIO, monitoring przetargów, analiza rynku i automatyczne wypełnianie dokumentacji ofertowej — w jednym narzędziu.
+          Wygrywaj przetargi dzięki danym i automatyzacji: aktualne przetargi publiczne z BZP, orzecznictwo Krajowej Izby Odwoławczej z wyszukiwarką AI, analiza rynku i automatyczne wypełnianie dokumentacji ofertowej — w jednym narzędziu.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -180,6 +180,51 @@
           </a>
         </div>
       </div>
+    </div>
+  </section>
+  <%!-- Entry points into both sections: the hubs people actually search for --%>
+  <section class="py-16 bg-base-200" id="home-hubs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <.hub_grid
+        id="home-kio-topics"
+        title="Orzecznictwo KIO według zagadnień"
+        lead="Linia orzecznicza Krajowej Izby Odwoławczej dla najczęstszych sporów w zamówieniach publicznych — z omówieniem, podstawą prawną i statystyką rozstrzygnięć."
+        items={
+          Enum.map(
+            Enum.take(Przetargowi.Judgements.Topics.all(), 6),
+            &%{path: Przetargowi.Judgements.Topics.path(&1), name: &1.name, lead: &1.lead}
+          )
+        }
+      />
+      <p class="-mt-8 mb-14">
+        <a href={~p"/orzecznictwo-kio"} class="text-primary font-medium hover:underline">
+          Wszystkie zagadnienia i wyszukiwarka orzeczeń KIO →
+        </a>
+        <span class="text-base-content/40 mx-2">·</span>
+        <a
+          href={~p"/orzecznictwo-kio/statystyki"}
+          class="text-primary font-medium hover:underline"
+        >
+          Statystyki KIO
+        </a>
+      </p>
+
+      <.hub_grid
+        id="home-tender-categories"
+        title="Przetargi publiczne według branży"
+        lead="Aktualne ogłoszenia z Biuletynu Zamówień Publicznych z terminami składania ofert."
+        items={
+          Enum.map(
+            Enum.take(Przetargowi.Tenders.Hubs.category_hubs(), 6),
+            &%{path: "/przetargi/branza/#{&1.slug}", name: &1.h1, lead: &1.intro}
+          )
+        }
+      />
+      <p class="-mt-8">
+        <a href={~p"/przetargi"} class="text-primary font-medium hover:underline">
+          Wszystkie branże, województwa i wyszukiwarka przetargów →
+        </a>
+      </p>
     </div>
   </section>
 </Layouts.app>

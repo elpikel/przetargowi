@@ -213,4 +213,39 @@ defmodule PrzetargowiWeb.LandingControllerTest do
       assert Enum.count(LazyHTML.query(document, "#kio-browse [aria-current=page]")) == 1
     end
   end
+
+  describe "figures on a topic hub reconcile" do
+    test "the by-year list adds up to the total, including undated and older rulings", %{
+      conn: conn
+    } do
+      for year <- 2017..2025 do
+        judgement = create_judgement(%{thematic_issues: ["wadium"]})
+        {:ok, _} = Judgements.update_judgement(judgement, %{decision_date: Date.new!(year, 3, 1)})
+      end
+
+      # one ruling without a date
+      create_judgement(%{thematic_issues: ["wadium"]})
+
+      conn = get(conn, "/orzecznictwo-kio/wadium")
+      html_response(conn, 200)
+
+      rows =
+        PrzetargowiWeb.LandingHTML.year_rows(conn.assigns.year_counts, conn.assigns.total_count)
+
+      assert conn.assigns.total_count == 10
+      assert rows |> Enum.map(&elem(&1, 2)) |> Enum.sum() == 10
+      assert {"wcześniejsze lata", nil, 3} in rows
+      assert {"bez daty", nil, 1} in rows
+    end
+
+    test "the definition is the first thing under the heading", %{conn: conn} do
+      topic = Topics.get("wadium")
+
+      document =
+        conn |> get("/orzecznictwo-kio/wadium") |> html_response(200) |> LazyHTML.from_document()
+
+      assert document |> LazyHTML.query("main header p") |> LazyHTML.text() =~
+               String.slice(List.first(topic.body), 0, 60)
+    end
+  end
 end

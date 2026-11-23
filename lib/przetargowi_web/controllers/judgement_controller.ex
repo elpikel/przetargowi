@@ -2,6 +2,7 @@ defmodule PrzetargowiWeb.JudgementController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.Judgements
+  alias Przetargowi.Judgements.Judgement
   alias Przetargowi.Judgements.Summary
   alias Przetargowi.Judgements.Topics
 
@@ -44,7 +45,7 @@ defmodule PrzetargowiWeb.JudgementController do
         view_judgement = %{
           id: judgement.id,
           slug: judgement.slug,
-          signature: judgement.signature,
+          signature: Judgement.display_signature(judgement.signature),
           decision_date: judgement.decision_date,
           issuing_authority: judgement.issuing_authority,
           document_type: judgement.document_type,
@@ -95,7 +96,7 @@ defmodule PrzetargowiWeb.JudgementController do
   # "Wyrok XXIII Zs 12/24". Half of the database are orders (postanowienia),
   # so labelling everything "Wyrok KIO" was simply wrong.
   defp heading(%{signature: signature} = judgement) when is_binary(signature) do
-    "#{document_label(judgement.document_type)} #{signature}"
+    "#{document_label(judgement.document_type)} #{Judgement.display_signature(signature)}"
   end
 
   defp heading(_judgement), do: "Orzeczenie KIO"

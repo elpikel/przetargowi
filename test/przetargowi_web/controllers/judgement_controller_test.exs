@@ -210,4 +210,74 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
                "https://przetargowi.pl/orzecznictwo-kio/#{judgement.slug}"
     end
   end
+
+  describe "joint cases and bad source dates" do
+    defp create_joint_case do
+      {:ok, judgement} =
+        Judgements.upsert_from_list(%{
+          uzp_id: "#{System.unique_integer([:positive])}",
+          signature: "KIO 2728/23|KIO 2729/23",
+          document_type: "wyrok",
+          synced_at: DateTime.utc_now()
+        })
+
+      judgement
+    end
+
+    test "a joint case gets a slug with a separator between its signatures" do
+      assert create_joint_case().slug == "kio-2728-23-kio-2729-23"
+    end
+
+    test "the old slug without a separator redirects to the corrected one", %{conn: conn} do
+      create_joint_case()
+
+      assert conn |> get("/orzecznictwo-kio/kio-2728-23kio-2729-23") |> redirected_to(301) ==
+               "/orzecznictwo-kio/kio-2728-23-kio-2729-23"
+
+      assert conn |> get("/orzeczenie/kio-2728-23kio-2729-23") |> redirected_to(301) ==
+               "/orzecznictwo-kio/kio-2728-23-kio-2729-23"
+    end
+
+    test "a joint case is headed with readable signatures, not the stored separator", %{
+      conn: conn
+    } do
+      judgement = create_joint_case()
+
+      conn = get(conn, ~p"/orzecznictwo-kio/#{judgement.slug}")
+      html_response(conn, 200)
+
+      assert conn.assigns.heading == "Wyrok KIO 2728/23, KIO 2729/23"
+    end
+
+    test "a decision date in the future is not stored" do
+      future = Date.add(Date.utc_today(), 30)
+
+      {:ok, judgement} =
+        Judgements.upsert_from_list(%{
+          uzp_id: "#{System.unique_integer([:positive])}",
+          signature: "KIO #{System.unique_integer([:positive])}/25",
+          decision_date: future,
+          synced_at: DateTime.utc_now()
+        })
+
+      assert judgement.decision_date == nil
+    end
+  end
+
+  describe "document order" do
+    test "the summary comes before the metadata sidebar in the HTML", %{conn: conn} do
+      judgement =
+        create_judgement(%{
+          content_html: "<p>#{String.duplicate("treść ", 200)}</p>",
+          resolution_method: "oddalone"
+        })
+
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
+
+      {summary, _} = :binary.match(response, "Streszczenie orzeczenia")
+      {sidebar, _} = :binary.match(response, ~s(id="sidebar"))
+
+      assert summary < sidebar
+    end
+  end
 end
