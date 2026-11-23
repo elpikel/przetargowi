@@ -168,11 +168,11 @@ defmodule PrzetargowiWeb.JudgementController do
     ] ++ topic_crumb ++ [%{name: heading, url: canonical_url}]
   end
 
-  # Thin/empty rulings (no fetched content) are kept out of the index so they
-  # stop dragging the domain's quality signal down. Once content is fetched and
-  # the page carries real value, it becomes indexable again automatically.
+  # Rulings are indexable only when the site-wide policy allows it
+  # (PrzetargowiWeb.Indexing) and the page has real content; thin or empty
+  # rulings never are.
   defp maybe_noindex(conn, judgement) do
-    if Summary.indexable?(judgement) do
+    if PrzetargowiWeb.Indexing.detail_pages?(:rulings) and Summary.indexable?(judgement) do
       conn
     else
       assign(conn, :meta_robots, "noindex, follow")

@@ -9,6 +9,25 @@ defmodule PrzetargowiWeb.ReportController do
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
+  # Bare /raporty is the section's landing page; any query string (even an
+  # empty `q`) switches to the search results with the full filter form.
+  def index(%{query_string: ""} = conn, _params) do
+    result = Reports.list_tender_reports(page: 1, per_page: 9)
+
+    conn
+    |> assign(:page_title, "Raporty przetargowe — miesięczne analizy rynku zamówień publicznych")
+    |> assign(
+      :meta_description,
+      "#{result.total_count} raportów rynku zamówień publicznych w Polsce: liczba i wartość przetargów, najaktywniejsi zamawiający i trendy według województw. Aktualizowane co miesiąc."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/raporty")
+    |> assign(:breadcrumbs, [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Raporty", url: "https://przetargowi.pl/raporty"}
+    ])
+    |> render(:landing, reports: result.reports, summary: Reports.summary())
+  end
+
   def index(conn, params) do
     page = parse_page(params["page"])
     query = params["q"] || ""
@@ -51,22 +70,7 @@ defmodule PrzetargowiWeb.ReportController do
       :meta_description,
       "#{result.total_count} raportów i analiz rynku zamówień publicznych w Polsce. Statystyki przetargów według regionów i branż."
     )
-    |> then(fn conn ->
-      has_filters = query != "" or Enum.any?(filters, fn {_k, v} -> v != "" end)
-
-      cond do
-        has_filters ->
-          assign(conn, :meta_robots, "noindex, follow")
-
-        page > 1 ->
-          conn
-          |> assign(:canonical_url, "https://przetargowi.pl/raporty?page=#{page}")
-          |> assign(:meta_robots, "noindex, follow")
-
-        true ->
-          assign(conn, :canonical_url, "https://przetargowi.pl/raporty")
-      end
-    end)
+    |> assign(:meta_robots, "noindex, follow")
     |> assign(:breadcrumbs, [
       %{name: "Strona główna", url: "https://przetargowi.pl"},
       %{name: "Raporty", url: "https://przetargowi.pl/raporty"}
@@ -80,6 +84,13 @@ defmodule PrzetargowiWeb.ReportController do
       filters: filters,
       filter_options: filter_options
     )
+  end
+
+  # Single reports follow the site-wide indexing policy (PrzetargowiWeb.Indexing).
+  defp maybe_noindex_report(conn) do
+    if PrzetargowiWeb.Indexing.detail_pages?(:reports),
+      do: conn,
+      else: assign(conn, :meta_robots, "noindex, follow")
   end
 
   defp has_filters?(filters) do
@@ -139,43 +150,56 @@ defmodule PrzetargowiWeb.ReportController do
     filter_options = Reports.get_filter_options()
     region_name = Map.get(@region_names, region, region)
 
-    conn
-    |> assign(:region, region)
-    |> assign(:page_title, "Raporty #{region_name}")
-    |> assign(
-      :meta_description,
-      "#{result.total_count} raportów i analiz przetargów w województwie #{region_name}. Statystyki zamówień publicznych."
-    )
-    |> then(fn conn ->
-      has_filters = Enum.any?(filters, fn {k, v} -> k != :region and v != "" end)
+    has_filters = Enum.any?(filters, fn {k, v} -> k != :region and v != "" end)
+    path = "/raporty/#{region}"
 
-      cond do
-        has_filters ->
-          assign(conn, :meta_robots, "noindex, follow")
+    conn =
+      conn
+      |> assign(:region, region)
+      |> assign(:page_title, "Raporty przetargowe — województwo #{region_name}")
+      |> assign(
+        :meta_description,
+        "#{result.total_count} miesięcznych raportów rynku zamówień publicznych w województwie #{region_name}: liczba i wartość przetargów, najaktywniejsi zamawiający, dostawy, usługi i roboty budowlane."
+      )
+      |> assign(:breadcrumbs, [
+        %{name: "Strona główna", url: "https://przetargowi.pl"},
+        %{name: "Raporty", url: "https://przetargowi.pl/raporty"},
+        %{name: "Województwo #{region_name}", url: "https://przetargowi.pl#{path}"}
+      ])
 
-        page > 1 ->
+    if has_filters do
+      # A filtered region is a search: same template as /raporty?…
+      conn
+      |> assign(:meta_robots, "noindex, follow")
+      |> render(:index,
+        reports: result.reports,
+        total_count: result.total_count,
+        page: result.page,
+        total_pages: result.total_pages,
+        query: "",
+        filters: filters,
+        filter_options: filter_options
+      )
+    else
+      conn
+      |> then(fn conn ->
+        if page > 1 do
           conn
-          |> assign(:canonical_url, "https://przetargowi.pl/raporty/#{region}?page=#{page}")
+          |> assign(:canonical_url, "https://przetargowi.pl#{path}?page=#{page}")
           |> assign(:meta_robots, "noindex, follow")
-
-        true ->
-          assign(conn, :canonical_url, "https://przetargowi.pl/raporty/#{region}")
-      end
-    end)
-    |> assign(:breadcrumbs, [
-      %{name: "Strona główna", url: "https://przetargowi.pl"},
-      %{name: "Raporty", url: "https://przetargowi.pl/raporty"},
-      %{name: "Woj. #{region_name}", url: "https://przetargowi.pl/raporty/#{region}"}
-    ])
-    |> render(:index,
-      reports: result.reports,
-      total_count: result.total_count,
-      page: result.page,
-      total_pages: result.total_pages,
-      query: "",
-      filters: filters,
-      filter_options: filter_options
-    )
+        else
+          assign(conn, :canonical_url, "https://przetargowi.pl#{path}")
+        end
+      end)
+      |> render(:hub,
+        reports: result.reports,
+        page: result.page,
+        total_pages: result.total_pages,
+        summary: Reports.summary(region),
+        open_tenders:
+          Przetargowi.Tenders.search_tender_notices(regions: [region], per_page: 1).total_count
+      )
+    end
   end
 
   defp show_report(conn, slug) do
@@ -194,6 +218,7 @@ defmodule PrzetargowiWeb.ReportController do
         |> assign(:page_title, report.title)
         |> assign(:meta_description, meta_description)
         |> assign(:canonical_url, canonical_url)
+        |> maybe_noindex_report()
         |> assign(:og_url, canonical_url)
         |> assign(:og_image, report.cover_image_url)
         |> assign(:og_type, "article")

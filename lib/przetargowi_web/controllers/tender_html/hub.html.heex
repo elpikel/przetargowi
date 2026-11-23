@@ -8,7 +8,7 @@
         items={[
           {"Otwarte postępowania", format_count(@total_count)},
           {"Termin składania ofert w ciągu 7 dni", format_count(@hub.stats.closing_soon)},
-          {"Ogłoszenia z ostatnich 12 miesięcy", format_count(@hub.stats.published_last_year)}
+          {"Zamawiający z otwartym postępowaniem", format_count(@hub.stats.authorities)}
         ]}
       />
 

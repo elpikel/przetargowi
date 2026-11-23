@@ -687,7 +687,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #0f766e;
+  color: #2347d9;
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
   transition: color 0.2s ease;
@@ -765,7 +765,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #0f766e;
+  color: #2347d9;
   font-size: 0.9375rem;
   transition: color 0.2s ease;
 }
@@ -821,6 +821,54 @@ h1 {
   color: rgba(15, 23, 42, 0.6);
   margin-top: 0.5rem;
   font-weight: 500;
+}
+
+/* ===== Stored report markup =====
+   Report HTML and its SVG charts are generated once and stored, so older
+   reports still carry the previous palette, serif figures and emoji section
+   icons. CSS outranks SVG presentation attributes, which lets these rules
+   bring every stored report in line without regenerating it. New reports are
+   generated with the current values (see Przetargowi.Reports.GraphGenerator). */
+
+.report-page svg text {
+  font-family: 'Inter', system-ui, sans-serif;
+  fill: #0f172a;
+}
+
+.report-page svg line[stroke='#f3e4c3'] {
+  stroke: #e4e7ec;
+}
+
+.report-page svg stop[stop-color='#12233d'] {
+  stop-color: #2347d9;
+}
+
+.report-page svg stop[stop-color='#1a3052'] {
+  stop-color: #1d3bb8;
+}
+
+.report-page svg rect[fill='#c9a227'] {
+  fill: #2347d9;
+}
+
+.report-page svg rect[fill='#b8922a'] {
+  fill: #3b5fe0;
+}
+
+.report-page svg rect[fill='#a7832d'] {
+  fill: #5a78e6;
+}
+
+.report-page svg rect[fill='#967430'] {
+  fill: #7c93ec;
+}
+
+.report-page svg rect[fill='#856533'] {
+  fill: #9fb0f2;
+}
+
+.report-section-icon {
+  display: none;
 }
 
 /* ===== Report Sections ===== */
@@ -918,7 +966,7 @@ h1 {
 }
 
 .report-value-card-primary .report-value-amount {
-  color: #2347d9;
+  color: #ffffff;
 }
 
 .report-value-label {

@@ -8,62 +8,62 @@ defmodule PrzetargowiWeb.SitemapController do
   alias Przetargowi.SitemapCache
   alias Przetargowi.Tenders
   alias Przetargowi.Tenders.Hubs
+  alias PrzetargowiWeb.Indexing
 
   @base_url "https://przetargowi.pl"
   @urls_per_sitemap 2_000
 
   @regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
 
-  # Sitemap index - lists all sub-sitemaps
+  # /sitemap.xml. With detail pages out of the index (the default, see
+  # PrzetargowiWeb.Indexing) every indexable URL fits in one file, so this is
+  # the whole sitemap. If rulings or reports are switched back on it becomes a
+  # sitemap index pointing at the page list plus their paginated sitemaps.
   def index(conn, _params) do
-    xml = cached("index", 3600, &build_sitemap_index/0)
+    xml =
+      if Indexing.any_detail_pages?(),
+        do: cached("index", 3600, &build_sitemap_index/0),
+        else: cached("static", 3600, &build_static_sitemap/0)
 
-    conn
-    |> put_resp_content_type("application/xml")
-    |> put_resp_header("cache-control", "public, max-age=3600")
-    |> send_resp(200, xml)
+    send_xml(conn, xml, 3600)
   end
 
-  # Static pages sitemap
+  # The page list as its own file — only needed while /sitemap.xml is an index.
   def static(conn, _params) do
-    xml = cached("static", 86_400, &build_static_sitemap/0)
+    if Indexing.any_detail_pages?(),
+      do: send_xml(conn, cached("static", 3600, &build_static_sitemap/0), 3600),
+      else: conn |> put_status(:moved_permanently) |> redirect(to: ~p"/sitemap.xml")
+  end
 
+  # Rulings sitemap (paginated) — exists only while rulings are indexable
+  def judgements(conn, %{"page" => page_str}) do
+    with true <- Indexing.detail_pages?(:rulings),
+         {page, ""} when page >= 1 <- Integer.parse(page_str) do
+      send_xml(
+        conn,
+        cached("judgements:#{page}", 3600, fn -> build_judgements_sitemap(page) end),
+        3600
+      )
+    else
+      _ -> send_resp(conn, 404, "Not found")
+    end
+  end
+
+  # Reports sitemap (paginated) — exists only while reports are indexable
+  def reports(conn, %{"page" => page_str}) do
+    with true <- Indexing.detail_pages?(:reports),
+         {page, ""} when page >= 1 <- Integer.parse(page_str) do
+      send_xml(conn, cached("reports:#{page}", 3600, fn -> build_reports_sitemap(page) end), 3600)
+    else
+      _ -> send_resp(conn, 404, "Not found")
+    end
+  end
+
+  defp send_xml(conn, xml, max_age) do
     conn
     |> put_resp_content_type("application/xml")
-    |> put_resp_header("cache-control", "public, max-age=86400")
+    |> put_resp_header("cache-control", "public, max-age=#{max_age}")
     |> send_resp(200, xml)
-  end
-
-  # Judgements sitemap (paginated)
-  def judgements(conn, %{"page" => page_str}) do
-    case Integer.parse(page_str) do
-      {page, ""} when page >= 1 ->
-        xml = cached("judgements:#{page}", 3600, fn -> build_judgements_sitemap(page) end)
-
-        conn
-        |> put_resp_content_type("application/xml")
-        |> put_resp_header("cache-control", "public, max-age=3600")
-        |> send_resp(200, xml)
-
-      _ ->
-        send_resp(conn, 404, "Not found")
-    end
-  end
-
-  # Reports sitemap (paginated)
-  def reports(conn, %{"page" => page_str}) do
-    case Integer.parse(page_str) do
-      {page, ""} when page >= 1 ->
-        xml = cached("reports:#{page}", 3600, fn -> build_reports_sitemap(page) end)
-
-        conn
-        |> put_resp_content_type("application/xml")
-        |> put_resp_header("cache-control", "public, max-age=3600")
-        |> send_resp(200, xml)
-
-      _ ->
-        send_resp(conn, 404, "Not found")
-    end
   end
 
   # Cache helper - returns cached XML or generates and caches it
@@ -79,32 +79,38 @@ defmodule PrzetargowiWeb.SitemapController do
     end
   end
 
-  # Build sitemap index listing all sub-sitemaps
+  # Sitemap index: the page list plus the paginated sitemaps of whichever
+  # detail pages are indexable.
   defp build_sitemap_index do
-    judgement_pages = ceil(Judgements.count_sitemap_entries() / @urls_per_sitemap)
-    report_pages = ceil(Reports.count_sitemap_entries() / @urls_per_sitemap)
-
-    judgement_lastmods = Judgements.sitemap_lastmods(@urls_per_sitemap)
-    report_lastmods = Reports.sitemap_lastmods(@urls_per_sitemap)
-
     today = Date.to_iso8601(Date.utc_today())
 
-    # Individual tender pages are intentionally excluded — they are noindex, so
-    # advertising them in the sitemap sends Google a contradictory signal.
-    # Category hubs and regions (in sitemap-static.xml) are the tender surface.
+    judgement_sitemaps =
+      if Indexing.detail_pages?(:rulings) do
+        pages = ceil(Judgements.count_sitemap_entries() / @urls_per_sitemap)
+        lastmods = Judgements.sitemap_lastmods(@urls_per_sitemap)
+
+        for page <- 1..max(pages, 1) do
+          {"#{@base_url}/sitemap/judgements/#{page}", format_date(lastmods[page]) || today}
+        end
+      else
+        []
+      end
+
+    report_sitemaps =
+      if Indexing.detail_pages?(:reports) do
+        pages = ceil(Reports.count_sitemap_entries() / @urls_per_sitemap)
+        lastmods = Reports.sitemap_lastmods(@urls_per_sitemap)
+
+        for page <- 1..max(pages, 1) do
+          {"#{@base_url}/sitemap/reports/#{page}", format_date(lastmods[page]) || today}
+        end
+      else
+        []
+      end
+
     sitemaps =
       [{"#{@base_url}/sitemap-static.xml", Date.utc_today()}] ++
-        for(
-          page <- 1..max(judgement_pages, 1),
-          do:
-            {"#{@base_url}/sitemap/judgements/#{page}",
-             format_date(judgement_lastmods[page]) || today}
-        ) ++
-        for(
-          page <- 1..max(report_pages, 1),
-          do:
-            {"#{@base_url}/sitemap/reports/#{page}", format_date(report_lastmods[page]) || today}
-        )
+        judgement_sitemaps ++ report_sitemaps
 
     """
     <?xml version="1.0" encoding="UTF-8"?>
@@ -163,6 +169,13 @@ defmodule PrzetargowiWeb.SitemapController do
     ]
 
     region_urls = Enum.map(@regions, &tender.("/przetargi/#{&1}", "0.7"))
+
+    # Report hubs: the landing page is in the list above, one page per region here
+    report_region_urls =
+      Enum.map(@regions, fn region ->
+        %{loc: "#{@base_url}/raporty/#{region}", priority: "0.6", changefreq: "monthly"}
+      end)
+
     hub_urls = Enum.map(Hubs.all_paths(), &tender.(&1, "0.8"))
     topic_urls = Enum.map(Topics.all_paths(), &kio.(&1, "0.9"))
 
@@ -177,7 +190,7 @@ defmodule PrzetargowiWeb.SitemapController do
         }
       end)
 
-    urls = static_urls ++ topic_urls ++ region_urls ++ hub_urls ++ blog_urls
+    urls = static_urls ++ topic_urls ++ region_urls ++ hub_urls ++ report_region_urls ++ blog_urls
     build_urlset(urls)
   end
 

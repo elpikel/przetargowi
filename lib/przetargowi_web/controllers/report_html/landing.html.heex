@@ -1,0 +1,74 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <.page_hero title="Raporty przetargowe">
+        Comiesięczne analizy rynku zamówień publicznych — liczba i wartość przetargów, najaktywniejsi zamawiający i trendy w każdym województwie.
+      </.page_hero>
+
+      <.search_bar
+        id="report-search"
+        action="/raporty"
+        label="Szukaj raportów"
+        placeholder="Województwo, rodzaj zamówienia lub miesiąc…"
+        advanced="/raporty?q="
+        advanced_label="Wyszukiwanie zaawansowane z filtrami"
+        centered
+      />
+
+      <.stat_tiles
+        id="report-figures"
+        items={[
+          {"Raportów w archiwum", format_count(@summary.total)},
+          {"Najnowszy raport",
+           if(@summary.latest_month, do: format_report_date(@summary.latest_month), else: "—")},
+          {"Województw z własnym raportem", map_size(@summary.by_region)}
+        ]}
+      />
+
+      <.hub_grid
+        id="report-regions"
+        title="Raporty według województwa"
+        lead="Wybierz województwo, aby zobaczyć jego miesięczne raporty: ogółem oraz osobno dla dostaw, usług i robót budowlanych."
+        items={region_items(@summary.by_region)}
+      />
+
+      <section class="mb-14" id="report-latest">
+        <h2 class="text-2xl font-bold text-base-content mb-6">Najnowsze raporty</h2>
+        <%= if @reports == [] do %>
+          <.empty_results
+            title="Brak raportów w archiwum"
+            hint="Raporty publikujemy raz w miesiącu."
+          />
+        <% else %>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <.report_card :for={report <- @reports} report={report} compact />
+          </div>
+        <% end %>
+        <p class="mt-6 text-center">
+          <a href="/raporty?q=" rel="nofollow" class="text-primary font-medium hover:underline">
+            Zobacz wszystkie raporty →
+          </a>
+        </p>
+      </section>
+
+      <section class="mb-14 prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/70 prose-a:text-primary prose-li:text-base-content/70">
+        <h2>Do czego służą raporty przetargowe?</h2>
+        <p>
+          Raport pokazuje, jak wyglądał rynek zamówień publicznych w danym miesiącu: ile postępowań ogłoszono, jaka była ich łączna wartość, którzy zamawiający byli najaktywniejsi i w jakich kategoriach zamawiano najwięcej. Pozwala ocenić, czy w Twoim regionie i branży rynek rośnie, i zaplanować udział w kolejnych postępowaniach.
+        </p>
+        <p>
+          Każdy raport powstaje na podstawie ogłoszeń z Biuletynu Zamówień Publicznych. Bieżące postępowania znajdziesz w <a href="/przetargi">wyszukiwarce przetargów</a>, a informację o tym, kto wygrywał podobne zamówienia — w <a href="/analiza-rynku">analizie rynku</a>.
+        </p>
+      </section>
+
+      <.faq_section id="report-faq" faqs={landing_faqs()} title="Najczęściej zadawane pytania" />
+
+      <.link_columns
+        id="report-browse"
+        title="Przeglądaj raporty"
+        columns={browse_columns()}
+        current="/raporty"
+      />
+    </div>
+  </div>
+</Layouts.app>

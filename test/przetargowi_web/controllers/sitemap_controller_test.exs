@@ -12,16 +12,47 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     :ok
   end
 
+  # Switches detail pages back into the index for one test (see PrzetargowiWeb.Indexing).
+  defp index_detail_pages(kinds) do
+    previous = Application.get_env(:przetargowi, :index_detail_pages)
+    Application.put_env(:przetargowi, :index_detail_pages, kinds)
+    on_exit(fn -> Application.put_env(:przetargowi, :index_detail_pages, previous) end)
+  end
+
   describe "GET /sitemap.xml" do
-    test "returns sitemap index with sub-sitemaps", %{conn: conn} do
+    test "is one file listing only landing pages, hubs, blog and static pages", %{conn: conn} do
+      ruling = insert_judgement(%{signature: "KIO 123/24"})
+
       conn = get(conn, ~p"/sitemap.xml")
 
       assert response_content_type(conn, :xml)
-      assert response(conn, 200) =~ "sitemapindex"
-      assert response(conn, 200) =~ "/sitemap-static.xml"
-      assert response(conn, 200) =~ "/sitemap/judgements/1"
-      # Individual tender pages are noindex, so they are not advertised here
-      refute response(conn, 200) =~ "/sitemap/tenders/1"
+      body = response(conn, 200)
+
+      assert body =~ "<urlset"
+      refute body =~ "sitemapindex"
+      assert body =~ "https://przetargowi.pl/orzecznictwo-kio</loc>"
+      assert body =~ "/orzecznictwo-kio/razaco-niska-cena</loc>"
+      assert body =~ "/przetargi/branza/budowlane</loc>"
+      assert body =~ "/raporty/mazowieckie</loc>"
+      assert body =~ "/blog/jak-odwolac-sie-do-kio</loc>"
+
+      # Detail pages are noindex, so they are not advertised
+      refute body =~ "/orzecznictwo-kio/#{ruling.slug}</loc>"
+    end
+
+    test "the old page-list URL redirects to the single sitemap", %{conn: conn} do
+      assert conn |> get(~p"/sitemap-static.xml") |> redirected_to(301) == "/sitemap.xml"
+    end
+
+    test "becomes a sitemap index when rulings are indexable again", %{conn: conn} do
+      index_detail_pages(rulings: true, reports: false)
+
+      body = conn |> get(~p"/sitemap.xml") |> response(200)
+
+      assert body =~ "sitemapindex"
+      assert body =~ "/sitemap-static.xml"
+      assert body =~ "/sitemap/judgements/1"
+      refute body =~ "/sitemap/reports/1"
     end
 
     test "sets cache-control header", %{conn: conn} do
@@ -31,9 +62,9 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
   end
 
-  describe "GET /sitemap-static.xml" do
+  describe "page list in /sitemap.xml" do
     test "returns static pages sitemap", %{conn: conn} do
-      conn = get(conn, ~p"/sitemap-static.xml")
+      conn = get(conn, ~p"/sitemap.xml")
 
       assert response_content_type(conn, :xml)
       body = response(conn, 200)
@@ -48,7 +79,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
 
     test "includes category hub pages", %{conn: conn} do
-      conn = get(conn, ~p"/sitemap-static.xml")
+      conn = get(conn, ~p"/sitemap.xml")
       body = response(conn, 200)
 
       assert body =~ "/przetargi/rodzaj/roboty-budowlane</loc>"
@@ -59,7 +90,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     test "list pages carry the date of their newest data as last-modified", %{conn: conn} do
       insert_judgement(%{signature: "KIO 900/24"})
 
-      body = conn |> get(~p"/sitemap-static.xml") |> response(200)
+      body = conn |> get(~p"/sitemap.xml") |> response(200)
       today = Date.to_iso8601(Date.utc_today())
 
       assert body =~
@@ -67,7 +98,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
 
     test "blog articles carry their own last-modified date, not today's", %{conn: conn} do
-      body = conn |> get(~p"/sitemap-static.xml") |> response(200)
+      body = conn |> get(~p"/sitemap.xml") |> response(200)
 
       article = Przetargowi.Blog.get_article_by_slug("jak-odwolac-sie-do-kio")
       date = Calendar.strftime(article.updated_at, "%Y-%m-%d")
@@ -79,7 +110,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
 
     test "includes KIO topic hubs", %{conn: conn} do
-      conn = get(conn, ~p"/sitemap-static.xml")
+      conn = get(conn, ~p"/sitemap.xml")
       body = response(conn, 200)
 
       assert body =~ "/orzecznictwo-kio/razaco-niska-cena</loc>"
@@ -87,7 +118,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
 
     test "includes all 16 regions", %{conn: conn} do
-      conn = get(conn, ~p"/sitemap-static.xml")
+      conn = get(conn, ~p"/sitemap.xml")
       body = response(conn, 200)
 
       regions =
@@ -99,7 +130,7 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
 
     test "all static URLs return 200", %{conn: conn} do
-      sitemap_conn = get(conn, ~p"/sitemap-static.xml")
+      sitemap_conn = get(conn, ~p"/sitemap.xml")
       body = response(sitemap_conn, 200)
 
       # Extract all URLs from the sitemap
@@ -119,7 +150,19 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     end
   end
 
+  describe "GET /sitemap/judgements/:page when rulings are not indexable" do
+    test "does not exist", %{conn: conn} do
+      insert_judgement(%{signature: "KIO 123/24"})
+
+      assert conn |> get(~p"/sitemap/judgements/1") |> response(404)
+    end
+  end
+
   describe "GET /sitemap/judgements/:page" do
+    setup do
+      index_detail_pages(rulings: true, reports: false)
+    end
+
     test "returns judgements sitemap for page 1", %{conn: conn} do
       j1 = insert_judgement(%{signature: "KIO 123/24"})
       j2 = insert_judgement(%{signature: "KIO 456/24"})

@@ -65,6 +65,30 @@ defmodule Przetargowi.Reports do
   end
 
   @doc """
+  Headline figures for the reports landing page and region hubs:
+  `%{total, latest_month, by_region}` where `by_region` maps a region slug to
+  its number of reports. Pass a region to scope `total` and `latest_month`.
+  """
+  def summary(region \\ nil) do
+    by_region =
+      from(r in TenderReport,
+        where: not is_nil(r.region),
+        group_by: r.region,
+        select: {r.region, count(r.id)}
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    scope = apply_region_filter(from(r in TenderReport), region)
+
+    %{
+      total: Repo.aggregate(scope, :count),
+      latest_month: Repo.aggregate(scope, :max, :report_month),
+      by_region: by_region
+    }
+  end
+
+  @doc """
   Lists tender reports with pagination and filtering.
 
   ## Options

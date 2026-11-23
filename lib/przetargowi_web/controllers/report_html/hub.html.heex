@@ -1,0 +1,104 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <.hub_header
+        crumbs={[
+          {"Strona główna", "/"},
+          {"Raporty", "/raporty"},
+          {"Województwo #{region_name(@region)}", nil}
+        ]}
+        title={"Raporty przetargowe — województwo #{region_name(@region)}"}
+        lead={"Miesięczne raporty rynku zamówień publicznych w województwie #{region_locative(@region)}: liczba i wartość przetargów, najaktywniejsi zamawiający i najczęstsze kategorie zamówień."}
+      />
+
+      <.stat_tiles
+        id="hub-figures"
+        items={[
+          {"Raportów w archiwum", format_count(@summary.total)},
+          {"Najnowszy raport",
+           if(@summary.latest_month, do: format_report_date(@summary.latest_month), else: "—")},
+          {"Otwarte przetargi w województwie", format_count(@open_tenders)}
+        ]}
+      />
+
+      <.search_bar
+        id="hub-search"
+        action="/raporty"
+        label="Szukaj raportów"
+        placeholder="Szukaj w raportach…"
+        hidden={[{"region", @region}]}
+        advanced={"/raporty?region=#{@region}"}
+      />
+
+      <div class="grid lg:grid-cols-3 gap-8 items-start">
+        <section class="lg:col-span-2" id="hub-reports">
+          <h2 class="text-xl font-bold text-base-content mb-5">
+            <%= if @page == 1 do %>
+              Najnowsze raporty — województwo {region_name(@region)}
+            <% else %>
+              Raporty — województwo {region_name(@region)}, strona {@page} z {@total_pages}
+            <% end %>
+          </h2>
+          <%= if @reports == [] do %>
+            <.empty_results
+              title="Brak raportów dla tego województwa"
+              hint="Raporty publikujemy raz w miesiącu."
+            />
+          <% else %>
+            <div class="space-y-4">
+              <.report_card :for={report <- @reports} report={report} />
+            </div>
+          <% end %>
+          <.pager
+            id="hub-pagination"
+            page={@page}
+            total_pages={@total_pages}
+            path={
+              fn page ->
+                if page == 1, do: "/raporty/#{@region}", else: "/raporty/#{@region}?page=#{page}"
+              end
+            }
+          />
+        </section>
+
+        <aside class="space-y-6">
+          <.side_card
+            title="Przetargi w tym województwie"
+            lead="Raport opisuje miniony miesiąc. Bieżące postępowania znajdziesz tutaj."
+          >
+            <ul class="space-y-2 text-sm" id="hub-related">
+              <li>
+                <a href={"/przetargi/#{@region}"} class="text-primary hover:underline">
+                  Aktualne przetargi — województwo {region_name(@region)}
+                </a>
+              </li>
+              <li>
+                <a href="/analiza-rynku" class="text-primary hover:underline">
+                  Analiza rynku — kto wygrywa przetargi
+                </a>
+              </li>
+            </ul>
+          </.side_card>
+        </aside>
+      </div>
+
+      <%!-- Editorial part: first page only, deeper pages are plain lists --%>
+      <div :if={@page == 1} class="mt-14 space-y-10" id="hub-editorial">
+        <.prose_card
+          id="hub-overview"
+          title={"Raporty przetargowe w województwie #{region_locative(@region)} — co zawierają"}
+          paragraphs={[
+            "W województwie #{region_locative(@region)} publikujemy co miesiąc raport zbiorczy oraz osobne raporty dla dostaw, usług i robót budowlanych. Każdy z nich podaje liczbę i wartość ogłoszonych postępowań, zamawiających, którzy ogłosili ich najwięcej, oraz najczęstsze kategorie CPV, na podstawie ogłoszeń z Biuletynu Zamówień Publicznych."
+          ]}
+        />
+      </div>
+
+      <.link_columns
+        id="report-browse"
+        title="Przeglądaj raporty"
+        columns={browse_columns()}
+        current={"/raporty/#{@region}"}
+      />
+    </div>
+  </div>
+</Layouts.app>

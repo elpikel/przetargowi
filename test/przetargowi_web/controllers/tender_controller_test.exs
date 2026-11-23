@@ -484,7 +484,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
 
       assert conn.assigns.total_count == 3
       assert stats.closing_soon == 1
-      assert stats.published_last_year == 3
+      assert stats.authorities == 1
       assert stats.by_region == [{"mazowieckie", 2}, {"malopolskie", 1}]
       assert stats.by_order_type == [{"Works", 3}]
       assert stats.top_authorities == [{"Gmina Testowa", 3}]

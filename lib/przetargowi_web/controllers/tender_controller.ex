@@ -2,7 +2,6 @@ defmodule PrzetargowiWeb.TenderController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.SearchLogs
-  alias Przetargowi.SitemapCache
   alias Przetargowi.Tenders
   alias Przetargowi.Tenders.Hubs
   alias Przetargowi.Watchlist
@@ -165,7 +164,7 @@ defmodule PrzetargowiWeb.TenderController do
       intro: hub.intro,
       search_scope: search_scope(kind, hub),
       content: Hubs.content(kind, hub.slug),
-      stats: cached_hub_stats(path, filter_opts)
+      stats: Tenders.hub_stats(filter_opts)
     })
   end
 
@@ -220,27 +219,12 @@ defmodule PrzetargowiWeb.TenderController do
       notices: notices,
       open?: open?,
       total_count: result.total_count,
-      stats: cached_hub_stats("/przetargi", []),
+      stats: Tenders.hub_stats(),
       categories: Hubs.category_hubs(),
       order_types: Hubs.order_type_hubs(),
       regions: Hubs.regions(),
       recent_articles: Przetargowi.Blog.list_recent_articles(3)
     )
-  end
-
-  # Five aggregate queries per hub; open-tender figures move slowly.
-  defp cached_hub_stats(key, filter_opts) do
-    cache_key = "hub-stats:#{key}"
-
-    case SitemapCache.get(cache_key) do
-      {:ok, stats} ->
-        stats
-
-      :miss ->
-        stats = Tenders.hub_stats(filter_opts)
-        SitemapCache.put(cache_key, stats, 900)
-        stats
-    end
   end
 
   # Regions have no hand-written copy: one honest paragraph built from the
@@ -396,7 +380,7 @@ defmodule PrzetargowiWeb.TenderController do
             "Aktualne przetargi publiczne w województwie #{region_name} z Biuletynu Zamówień Publicznych, z terminami składania ofert.",
           search_scope: search_scope(:region, %{slug: region}),
           content: region_content(region),
-          stats: cached_hub_stats(path, regions: [region])
+          stats: Tenders.hub_stats(regions: [region])
         })
     end
   end

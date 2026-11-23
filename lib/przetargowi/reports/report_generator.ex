@@ -527,7 +527,7 @@ defmodule Przetargowi.Reports.ReportGenerator do
               <span class="report-ranking-position">#{index}</span>
               <div class="report-ranking-content">
                 <span class="report-ranking-name">#{org["name"]}</span>
-                <span class="report-ranking-value">#{org["count"]} ogłoszeń</span>
+                <span class="report-ranking-value">#{count_label(org["count"], :notice)}</span>
               </div>
             </div>
             """
@@ -554,7 +554,7 @@ defmodule Przetargowi.Reports.ReportGenerator do
               <span class="report-ranking-position">#{index}</span>
               <div class="report-ranking-content">
                 <span class="report-ranking-name">#{city["city"]}</span>
-                <span class="report-ranking-value">#{city["count"]} ogłoszeń</span>
+                <span class="report-ranking-value">#{count_label(city["count"], :notice)}</span>
               </div>
             </div>
             """
@@ -581,7 +581,7 @@ defmodule Przetargowi.Reports.ReportGenerator do
               <span class="report-ranking-position">#{index}</span>
               <div class="report-ranking-content">
                 <span class="report-ranking-name">#{contractor["name"]}</span>
-                <span class="report-ranking-value">#{contractor["count"]} kontraktów</span>
+                <span class="report-ranking-value">#{count_label(contractor["count"], :contract)}</span>
               </div>
             </div>
             """
@@ -618,7 +618,6 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
     <section class="report-section">
       <h3 class="report-section-title">
-        <span class="report-section-icon">📈</span>
         Trendy publikacji
       </h3>
       <p class="report-section-desc">Tygodniowy rozkład publikacji przetargów w analizowanym miesiącu.</p>
@@ -629,7 +628,6 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
     <section class="report-section">
       <h3 class="report-section-title">
-        <span class="report-section-icon">💰</span>
         Wartości kontraktów
       </h3>
       <div class="report-values-grid">
@@ -650,7 +648,6 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
     <section class="report-section">
       <h3 class="report-section-title">
-        <span class="report-section-icon">🏢</span>
         Najaktywniejsze podmioty
       </h3>
       <div class="report-columns">
@@ -667,7 +664,6 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
     <section class="report-section">
       <h3 class="report-section-title">
-        <span class="report-section-icon">📍</span>
         Rozkład geograficzny
       </h3>
       #{top_cities_html}
@@ -675,7 +671,6 @@ defmodule Przetargowi.Reports.ReportGenerator do
 
     <section class="report-section">
       <h3 class="report-section-title">
-        <span class="report-section-icon">📊</span>
         Rozkład wartości przetargów
       </h3>
       <div class="report-chart-container">
@@ -814,5 +809,24 @@ defmodule Przetargowi.Reports.ReportGenerator do
     |> Decimal.to_string()
     |> String.replace(~r/(\d)(?=(\d{3})+(?!\d))/, "\\1 ")
     |> Kernel.<>(" PLN")
+  end
+
+  # "1 kontrakt", "3 kontrakty", "12 kontraktów" — Polish plural forms.
+  defp count_label(count, noun) do
+    {one, few, many} =
+      case noun do
+        :contract -> {"kontrakt", "kontrakty", "kontraktów"}
+        :notice -> {"ogłoszenie", "ogłoszenia", "ogłoszeń"}
+      end
+
+    form =
+      cond do
+        not is_integer(count) -> many
+        count == 1 -> one
+        rem(count, 10) in 2..4 and rem(count, 100) not in 12..14 -> few
+        true -> many
+      end
+
+    "#{count} #{form}"
   end
 end

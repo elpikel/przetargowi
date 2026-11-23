@@ -269,11 +269,17 @@ defmodule Przetargowi.Tenders do
   `:cpv_prefixes` options as `search_tender_notices/1` and returns:
 
     * `:closing_soon` — open tenders whose deadline falls within 7 days
-    * `:published_last_year` — contract notices published in the last 12 months
+    * `:authorities` — number of contracting authorities with an open tender
     * `:by_region` — `[{region_slug, count}]` of open tenders, largest first
     * `:by_order_type` — `[{order_type, count}]` of open tenders
     * `:top_authorities` — `[{organization_name, count}]`, the contracting
       authorities with the most open tenders
+
+  Everything is derived from one query over the hub's open tenders — the same
+  rows the hub's list already counts — so it is cheap enough to run on every
+  request and needs no cache. Keep it that way: a figure that needs its own
+  scan of historical notices (a "last 12 months" count was tried) took over
+  15 seconds on production and timed hub pages out.
   """
   def hub_stats(opts \\ []) do
     regions = normalize_to_list(Keyword.get(opts, :regions))
@@ -281,58 +287,42 @@ defmodule Przetargowi.Tenders do
     cpv_prefixes = normalize_to_list(Keyword.get(opts, :cpv_prefixes))
     now = DateTime.utc_now()
 
-    scope =
+    open =
       TenderNotice
       |> from(as: :tender_notice)
       |> filter_hub_dimensions(regions, order_types, cpv_prefixes)
-
-    open = where(scope, [tender_notice: tn], tn.submitting_offers_date >= ^now)
-
-    closing_soon =
-      open
-      |> where([tender_notice: tn], tn.submitting_offers_date <= ^DateTime.add(now, 7, :day))
-      |> Repo.aggregate(:count)
-
-    published_last_year =
-      scope
-      |> where([tender_notice: tn], tn.notice_type == "ContractNotice")
-      |> where([tender_notice: tn], tn.publication_date >= ^DateTime.add(now, -365, :day))
-      |> Repo.aggregate(:count)
-
-    by_region =
-      open
-      |> where([tender_notice: tn], not is_nil(tn.organization_province))
-      |> group_by([tender_notice: tn], tn.organization_province)
-      |> select([tender_notice: tn], {tn.organization_province, count()})
-      |> Repo.all()
-      |> Enum.map(fn {code, count} -> {province_code_to_region(code), count} end)
-      |> Enum.reject(fn {region, _count} -> is_nil(region) end)
-      |> Enum.sort_by(fn {region, count} -> {-count, region} end)
-
-    by_order_type =
-      open
-      |> where([tender_notice: tn], not is_nil(tn.order_type))
-      |> group_by([tender_notice: tn], tn.order_type)
-      |> select([tender_notice: tn], {tn.order_type, count()})
-      |> order_by([tender_notice: tn], desc: count())
+      |> where([tender_notice: tn], tn.submitting_offers_date >= ^now)
+      |> select([tender_notice: tn], %{
+        province: tn.organization_province,
+        order_type: tn.order_type,
+        authority: tn.organization_name,
+        deadline: tn.submitting_offers_date
+      })
       |> Repo.all()
 
-    top_authorities =
-      open
-      |> where([tender_notice: tn], not is_nil(tn.organization_name))
-      |> group_by([tender_notice: tn], tn.organization_name)
-      |> select([tender_notice: tn], {tn.organization_name, count()})
-      |> order_by([tender_notice: tn], desc: count(), asc: tn.organization_name)
-      |> limit(5)
-      |> Repo.all()
+    week_ahead = DateTime.add(now, 7, :day)
+    by_authority = frequencies(open, & &1.authority)
 
     %{
-      closing_soon: closing_soon,
-      published_last_year: published_last_year,
-      by_region: by_region,
-      by_order_type: by_order_type,
-      top_authorities: top_authorities
+      closing_soon: Enum.count(open, &(DateTime.compare(&1.deadline, week_ahead) != :gt)),
+      authorities: length(by_authority),
+      by_region:
+        open
+        |> frequencies(& &1.province)
+        |> Enum.map(fn {code, count} -> {province_code_to_region(code), count} end)
+        |> Enum.reject(fn {region, _count} -> is_nil(region) end)
+        |> Enum.sort_by(fn {region, count} -> {-count, region} end),
+      by_order_type:
+        open
+        |> frequencies(& &1.order_type)
+        |> Enum.sort_by(fn {type, count} -> {-count, type} end),
+      top_authorities:
+        by_authority |> Enum.sort_by(fn {name, count} -> {-count, name} end) |> Enum.take(5)
     }
+  end
+
+  defp frequencies(rows, key_fun) do
+    rows |> Enum.map(key_fun) |> Enum.reject(&is_nil/1) |> Enum.frequencies() |> Map.to_list()
   end
 
   @province_regions %{

@@ -111,6 +111,11 @@ config :przetargowi, Oban,
 # Configure HTTP client for UZP scraper
 config :przetargowi, :uzp_http_client, Przetargowi.UZP.HTTPClient
 
+# Search indexing of detail pages (single rulings, single monthly reports).
+# Off: they carry noindex and are left out of the sitemap, so only landing
+# pages, hubs, the blog and static pages are indexed. See PrzetargowiWeb.Indexing.
+config :przetargowi, :index_detail_pages, rulings: false, reports: false
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

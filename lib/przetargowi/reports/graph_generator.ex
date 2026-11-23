@@ -50,9 +50,9 @@ defmodule Przetargowi.Reports.GraphGenerator do
         <rect x="#{x}" y="#{y}" width="#{bar_width}" height="#{height}"
               fill="url(#barGradient)" rx="4"/>
         <text x="#{x + bar_width / 2}" y="#{top_padding + chart_height + 20}"
-              text-anchor="middle" font-size="11" fill="#0a1628" font-family="DM Sans, system-ui, sans-serif">Tydz. #{data["week"]}</text>
+              text-anchor="middle" font-size="11" fill="#0f172a" font-family="Inter, system-ui, sans-serif">Tydz. #{data["week"]}</text>
         <text x="#{x + bar_width / 2}" y="#{y - 8}"
-              text-anchor="middle" font-size="13" fill="#12233d" font-weight="700" font-family="Playfair Display, Georgia, serif">#{count}</text>
+              text-anchor="middle" font-size="13" fill="#0f172a" font-weight="700" font-family="Inter, system-ui, sans-serif">#{count}</text>
         """
       end)
 
@@ -62,13 +62,13 @@ defmodule Przetargowi.Reports.GraphGenerator do
     <svg width="100%" viewBox="0 0 #{width} #{top_padding + chart_height + bottom_padding}" xmlns="http://www.w3.org/2000/svg" style="max-width: #{width}px;">
       <defs>
         <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#12233d"/>
-          <stop offset="100%" stop-color="#1a3052"/>
+          <stop offset="0%" stop-color="#2347d9"/>
+          <stop offset="100%" stop-color="#1d3bb8"/>
         </linearGradient>
       </defs>
       <title>Liczba przetargów w poszczególnych tygodniach</title>
       <line x1="10" y1="#{top_padding + chart_height}" x2="#{width - 10}" y2="#{top_padding + chart_height}"
-            stroke="#f3e4c3" stroke-width="1"/>
+            stroke="#e4e7ec" stroke-width="1"/>
       #{bars}
     </svg>
     """
@@ -88,8 +88,8 @@ defmodule Przetargowi.Reports.GraphGenerator do
     label_width = 140
     padding = 20
 
-    # Gold color palette for bars
-    colors = ["#c9a227", "#b8922a", "#a7832d", "#967430", "#856533"]
+    # One hue, darkest first, so the ranges read as an ordered scale
+    colors = ["#2347d9", "#3b5fe0", "#5a78e6", "#7c93ec", "#9fb0f2"]
 
     bars =
       value_ranges
@@ -101,11 +101,11 @@ defmodule Przetargowi.Reports.GraphGenerator do
         color = Enum.at(colors, rem(index, length(colors)))
 
         """
-        <text x="#{padding}" y="#{y + bar_height / 2 + 5}" font-size="13" fill="#0a1628" font-family="DM Sans, system-ui, sans-serif">#{data["label"]}</text>
+        <text x="#{padding}" y="#{y + bar_height / 2 + 5}" font-size="13" fill="#0f172a" font-family="Inter, system-ui, sans-serif">#{data["label"]}</text>
         <rect x="#{label_width + padding}" y="#{y}" width="#{width}" height="#{bar_height}"
               fill="#{color}" rx="6"/>
         <text x="#{label_width + padding + width + 10}" y="#{y + bar_height / 2 + 5}"
-              font-size="14" fill="#12233d" font-weight="700" font-family="Playfair Display, Georgia, serif">#{count}</text>
+              font-size="14" fill="#0f172a" font-weight="700" font-family="Inter, system-ui, sans-serif">#{count}</text>
         """
       end)
 

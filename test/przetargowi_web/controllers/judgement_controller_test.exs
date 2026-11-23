@@ -24,12 +24,29 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
       assert response =~ ~s(<meta name="robots" content="noindex, follow">)
     end
 
-    test "page with real content stays indexable", %{conn: conn} do
+    test "a ruling with real content is noindex too: rulings are kept out of the index", %{
+      conn: conn
+    } do
       judgement = create_judgement(%{content_html: "<p>#{String.duplicate("treść ", 200)}</p>"})
 
       response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
-      assert response =~ ~s(<meta name="robots" content="index, follow">)
+      assert response =~ ~s(<meta name="robots" content="noindex, follow">)
+    end
+
+    test "is indexable when the policy allows rulings and the page has content", %{conn: conn} do
+      previous = Application.get_env(:przetargowi, :index_detail_pages)
+      Application.put_env(:przetargowi, :index_detail_pages, rulings: true, reports: false)
+      on_exit(fn -> Application.put_env(:przetargowi, :index_detail_pages, previous) end)
+
+      judgement = create_judgement(%{content_html: "<p>#{String.duplicate("treść ", 200)}</p>"})
+      thin = create_judgement(%{})
+
+      assert conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200) =~
+               ~s(<meta name="robots" content="index, follow">)
+
+      assert conn |> get(~p"/orzecznictwo-kio/#{thin.slug}") |> html_response(200) =~
+               ~s(<meta name="robots" content="noindex, follow">)
     end
   end
 
