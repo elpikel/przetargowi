@@ -1,0 +1,137 @@
+defmodule Przetargowi.Repo.Migrations.InsertBlogArticleWadium do
+  use Ecto.Migration
+
+  @slug "wadium-w-przetargu-formy-gwarancja-zwrot-i-zatrzymanie"
+  @title "Wadium w przetargu — formy, gwarancja wadialna, zwrot i zatrzymanie"
+  @excerpt "Ile wynosi wadium, w jakiej formie je wnieść, na co uważać w gwarancji wadialnej, kiedy zamawiający zwraca wadium, a kiedy je zatrzymuje. Poradnik na podstawie art. 97 i 98 Pzp i orzecznictwa KIO."
+  @meta_description "Wadium w zamówieniach publicznych: wysokość (1,5% i 3%), formy wniesienia, wymagania wobec gwarancji wadialnej, zwrot i zatrzymanie wadium (art. 97–98 Pzp), najczęstsze błędy i orzecznictwo KIO."
+  @meta_keywords "wadium, wadium w przetargu, gwarancja wadialna, zwrot wadium, zatrzymanie wadium, art 97 pzp, art 98 pzp, wadium konsorcjum, odrzucenie oferty wadium, orzecznictwo KIO"
+
+  @content """
+  <h2>Po co jest wadium</h2>
+
+  <p>Wadium zabezpiecza zamawiającego na wypadek, gdyby wybrany wykonawca uchylił się od zawarcia umowy albo nie uzupełnił wymaganych dokumentów. Zasady jego wnoszenia regulują <a href="/ustawa-pzp#art-97">art. 97</a> i <a href="/ustawa-pzp#art-98">art. 98 ustawy Pzp</a>.</p>
+
+  <p>Żądanie wadium jest <strong>uprawnieniem, a nie obowiązkiem</strong> zamawiającego. Jeżeli jednak zostało przewidziane w SWZ, błąd przy jego wniesieniu jest nienaprawialny: oferta podlega odrzuceniu na podstawie <a href="/ustawa-pzp#art-226">art. 226 ust. 1 pkt 14 Pzp</a>, a wadium nie można uzupełnić po terminie składania ofert.</p>
+
+  <h2>Wysokość wadium</h2>
+
+  <ul>
+    <li>zamówienia o wartości równej progom unijnym lub wyższej — nie więcej niż <strong>3%</strong> wartości zamówienia,</li>
+    <li>zamówienia poniżej progów unijnych — nie więcej niż <strong>1,5%</strong> wartości zamówienia.</li>
+  </ul>
+
+  <p>Zamawiający podaje w dokumentach zamówienia konkretną kwotę. Przy zamówieniach z podziałem na części wadium określa się osobno dla każdej części.</p>
+
+  <h2>Formy wniesienia</h2>
+
+  <p>Wadium można wnieść w jednej lub kilku formach, według wyboru wykonawcy:</p>
+
+  <ul>
+    <li>w <strong>pieniądzu</strong> — wyłącznie przelewem na rachunek wskazany przez zamawiającego,</li>
+    <li><strong>gwarancji bankowej</strong>,</li>
+    <li><strong>gwarancji ubezpieczeniowej</strong>,</li>
+    <li><strong>poręczeniu</strong> udzielanym przez podmioty, o których mowa w ustawie o utworzeniu Polskiej Agencji Rozwoju Przedsiębiorczości.</li>
+  </ul>
+
+  <div style="background: #fff8e1; border-left: 4px solid #c9a227; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;"><p style="margin: 0;"><strong>Wadium w pieniądzu musi znaleźć się na rachunku zamawiającego przed upływem terminu składania ofert.</strong> Liczy się moment uznania rachunku, a nie zlecenia przelewu. Przelew wysłany w ostatniej chwili to jedno z najczęstszych źródeł odrzucenia oferty.</p></div>
+
+  <h2>Gwarancja wadialna — na co uważać</h2>
+
+  <p>Wadium w formie gwarancji lub poręczenia przekazuje się zamawiającemu jako <strong>oryginał w postaci elektronicznej</strong>, czyli dokument opatrzony kwalifikowanym podpisem elektronicznym wystawcy. Skan papierowej gwarancji nie jest wadium wniesionym prawidłowo.</p>
+
+  <p>Przed złożeniem oferty sprawdź, czy gwarancja:</p>
+
+  <ul>
+    <li>jest <strong>nieodwołalna, bezwarunkowa i płatna na pierwsze żądanie</strong> zamawiającego,</li>
+    <li>obejmuje <strong>wszystkie przypadki zatrzymania wadium</strong> z art. 98 ust. 6 Pzp,</li>
+    <li>jest ważna przez <strong>cały termin związania ofertą</strong> — łącznie z pierwszym i ostatnim dniem,</li>
+    <li>wskazuje prawidłowo zamawiającego jako beneficjenta, nazwę postępowania i kwotę,</li>
+    <li>nie zawiera postanowień utrudniających wypłatę, np. obowiązku przesłania żądania za pośrednictwem banku w terminie krótszym niż ważność gwarancji.</li>
+  </ul>
+
+  <h3>Wadium konsorcjum</h3>
+
+  <p>Gdy ofertę składa konsorcjum, najbezpieczniej jest, aby gwarancja wymieniała wszystkich jego członków. Po wyroku Sądu Najwyższego z 15 lutego 2018 r. (IV CSK 86/17) przyjmuje się jednak, że samo wskazanie w gwarancji tylko jednego konsorcjanta nie przesądza o wadliwości wadium — decyduje treść gwarancji i to, czy zamawiający może z niej skorzystać także wtedy, gdy przyczyna zatrzymania leży po stronie innego członka konsorcjum. Spory na tym tle wciąż trafiają do Izby — zobacz <a href="/orzecznictwo-kio/wadium">orzecznictwo KIO dotyczące wadium</a>.</p>
+
+  <h2>Utrzymanie wadium i przedłużenie terminu związania ofertą</h2>
+
+  <p>Wadium musi być utrzymywane <strong>nieprzerwanie</strong> do dnia upływu terminu związania ofertą. Jeżeli zamawiający zwraca się o przedłużenie tego terminu, zgoda wykonawcy jest skuteczna tylko z jednoczesnym przedłużeniem okresu ważności wadium albo wniesieniem nowego. Więcej: <a href="/orzecznictwo-kio/termin-zwiazania-oferta">termin związania ofertą w orzecznictwie KIO</a>.</p>
+
+  <h2>Kiedy zamawiający zwraca wadium</h2>
+
+  <p>Zamawiający zwraca wadium niezwłocznie, nie później niż w terminie 7 dni od:</p>
+
+  <ul>
+    <li>upływu terminu związania ofertą,</li>
+    <li>zawarcia umowy w sprawie zamówienia publicznego,</li>
+    <li>unieważnienia postępowania — z wyjątkiem sytuacji, gdy nie zostało rozstrzygnięte odwołanie na unieważnienie lub nie upłynął termin na jego wniesienie.</li>
+  </ul>
+
+  <p>Na wniosek wykonawcy zwrot następuje wcześniej — m.in. gdy wykonawca wycofał ofertę przed terminem składania ofert albo jego oferta została odrzucona. Złożenie takiego wniosku powoduje jednak rozwiązanie stosunku prawnego z wykonawcą i utratę prawa do środków ochrony prawnej, dlatego nie składaj go, jeżeli rozważasz odwołanie.</p>
+
+  <h2>Kiedy zamawiający zatrzymuje wadium</h2>
+
+  <p>Zatrzymanie wadium wraz z odsetkami następuje, gdy:</p>
+
+  <ol>
+    <li>wykonawca w odpowiedzi na wezwanie z <a href="/ustawa-pzp#art-128">art. 128 ust. 1</a> lub art. 107 ust. 2 Pzp, <strong>z przyczyn leżących po jego stronie</strong>, nie złożył podmiotowych lub przedmiotowych środków dowodowych lub oświadczeń albo nie wyraził zgody na poprawienie omyłki — i spowodowało to brak możliwości wybrania jego oferty jako najkorzystniejszej,</li>
+    <li>wykonawca, którego oferta została wybrana, <strong>odmówił podpisania umowy</strong> na warunkach określonych w ofercie,</li>
+    <li>wykonawca, którego oferta została wybrana, <strong>nie wniósł wymaganego zabezpieczenia należytego wykonania umowy</strong>,</li>
+    <li>zawarcie umowy stało się niemożliwe z przyczyn leżących po stronie wykonawcy, którego oferta została wybrana.</li>
+  </ol>
+
+  <p>W pierwszym przypadku orzecznictwo wymaga, aby zaniechanie wykonawcy było zawinione — celem przepisu jest przeciwdziałanie zmowom, a nie karanie za każdy błąd w dokumentach.</p>
+
+  <h2>Najczęstsze błędy</h2>
+
+  <ul>
+    <li>przelew zaksięgowany po terminie składania ofert,</li>
+    <li>gwarancja ważna o jeden dzień za krótko,</li>
+    <li>skan gwarancji zamiast dokumentu z kwalifikowanym podpisem wystawcy,</li>
+    <li>gwarancja, która nie obejmuje wszystkich przesłanek zatrzymania wadium,</li>
+    <li>brak przedłużenia wadium przy przedłużeniu terminu związania ofertą.</li>
+  </ul>
+
+  <p>Więcej typowych pomyłek opisujemy w poradniku <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstsze błędy w ofertach przetargowych</a>.</p>
+
+  <h2>Najczęstsze pytania</h2>
+
+  <h3>Czy wadium można wnieść gotówką w kasie zamawiającego?</h3>
+
+  <p>Nie. Wadium w pieniądzu wnosi się wyłącznie przelewem na rachunek bankowy wskazany przez zamawiającego.</p>
+
+  <h3>Co się dzieje z wadium po odrzuceniu oferty?</h3>
+
+  <p>Zamawiający zwraca je na wniosek wykonawcy albo z urzędu po upływie terminu związania ofertą, zawarciu umowy lub unieważnieniu postępowania. Jeżeli planujesz odwołanie, nie składaj wniosku o zwrot wadium — powoduje on utratę prawa do korzystania ze środków ochrony prawnej.</p>
+
+  <h3>Czy od wadium wniesionego w pieniądzu należą się odsetki?</h3>
+
+  <p>Tak. Zamawiający przechowuje wadium wniesione w pieniądzu na rachunku bankowym i zwraca je wraz z odsetkami wynikającymi z umowy rachunku, pomniejszone o koszty prowadzenia rachunku i prowizję za przelew.</p>
+  """
+
+  def up do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    execute(fn ->
+      repo().query!(
+        """
+        INSERT INTO articles (title, slug, excerpt, meta_description, meta_keywords, author, published, content, published_at, inserted_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, 'Redakcja Przetargowi.pl', true, $6, $7, $7, $7)
+        ON CONFLICT (slug) DO UPDATE SET
+          title = EXCLUDED.title,
+          excerpt = EXCLUDED.excerpt,
+          meta_description = EXCLUDED.meta_description,
+          meta_keywords = EXCLUDED.meta_keywords,
+          content = EXCLUDED.content,
+          updated_at = EXCLUDED.updated_at
+        """,
+        [@title, @slug, @excerpt, @meta_description, @meta_keywords, @content, now]
+      )
+    end)
+  end
+
+  def down do
+    execute(fn -> repo().query!("DELETE FROM articles WHERE slug = $1", [@slug]) end)
+  end
+end

@@ -166,6 +166,50 @@ defmodule Przetargowi.Tenders.Hubs do
     }
   ]
 
+  # {slug, name, locative ("w województwie …"), largest cities}
+  @regions [
+    {"dolnoslaskie", "dolnośląskie", "dolnośląskim", "Wrocław, Wałbrzych, Legnica"},
+    {"kujawsko-pomorskie", "kujawsko-pomorskie", "kujawsko-pomorskim",
+     "Bydgoszcz, Toruń, Włocławek"},
+    {"lubelskie", "lubelskie", "lubelskim", "Lublin, Zamość, Chełm"},
+    {"lubuskie", "lubuskie", "lubuskim", "Zielona Góra, Gorzów Wielkopolski"},
+    {"lodzkie", "łódzkie", "łódzkim", "Łódź, Piotrków Trybunalski, Pabianice"},
+    {"malopolskie", "małopolskie", "małopolskim", "Kraków, Tarnów, Nowy Sącz"},
+    {"mazowieckie", "mazowieckie", "mazowieckim", "Warszawa, Radom, Płock"},
+    {"opolskie", "opolskie", "opolskim", "Opole, Kędzierzyn-Koźle, Nysa"},
+    {"podkarpackie", "podkarpackie", "podkarpackim", "Rzeszów, Przemyśl, Stalowa Wola"},
+    {"podlaskie", "podlaskie", "podlaskim", "Białystok, Suwałki, Łomża"},
+    {"pomorskie", "pomorskie", "pomorskim", "Gdańsk, Gdynia, Słupsk"},
+    {"slaskie", "śląskie", "śląskim", "Katowice, Częstochowa, Gliwice"},
+    {"swietokrzyskie", "świętokrzyskie", "świętokrzyskim", "Kielce, Ostrowiec Świętokrzyski"},
+    {"warminsko-mazurskie", "warmińsko-mazurskie", "warmińsko-mazurskim", "Olsztyn, Elbląg, Ełk"},
+    {"wielkopolskie", "wielkopolskie", "wielkopolskim", "Poznań, Kalisz, Konin"},
+    {"zachodniopomorskie", "zachodniopomorskie", "zachodniopomorskim",
+     "Szczecin, Koszalin, Stargard"}
+  ]
+
+  @doc "All 16 voivodeships as `%{slug, name, locative, cities}`."
+  def regions do
+    for {slug, name, locative, cities} <- @regions do
+      %{slug: slug, name: name, locative: locative, cities: cities}
+    end
+  end
+
+  @doc "Looks up a voivodeship by slug, or nil."
+  def region(slug), do: Enum.find(regions(), &(&1.slug == slug))
+
+  @doc "URL path of a hub: `path(:category, \"budowlane\")`."
+  def path(:order_type, slug), do: "/przetargi/rodzaj/#{slug}"
+  def path(:category, slug), do: "/przetargi/branza/#{slug}"
+  def path(:region, slug), do: "/przetargi/#{slug}"
+
+  @doc "Editorial content (copy, FAQ, related KIO topics) of a hub."
+  defdelegate content(kind, slug), to: Przetargowi.Tenders.HubContent, as: :get
+
+  @doc "Looks up the order-type hub for a BZP `order_type` value such as \"Works\"."
+  def order_type_hub_for(order_type),
+    do: Enum.find(@order_type_hubs, &(&1.order_type == order_type))
+
   @doc "All order-type hubs."
   def order_type_hubs, do: @order_type_hubs
 

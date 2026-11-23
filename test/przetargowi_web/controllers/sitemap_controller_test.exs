@@ -39,7 +39,9 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
       body = response(conn, 200)
       assert body =~ "<urlset"
       assert body =~ "https://przetargowi.pl</loc>"
-      assert body =~ "https://przetargowi.pl/szukaj</loc>"
+      assert body =~ "https://przetargowi.pl/orzecznictwo-kio</loc>"
+      # The bare search URL redirects to the pillar page, so it is not listed.
+      refute body =~ "https://przetargowi.pl/szukaj</loc>"
       assert body =~ "https://przetargowi.pl/przetargi</loc>"
       assert body =~ "https://przetargowi.pl/przetargi/mazowieckie</loc>"
       assert body =~ "https://przetargowi.pl/ustawa-pzp</loc>"
@@ -52,6 +54,14 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
       assert body =~ "/przetargi/rodzaj/roboty-budowlane</loc>"
       assert body =~ "/przetargi/branza/budowlane</loc>"
       assert body =~ "/przetargi/branza/medyczne</loc>"
+    end
+
+    test "includes KIO topic hubs", %{conn: conn} do
+      conn = get(conn, ~p"/sitemap-static.xml")
+      body = response(conn, 200)
+
+      assert body =~ "/orzecznictwo-kio/razaco-niska-cena</loc>"
+      assert body =~ "/orzecznictwo-kio/tajemnica-przedsiebiorstwa</loc>"
     end
 
     test "includes all 16 regions", %{conn: conn} do
@@ -91,14 +101,17 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
     test "returns judgements sitemap for page 1", %{conn: conn} do
       j1 = insert_judgement(%{signature: "KIO 123/24"})
       j2 = insert_judgement(%{signature: "KIO 456/24"})
+      thin = insert_judgement(%{signature: "KIO 789/24", meritum: nil})
 
       conn = get(conn, ~p"/sitemap/judgements/1")
 
       assert response_content_type(conn, :xml)
       body = response(conn, 200)
       assert body =~ "<urlset"
-      assert body =~ "/orzeczenie/#{j1.slug}</loc>"
-      assert body =~ "/orzeczenie/#{j2.slug}</loc>"
+      assert body =~ "/orzecznictwo-kio/#{j1.slug}</loc>"
+      assert body =~ "/orzecznictwo-kio/#{j2.slug}</loc>"
+      # Rulings without content are noindex on the page, so not advertised here.
+      refute body =~ "/orzecznictwo-kio/#{thin.slug}</loc>"
     end
 
     test "returns 404 for invalid page", %{conn: conn} do
@@ -128,7 +141,8 @@ defmodule PrzetargowiWeb.SitemapControllerTest do
       uzp_id: "UZP-#{System.unique_integer([:positive])}",
       signature: "KIO #{System.unique_integer([:positive])}/24",
       issuing_authority: "Krajowa Izba Odwoławcza",
-      document_type: "Wyrok"
+      document_type: "Wyrok",
+      meritum: String.duplicate("istota sprawy ", 10)
     }
 
     %Judgement{}

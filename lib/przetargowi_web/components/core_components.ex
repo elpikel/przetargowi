@@ -495,4 +495,27 @@ defmodule PrzetargowiWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  @doc """
+  Visible breadcrumb trail. `crumbs` is a list of `{label, path}`; the last
+  entry has a `nil` path and is rendered as the current page.
+  """
+  attr :crumbs, :list, required: true, doc: "list of {label, path | nil}"
+
+  def breadcrumb_nav(assigns) do
+    ~H"""
+    <nav aria-label="Okruszki" class="text-sm text-base-content/50 mb-6">
+      <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <li :for={{label, path} <- @crumbs} class="flex items-center gap-2">
+          <%= if path do %>
+            <a href={path} class="hover:text-primary transition-colors">{label}</a>
+            <.icon name="hero-chevron-right-mini" class="size-4 text-base-content/30" />
+          <% else %>
+            <span class="text-base-content/70" aria-current="page">{label}</span>
+          <% end %>
+        </li>
+      </ol>
+    </nav>
+    """
+  end
 end

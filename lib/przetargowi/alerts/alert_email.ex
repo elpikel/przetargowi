@@ -239,8 +239,6 @@ defmodule Przetargowi.Alerts.AlertEmail do
     Calendar.strftime(datetime, "%d.%m.%Y %H:%M")
   end
 
-  defp format_value(nil), do: "-"
-
   defp format_value(value) do
     value
     |> Decimal.round(2)

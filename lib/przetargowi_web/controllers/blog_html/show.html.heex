@@ -1,5 +1,5 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="bg-base-200 min-h-screen">
+  <div class="hero-backdrop bg-base-200 min-h-screen">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <article>
         <!-- Header -->
@@ -20,9 +20,39 @@
         </header>
         
 <!-- Content -->
+        <%= if @faqs != [] do %>
+          <script type="application/ld+json">
+            <%= raw(Jason.encode!(%{
+              "@context" => "https://schema.org",
+              "@type" => "FAQPage",
+              "mainEntity" => Enum.map(@faqs, fn faq ->
+                %{
+                  "@type" => "Question",
+                  "name" => faq.question,
+                  "acceptedAnswer" => %{"@type" => "Answer", "text" => faq.answer}
+                }
+              end)
+            })) %>
+          </script>
+        <% end %>
+        <nav
+          :if={length(@toc) >= 3}
+          id="article-toc"
+          aria-label="Spis treści"
+          class="card-base p-6 mb-6"
+        >
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-3">
+            Spis treści
+          </h2>
+          <ol class="space-y-1.5 text-sm list-decimal list-inside marker:text-base-content/40">
+            <li :for={entry <- @toc}>
+              <a href={"##{entry.id}"} class="text-primary hover:underline">{entry.title}</a>
+            </li>
+          </ol>
+        </nav>
         <div class="pricing-card pricing-card-static p-8 md:p-12">
           <div class="prose prose-lg max-w-none prose-headings:text-base-content prose-h2:text-2xl prose-h3:text-xl prose-p:text-base-content/80 prose-a:text-primary prose-strong:text-base-content prose-ul:text-base-content/80 prose-ol:text-base-content/80">
-            {raw(@article.content)}
+            {raw(@content_html)}
           </div>
         </div>
         
@@ -45,7 +75,7 @@
               </div>
             </a>
             <a
-              href="/szukaj"
+              href="/orzecznictwo-kio"
               class="p-6 rounded-xl bg-base-200 hover:bg-base-300 transition-colors text-center"
             >
               <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-primary/10 flex items-center justify-center">

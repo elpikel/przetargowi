@@ -145,8 +145,4 @@ defmodule PrzetargowiWeb.DocumentFillController do
   defp format_error({:zip_create_failed, reason}) do
     "Błąd tworzenia archiwum: #{inspect(reason)}"
   end
-
-  defp format_error(reason) do
-    inspect(reason)
-  end
 end

@@ -9,6 +9,26 @@ defmodule PrzetargowiWeb.SearchController do
   @per_page 10
   @semantic_results_limit 20
 
+  @search_path "/orzecznictwo-kio/szukaj"
+
+  @doc """
+  Old `/szukaj` URLs. The bare URL used to be an indexable page competing with
+  `/orzecznictwo-kio` for the same queries, so it goes to the pillar page;
+  anything with parameters goes to the same search under its new path.
+  """
+  def legacy(%{query_string: ""} = conn, _params) do
+    conn
+    |> put_status(:moved_permanently)
+    |> redirect(to: ~p"/orzecznictwo-kio")
+  end
+
+  def legacy(conn, _params) do
+    conn
+    |> put_status(:moved_permanently)
+    |> redirect(to: "#{@search_path}?#{conn.query_string}")
+  end
+
+  # Search results are never indexable: every render below is noindex.
   def index(conn, params) do
     query = Map.get(params, "q", "")
     search_mode = Map.get(params, "mode", "keyword")
@@ -47,12 +67,9 @@ defmodule PrzetargowiWeb.SearchController do
     # Transform to view format
     view_results = Enum.map(results, &transform_judgement/1)
 
-    # Canonical URL without page param to avoid duplicate content
-    canonical_url = build_canonical_url(query, filters)
-
     breadcrumbs = [
       %{name: "Strona główna", url: "https://przetargowi.pl"},
-      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"}
+      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/orzecznictwo-kio"}
     ]
 
     conn
@@ -64,17 +81,7 @@ defmodule PrzetargowiWeb.SearchController do
       )
     )
     |> assign(:meta_description, build_search_meta_description(query, filters, total_count))
-    |> then(fn conn ->
-      robots = search_meta_robots(query, filters, page)
-
-      if robots == "noindex, follow" do
-        assign(conn, :meta_robots, robots)
-      else
-        conn
-        |> assign(:canonical_url, canonical_url)
-        |> assign(:og_url, canonical_url)
-      end
-    end)
+    |> assign(:meta_robots, "noindex, follow")
     |> assign(:breadcrumbs, breadcrumbs)
     |> assign(:query, query)
     |> assign(:search_mode, "keyword")
@@ -112,11 +119,12 @@ defmodule PrzetargowiWeb.SearchController do
   end
 
   defp perform_semantic_search(conn, query, filters) do
+    conn = assign(conn, :meta_robots, "noindex, follow")
     filter_options = Judgements.get_filter_options()
 
     breadcrumbs = [
       %{name: "Strona główna", url: "https://przetargowi.pl"},
-      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/szukaj"}
+      %{name: "Orzecznictwo KIO", url: "https://przetargowi.pl/orzecznictwo-kio"}
     ]
 
     if query == "" do
@@ -338,40 +346,6 @@ defmodule PrzetargowiWeb.SearchController do
       contracting_authority: judgement.contracting_authority,
       meritum: judgement.meritum
     }
-  end
-
-  defp build_canonical_url(query, filters) do
-    base = "https://przetargowi.pl/szukaj"
-
-    params =
-      [{"q", query}]
-      |> add_filter_param(filters, :document_type, "document_type")
-      |> add_filter_param(filters, :issuing_authority, "issuing_authority")
-      |> add_filter_param(filters, :resolution_method, "resolution_method")
-      |> Enum.filter(fn {_, v} -> v != "" end)
-
-    if params == [] do
-      base
-    else
-      query_string = URI.encode_query(params)
-      "#{base}?#{query_string}"
-    end
-  end
-
-  defp add_filter_param(params, filters, key, param_name) do
-    value = Map.get(filters, key, "")
-    if value != "", do: params ++ [{param_name, value}], else: params
-  end
-
-  defp search_meta_robots(query, filters, page) do
-    has_active_filters =
-      Enum.any?(filters, fn {_k, v} -> v != "" end)
-
-    if query != "" or page > 1 or has_active_filters do
-      "noindex, follow"
-    else
-      "index, follow"
-    end
   end
 
   defp build_search_meta_description(query, filters, total_count) do

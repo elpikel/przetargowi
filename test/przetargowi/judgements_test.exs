@@ -410,8 +410,8 @@ defmodule Przetargowi.JudgementsTest do
 
   describe "list_sitemap_entries/2" do
     test "returns all entries with slug when no limit" do
-      {:ok, j1} = create_judgement()
-      {:ok, j2} = create_judgement()
+      {:ok, j1} = create_indexable_judgement()
+      {:ok, j2} = create_indexable_judgement()
 
       entries = Judgements.list_sitemap_entries()
 
@@ -421,10 +421,10 @@ defmodule Przetargowi.JudgementsTest do
     end
 
     test "excludes entries without slug" do
-      {:ok, j_with_slug} = create_judgement()
+      {:ok, j_with_slug} = create_indexable_judgement()
 
       # Create judgement then clear its slug directly
-      {:ok, j_without_slug} = create_judgement()
+      {:ok, j_without_slug} = create_indexable_judgement()
 
       import Ecto.Query
 
@@ -439,7 +439,7 @@ defmodule Przetargowi.JudgementsTest do
     end
 
     test "respects limit and offset for pagination" do
-      for _ <- 1..5, do: create_judgement()
+      for _ <- 1..5, do: create_indexable_judgement()
 
       entries_page1 = Judgements.list_sitemap_entries(2, 0)
       entries_page2 = Judgements.list_sitemap_entries(2, 2)
@@ -458,7 +458,7 @@ defmodule Przetargowi.JudgementsTest do
     end
 
     test "returns entries with updated_at field" do
-      create_judgement()
+      create_indexable_judgement()
 
       [entry] = Judgements.list_sitemap_entries()
 
@@ -466,16 +466,120 @@ defmodule Przetargowi.JudgementsTest do
     end
   end
 
+  describe "sitemap indexability" do
+    test "leaves out thin rulings that the page marks noindex" do
+      {:ok, thin} = create_judgement()
+      {:ok, indexable} = create_indexable_judgement()
+
+      slugs = Enum.map(Judgements.list_sitemap_entries(), & &1.slug)
+
+      assert indexable.slug in slugs
+      refute thin.slug in slugs
+      assert Judgements.count_sitemap_entries() == 1
+    end
+  end
+
+  describe "topic queries" do
+    @issues ["rażąco niska cena", "wyjaśnienia rażąco niskiej ceny"]
+
+    defp create_topic_judgement(details) do
+      {:ok, judgement} = create_judgement()
+      {:ok, judgement} = Judgements.update_with_details(judgement, details)
+      judgement
+    end
+
+    test "list_topic_judgements/2 returns rulings tagged with any of the issues, newest first" do
+      older =
+        create_topic_judgement(%{thematic_issues: ["rażąco niska cena"]})
+        |> set_decision_date(~D[2024-01-10])
+
+      newer =
+        create_topic_judgement(%{thematic_issues: ["wyjaśnienia rażąco niskiej ceny", "wadium"]})
+        |> set_decision_date(~D[2025-03-01])
+
+      _unrelated = create_topic_judgement(%{thematic_issues: ["wadium"]})
+
+      results = Judgements.list_topic_judgements(@issues)
+
+      assert Enum.map(results, & &1.slug) == [newer.slug, older.slug]
+      assert Judgements.count_topic_judgements(@issues) == 2
+    end
+
+    test "list_topic_judgements/2 paginates" do
+      for _ <- 1..3, do: create_topic_judgement(%{thematic_issues: ["rażąco niska cena"]})
+
+      assert length(Judgements.list_topic_judgements(@issues, limit: 2, offset: 0)) == 2
+      assert length(Judgements.list_topic_judgements(@issues, limit: 2, offset: 2)) == 1
+    end
+
+    test "outcome_summary/1 groups outcomes and computes the upheld rate on the merits" do
+      for method <- ["uwzględnione", "oddalone", "oddalone", "oddalone", "umorzone (wycofanie)"] do
+        create_topic_judgement(%{
+          thematic_issues: ["rażąco niska cena"],
+          resolution_method: method
+        })
+      end
+
+      create_topic_judgement(%{thematic_issues: ["wadium"], resolution_method: "uwzględnione"})
+
+      summary = Judgements.outcome_summary(@issues)
+
+      assert summary.total == 5
+      assert summary.upheld_rate == 25
+
+      assert Enum.map(summary.groups, &{&1.key, &1.count, &1.percent}) == [
+               {:upheld, 1, 20},
+               {:dismissed, 3, 60},
+               {:discontinued, 1, 20}
+             ]
+    end
+
+    test "outcome_summary/1 has no upheld rate when nothing was decided on the merits" do
+      assert Judgements.outcome_summary(@issues) == %{total: 0, groups: [], upheld_rate: nil}
+    end
+
+    test "top_provisions/2 counts cited provisions within the topic" do
+      create_topic_judgement(%{
+        thematic_issues: ["rażąco niska cena"],
+        key_provisions: ["art. 224 ust. 6", "art. 226 ust. 1 pkt 8"]
+      })
+
+      create_topic_judgement(%{
+        thematic_issues: ["rażąco niska cena"],
+        key_provisions: ["art. 224 ust. 6"]
+      })
+
+      create_topic_judgement(%{thematic_issues: ["wadium"], key_provisions: ["art. 97"]})
+
+      assert Judgements.top_provisions(@issues) == [
+               {"art. 224 ust. 6", 2},
+               {"art. 226 ust. 1 pkt 8", 1}
+             ]
+    end
+
+    test "year_counts/2 counts rulings per decision year, newest first" do
+      create_topic_judgement(%{thematic_issues: ["rażąco niska cena"]})
+      |> set_decision_date(~D[2024-05-01])
+
+      for _ <- 1..2 do
+        create_topic_judgement(%{thematic_issues: ["rażąco niska cena"]})
+        |> set_decision_date(~D[2025-05-01])
+      end
+
+      assert Judgements.year_counts(@issues) == [{2025, 2}, {2024, 1}]
+    end
+  end
+
   describe "count_sitemap_entries/0" do
     test "returns count of entries with slug" do
-      for _ <- 1..3, do: create_judgement()
+      for _ <- 1..3, do: create_indexable_judgement()
 
       assert Judgements.count_sitemap_entries() == 3
     end
 
     test "excludes entries without slug" do
-      create_judgement()
-      {:ok, j_without_slug} = create_judgement()
+      create_indexable_judgement()
+      {:ok, j_without_slug} = create_indexable_judgement()
 
       import Ecto.Query
 
@@ -524,6 +628,16 @@ defmodule Przetargowi.JudgementsTest do
   end
 
   # Helper function to create test judgements
+  defp create_indexable_judgement do
+    {:ok, judgement} = create_judgement()
+    Judgements.update_with_details(judgement, %{meritum: String.duplicate("istota sprawy ", 10)})
+  end
+
+  defp set_decision_date(judgement, date) do
+    {:ok, judgement} = Judgements.update_judgement(judgement, %{decision_date: date})
+    judgement
+  end
+
   defp create_judgement(attrs \\ %{}) do
     default_attrs = %{
       uzp_id: "#{System.unique_integer([:positive])}",

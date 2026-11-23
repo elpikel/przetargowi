@@ -28,6 +28,159 @@ defmodule PrzetargowiWeb.TenderHTML do
     {"Works", "Roboty budowlane"}
   ]
 
+  alias Przetargowi.Judgements.Topics
+  alias Przetargowi.Tenders.Hubs
+
+  @order_type_labels Map.new(@order_type_options)
+
+  def order_type_label(order_type), do: Map.get(@order_type_labels, order_type, order_type)
+
+  def region_label(slug) do
+    case Hubs.region(slug) do
+      nil -> slug
+      region -> region.name
+    end
+  end
+
+  @doc "A tender notice as a result card."
+  attr :notice, :map, required: true
+  attr :compact, :boolean, default: false
+  attr :current_scope, :any, default: nil
+  attr :watched_ids, :list, default: []
+
+  def tender_card(assigns) do
+    ~H"""
+    <.result_card
+      href={"/przetargi/#{@notice.slug}"}
+      title={truncate(@notice.order_object, if(@compact, do: 110, else: 200))}
+      cue="Zobacz przetarg"
+      compact={@compact}
+    >
+      <:meta>
+        <span class={is_urgent?(@notice.submitting_offers_date) && "text-error font-medium"}>
+          Termin: {format_datetime(@notice.submitting_offers_date)}
+        </span>
+        <.tag
+          :if={days_until_deadline(@notice.submitting_offers_date)}
+          tone={if(is_urgent?(@notice.submitting_offers_date), do: "urgent", else: "neutral")}
+        >
+          {days_until_deadline(@notice.submitting_offers_date)}
+        </.tag>
+      </:meta>
+      <p class={["text-sm", @compact && "line-clamp-2"]}>
+        {@notice.organization_name}
+        <span :if={@notice.organization_city} class="text-base-content/50">
+          · {@notice.organization_city}, {format_province_name(@notice.organization_province)}
+        </span>
+      </p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <.tag tone="accent">{format_order_type(@notice.order_type)}</.tag>
+        <.tag>{@notice.bzp_number}</.tag>
+        <.tag :if={@notice.estimated_value}>{format_value(@notice.estimated_value)}</.tag>
+      </div>
+      <:actions :if={@current_scope && !@compact}>
+        <%= if @notice.object_id in @watched_ids do %>
+          <.link
+            href={"/obserwowane/przetarg/#{@notice.object_id}"}
+            method="delete"
+            class="btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
+            title="Usuń z obserwowanych"
+          >
+            <.icon name="hero-star-solid" class="size-4 text-amber-500" /> Obserwujesz
+          </.link>
+        <% else %>
+          <form action="/obserwowane" method="post" class="inline">
+            <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+            <input type="hidden" name="tender_object_id" value={@notice.object_id} />
+            <button
+              type="submit"
+              class="btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
+              title="Dodaj do obserwowanych"
+            >
+              <.icon name="hero-star" class="size-4" /> Obserwuj
+            </button>
+          </form>
+        <% end %>
+      </:actions>
+    </.result_card>
+    """
+  end
+
+  @doc "Columns for the \"browse tenders\" block: industries, order types, voivodeships."
+  def browse_columns do
+    [
+      %{
+        id: "browse-categories",
+        title: "Według branży",
+        links: Enum.map(Hubs.category_hubs(), &{Hubs.path(:category, &1.slug), &1.h1})
+      },
+      %{
+        id: "browse-order-types",
+        title: "Według rodzaju zamówienia",
+        links:
+          Enum.map(Hubs.order_type_hubs(), &{Hubs.path(:order_type, &1.slug), &1.h1}) ++
+            [
+              {"/analiza-rynku", "Analiza rynku — kto wygrywa przetargi"},
+              {"/przetargi", "Wszystkie przetargi"}
+            ]
+      },
+      %{
+        id: "browse-regions",
+        title: "Według województwa",
+        links: Enum.map(Hubs.regions(), &{Hubs.path(:region, &1.slug), &1.name})
+      }
+    ]
+  end
+
+  @doc "Sidebar rows for the open-tender breakdowns of a hub or the landing page."
+  def region_rows(stats),
+    do:
+      Enum.map(stats.by_region, fn {slug, count} ->
+        {region_label(slug), Hubs.path(:region, slug), count}
+      end)
+
+  def order_type_rows(stats) do
+    Enum.map(stats.by_order_type, fn {order_type, count} ->
+      path =
+        case Hubs.order_type_hub_for(order_type) do
+          nil -> nil
+          hub -> Hubs.path(:order_type, hub.slug)
+        end
+
+      {order_type_label(order_type), path, count}
+    end)
+  end
+
+  def authority_rows(stats),
+    do: Enum.map(stats.top_authorities, fn {name, count} -> {name, nil, count} end)
+
+  def kio_topics(hub), do: Enum.flat_map(hub.content.kio_topics, &List.wrap(Topics.get(&1)))
+
+  @landing_faqs [
+    %{
+      question: "Skąd pochodzą przetargi w wyszukiwarce?",
+      answer:
+        "Z Biuletynu Zamówień Publicznych (BZP) prowadzonego przez Urząd Zamówień Publicznych. Publikowane są tam ogłoszenia o zamówieniach o wartości poniżej progów unijnych. Bazę aktualizujemy codziennie."
+    },
+    %{
+      question: "Jak znaleźć przetargi dla mojej firmy?",
+      answer:
+        "Wybierz branżę lub województwo z listy albo użyj wyszukiwarki ze słowami kluczowymi i filtrami. Po założeniu konta możesz ustawić alert — nowe ogłoszenia pasujące do Twoich kryteriów będą przychodzić e-mailem."
+    },
+    %{
+      question: "Czy korzystanie z wyszukiwarki przetargów jest bezpłatne?",
+      answer:
+        "Tak. Przeglądanie i wyszukiwanie ogłoszeń o przetargach jest bezpłatne i nie wymaga rejestracji. Konto jest potrzebne do alertów, listy obserwowanych i automatycznego wypełniania dokumentów."
+    },
+    %{
+      question: "Co oznacza termin składania ofert?",
+      answer:
+        "To dzień i godzina, do których oferta musi wpłynąć do zamawiającego na platformie zakupowej. Oferta złożona po terminie podlega odrzuceniu, a terminu nie można przywrócić."
+    }
+  ]
+
+  def landing_faqs, do: @landing_faqs
+
   def region_options, do: @region_options
   def order_type_options, do: @order_type_options
 

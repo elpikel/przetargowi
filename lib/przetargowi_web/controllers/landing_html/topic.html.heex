@@ -1,0 +1,113 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <.hub_header
+        crumbs={[
+          {"Strona główna", "/"},
+          {"Orzecznictwo KIO", "/orzecznictwo-kio"},
+          {@topic.name, nil}
+        ]}
+        title={"#{@topic.name} — orzecznictwo KIO"}
+        lead={@topic.lead}
+      />
+
+      <.stat_tiles
+        id="topic-figures"
+        items={[
+          {"Orzeczeń w bazie", format_count(@total_count)},
+          {"Odwołania uwzględnione (z rozpoznanych merytorycznie)",
+           if(@outcomes.upheld_rate, do: "#{@outcomes.upheld_rate}%", else: "—")},
+          {"Orzeczenia z ostatniego roku w bazie",
+           case @year_counts do
+             [{year, count} | _] -> "#{format_count(count)} (#{year})"
+             [] -> "—"
+           end}
+        ]}
+      />
+
+      <.search_bar
+        id="topic-search"
+        action="/orzecznictwo-kio/szukaj"
+        label="Szukaj orzeczeń KIO"
+        placeholder="Szukaj w orzeczeniach KIO…"
+        advanced="/orzecznictwo-kio/szukaj"
+      />
+
+      <div class="grid lg:grid-cols-3 gap-8 items-start">
+        <section class="lg:col-span-2" id="topic-judgements">
+          <h2 class="text-xl font-bold text-base-content mb-5">
+            <%= if @current_page == 1 do %>
+              Najnowsze orzeczenia KIO: {String.downcase(@topic.name)}
+            <% else %>
+              Orzeczenia KIO: {String.downcase(@topic.name)} — strona {@current_page} z {@total_pages}
+            <% end %>
+          </h2>
+          <%= if @judgements == [] do %>
+            <.empty_results title="Brak orzeczeń oznaczonych tym zagadnieniem" />
+          <% else %>
+            <div class="space-y-4">
+              <.ruling_card :for={judgement <- @judgements} judgement={judgement} />
+            </div>
+          <% end %>
+          <.pager
+            id="topic-pagination"
+            page={@current_page}
+            total_pages={@total_pages}
+            path={&topic_page_path(@topic, &1)}
+          />
+        </section>
+
+        <aside class="space-y-6">
+          <.side_card
+            :if={@outcomes.total > 0}
+            title="Jak rozstrzyga KIO?"
+            lead="Wynik postępowania w sprawach oznaczonych tym zagadnieniem."
+          >
+            <.outcome_stats outcomes={@outcomes} id="topic-outcomes" />
+          </.side_card>
+
+          <.side_card title="Podstawa prawna">
+            <ul class="space-y-2 text-sm">
+              <li :for={{article, label} <- @topic.articles}>
+                <a href={"/ustawa-pzp#art-#{article}"} class="text-primary hover:underline">
+                  {label}
+                </a>
+              </li>
+            </ul>
+          </.side_card>
+
+          <.side_card :if={@top_provisions != []} title="Najczęściej powoływane przepisy">
+            <.count_list
+              id="topic-provisions"
+              rows={
+                Enum.map(@top_provisions, fn {provision, count} -> {provision, nil, count} end)
+              }
+            />
+          </.side_card>
+
+          <.side_card :if={@year_counts != []} title="Orzeczenia według lat">
+            <.count_list rows={Enum.map(@year_counts, fn {year, count} -> {year, nil, count} end)} />
+          </.side_card>
+        </aside>
+      </div>
+
+      <%!-- Editorial part: first page only, deeper pages are plain lists --%>
+      <div :if={@current_page == 1} class="mt-14 space-y-10" id="topic-editorial">
+        <.prose_card
+          id="topic-overview"
+          title={"#{@topic.name} w orzecznictwie Krajowej Izby Odwoławczej"}
+          paragraphs={@topic.body}
+          guide={@topic.blog}
+        />
+        <.faq_section id="topic-faq" faqs={@topic.faqs} />
+      </div>
+
+      <.link_columns
+        id="kio-browse"
+        title="Przeglądaj orzecznictwo KIO"
+        columns={browse_columns()}
+        current={topic_path(@topic)}
+      />
+    </div>
+  </div>
+</Layouts.app>

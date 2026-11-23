@@ -3,6 +3,7 @@ defmodule PrzetargowiWeb.SitemapController do
 
   alias Przetargowi.Blog
   alias Przetargowi.Judgements
+  alias Przetargowi.Judgements.Topics
   alias Przetargowi.Reports
   alias Przetargowi.SitemapCache
   alias Przetargowi.Tenders.Hubs
@@ -129,8 +130,8 @@ defmodule PrzetargowiWeb.SitemapController do
   defp build_static_sitemap do
     static_urls = [
       %{loc: @base_url, priority: "1.0", changefreq: "daily"},
-      %{loc: "#{@base_url}/orzecznictwo-kio", priority: "0.9", changefreq: "weekly"},
-      %{loc: "#{@base_url}/szukaj", priority: "0.9", changefreq: "daily"},
+      %{loc: "#{@base_url}/orzecznictwo-kio", priority: "0.9", changefreq: "daily"},
+      %{loc: "#{@base_url}/orzecznictwo-kio/statystyki", priority: "0.8", changefreq: "weekly"},
       %{loc: "#{@base_url}/przetargi", priority: "0.9", changefreq: "daily"},
       %{loc: "#{@base_url}/analiza-rynku", priority: "0.8", changefreq: "weekly"},
       %{loc: "#{@base_url}/ustawa-pzp", priority: "0.8", changefreq: "yearly"},
@@ -163,7 +164,12 @@ defmodule PrzetargowiWeb.SitemapController do
         }
       end)
 
-    urls = static_urls ++ region_urls ++ hub_urls ++ blog_urls
+    topic_urls =
+      Enum.map(Topics.all_paths(), fn path ->
+        %{loc: "#{@base_url}#{path}", priority: "0.9", changefreq: "daily"}
+      end)
+
+    urls = static_urls ++ topic_urls ++ region_urls ++ hub_urls ++ blog_urls
     build_urlset(urls)
   end
 
@@ -175,7 +181,7 @@ defmodule PrzetargowiWeb.SitemapController do
       Judgements.list_sitemap_entries(@urls_per_sitemap, offset)
       |> Enum.map(fn entry ->
         %{
-          loc: "#{@base_url}/orzeczenie/#{entry.slug}",
+          loc: "#{@base_url}/orzecznictwo-kio/#{entry.slug}",
           lastmod: format_date(entry.updated_at),
           priority: "0.8",
           changefreq: "monthly"

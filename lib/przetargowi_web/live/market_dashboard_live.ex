@@ -167,7 +167,7 @@ defmodule PrzetargowiWeb.MarketDashboardLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={assigns[:current_scope]}>
-      <div class="min-h-screen bg-base-200">
+      <div class="hero-backdrop min-h-screen bg-base-200">
         <div class="container mx-auto px-4 py-8 max-w-7xl">
           <h1 class="text-3xl font-bold mb-2">Analiza Rynku Przetargów</h1>
           <p class="text-base-content/60 mb-8">

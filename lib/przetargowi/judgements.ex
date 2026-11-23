@@ -728,9 +728,8 @@ defmodule Przetargowi.Judgements do
   Supports pagination with limit and offset.
   """
   def list_sitemap_entries(limit \\ nil, offset \\ 0) do
-    Judgement
+    indexable_query()
     |> select([j], %{slug: j.slug, updated_at: j.updated_at})
-    |> where([j], not is_nil(j.slug))
     |> order_by([j], asc: j.id)
     |> then(fn query ->
       case limit do
@@ -745,9 +744,21 @@ defmodule Przetargowi.Judgements do
   Returns the count of judgements with slugs for sitemap pagination.
   """
   def count_sitemap_entries do
+    Repo.aggregate(indexable_query(), :count)
+  end
+
+  # Rulings worth indexing: they have a slug and enough content. Mirrors
+  # `Summary.indexable?/1`, which decides the `noindex` tag on the page itself —
+  # the sitemap must not advertise URLs that the page then marks noindex.
+  defp indexable_query do
     Judgement
     |> where([j], not is_nil(j.slug))
-    |> Repo.aggregate(:count)
+    |> where(
+      [j],
+      fragment("char_length(btrim(coalesce(?, ''))) >= 80", j.meritum) or
+        fragment("char_length(btrim(coalesce(?, ''))) >= 160", j.deliberation) or
+        fragment("octet_length(coalesce(?, '')) >= 400", j.content_html)
+    )
   end
 
   @doc """
@@ -755,8 +766,7 @@ defmodule Przetargowi.Judgements do
   Each page contains `per_page` entries ordered by id.
   """
   def sitemap_lastmods(per_page) do
-    Judgement
-    |> where([j], not is_nil(j.slug))
+    indexable_query()
     |> select([j], %{
       page: fragment("(ROW_NUMBER() OVER (ORDER BY id) - 1) / ? + 1", ^per_page),
       updated_at: j.updated_at
@@ -863,5 +873,185 @@ defmodule Przetargowi.Judgements do
       meritum: j.meritum
     })
     |> Repo.all()
+  end
+
+  @doc """
+  Returns rulings tagged with any of the given thematic issues, newest first.
+  Used by the topic hubs (`/orzecznictwo-kio/:slug`).
+  """
+  def list_topic_judgements(issues, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 20)
+    offset = Keyword.get(opts, :offset, 0)
+
+    issues
+    |> topic_query()
+    |> order_by([j], desc_nulls_last: j.decision_date, desc: j.id)
+    |> limit(^limit)
+    |> offset(^offset)
+    |> select([j], %{
+      slug: j.slug,
+      signature: j.signature,
+      decision_date: j.decision_date,
+      document_type: j.document_type,
+      issuing_authority: j.issuing_authority,
+      resolution_method: j.resolution_method,
+      meritum: j.meritum
+    })
+    |> Repo.all()
+  end
+
+  @doc "Counts rulings tagged with any of the given thematic issues."
+  def count_topic_judgements(issues) do
+    issues |> topic_query() |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Returns `{resolution_method, count}` pairs for a topic (or for the whole
+  database when `issues` is `:all`), most frequent first. Rulings without a
+  resolution method are skipped.
+  """
+  def outcome_counts(issues) do
+    issues
+    |> topic_query()
+    |> where([j], not is_nil(j.resolution_method) and j.resolution_method != "")
+    |> group_by([j], j.resolution_method)
+    |> select([j], {j.resolution_method, count(j.id)})
+    |> order_by([j], desc: count(j.id))
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns `{year, count}` pairs for a topic (or the whole database when
+  `issues` is `:all`), newest year first.
+  """
+  def year_counts(issues, limit \\ 8) do
+    issues
+    |> topic_query()
+    |> where([j], not is_nil(j.decision_date))
+    |> group_by([j], fragment("date_part('year', ?)", j.decision_date))
+    |> select([j], {fragment("date_part('year', ?)::int", j.decision_date), count(j.id)})
+    |> order_by([j], desc: fragment("date_part('year', ?)", j.decision_date))
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the `{provision, count}` pairs most often cited in a topic's rulings.
+  """
+  def top_provisions(issues, limit \\ 8) do
+    issues
+    |> topic_query()
+    |> join(:inner_lateral, [j], p in fragment("SELECT unnest(?) AS provision", j.key_provisions),
+      on: true,
+      as: :provision
+    )
+    |> group_by([provision: p], p.provision)
+    |> select([provision: p], {p.provision, count()})
+    |> order_by([provision: p], desc: count(), asc: p.provision)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @outcome_groups [
+    {:upheld, "Odwołanie uwzględnione"},
+    {:dismissed, "Odwołanie oddalone"},
+    {:discontinued, "Postępowanie umorzone"},
+    {:rejected, "Odwołanie odrzucone"},
+    {:returned, "Odwołanie zwrócone"},
+    {:other, "Inne rozstrzygnięcia"}
+  ]
+
+  @doc """
+  Summarises how the rulings of a topic (or all rulings, for `:all`) ended.
+
+  Returns a map with:
+    * `:total` — rulings with a known outcome
+    * `:groups` — `%{key, label, count, percent}` per outcome group, in a fixed
+      order, empty groups dropped
+    * `:upheld_rate` — share of upheld appeals among those decided on the
+      merits (upheld + dismissed), as an integer percent, or nil when no
+      appeal was decided on the merits
+  """
+  def outcome_summary(issues) do
+    counts =
+      issues
+      |> outcome_counts()
+      |> Enum.group_by(fn {method, _} -> outcome_group(method) end, fn {_, count} -> count end)
+      |> Map.new(fn {group, counts} -> {group, Enum.sum(counts)} end)
+
+    total = counts |> Map.values() |> Enum.sum()
+
+    groups =
+      for {key, label} <- @outcome_groups, count = Map.get(counts, key, 0), count > 0 do
+        %{key: key, label: label, count: count, percent: percent(count, total)}
+      end
+
+    upheld = Map.get(counts, :upheld, 0)
+    on_merits = upheld + Map.get(counts, :dismissed, 0)
+
+    %{
+      total: total,
+      groups: groups,
+      upheld_rate: if(on_merits > 0, do: percent(upheld, on_merits))
+    }
+  end
+
+  @doc """
+  Outcome figures per decision year, newest first:
+  `%{year, total, upheld, dismissed, upheld_rate}` where `upheld_rate` is the
+  share of upheld appeals among those decided on the merits (nil if none).
+  """
+  def outcomes_by_year(limit \\ 10) do
+    Judgement
+    |> where([j], not is_nil(j.slug) and not is_nil(j.decision_date))
+    |> where([j], not is_nil(j.resolution_method) and j.resolution_method != "")
+    |> group_by([j], [fragment("date_part('year', ?)", j.decision_date), j.resolution_method])
+    |> select(
+      [j],
+      {fragment("date_part('year', ?)::int", j.decision_date), j.resolution_method, count(j.id)}
+    )
+    |> Repo.all()
+    |> Enum.group_by(fn {year, _method, _count} -> year end)
+    |> Enum.map(fn {year, rows} ->
+      by_group =
+        Enum.reduce(rows, %{}, fn {_year, method, count}, acc ->
+          Map.update(acc, outcome_group(method), count, &(&1 + count))
+        end)
+
+      upheld = Map.get(by_group, :upheld, 0)
+      dismissed = Map.get(by_group, :dismissed, 0)
+
+      %{
+        year: year,
+        total: by_group |> Map.values() |> Enum.sum(),
+        upheld: upheld,
+        dismissed: dismissed,
+        upheld_rate: if(upheld + dismissed > 0, do: percent(upheld, upheld + dismissed))
+      }
+    end)
+    |> Enum.sort_by(& &1.year, :desc)
+    |> Enum.take(limit)
+  end
+
+  @doc """
+  Maps a `resolution_method` value to its outcome group, e.g.
+  `"umorzone (wycofanie)"` → `:discontinued`.
+  """
+  def outcome_group("uwzględnione" <> _), do: :upheld
+  def outcome_group("oddalone" <> _), do: :dismissed
+  def outcome_group("umorzone" <> _), do: :discontinued
+  def outcome_group("odrzucone" <> _), do: :rejected
+  def outcome_group("zwrócone" <> _), do: :returned
+  def outcome_group(_), do: :other
+
+  defp percent(_count, 0), do: 0
+  defp percent(count, total), do: round(count * 100 / total)
+
+  defp topic_query(:all), do: where(Judgement, [j], not is_nil(j.slug))
+
+  defp topic_query(issues) when is_list(issues) do
+    Judgement
+    |> where([j], not is_nil(j.slug))
+    |> where([j], fragment("? && ?::text[]", j.thematic_issues, ^issues))
   end
 end

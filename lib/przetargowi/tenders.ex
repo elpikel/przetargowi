@@ -157,32 +157,7 @@ defmodule Przetargowi.Tenders do
         base_query
       end
 
-    base_query =
-      if regions == [] do
-        base_query
-      else
-        province_codes = regions |> Enum.map(&region_to_province_code/1) |> Enum.filter(& &1)
-        where(base_query, [tender_notice: tn], tn.organization_province in ^province_codes)
-      end
-
-    base_query =
-      if order_types == [] do
-        base_query
-      else
-        where(base_query, [tender_notice: tn], tn.order_type in ^order_types)
-      end
-
-    base_query =
-      if cpv_prefixes == [] do
-        base_query
-      else
-        conditions =
-          Enum.reduce(cpv_prefixes, dynamic(false), fn prefix, acc ->
-            dynamic([tender_notice: tn], ^acc or ilike(tn.cpv_main, ^(prefix <> "%")))
-          end)
-
-        where(base_query, ^conditions)
-      end
+    base_query = filter_hub_dimensions(base_query, regions, order_types, cpv_prefixes)
 
     base_query =
       if with_winner_analysis do
@@ -234,6 +209,149 @@ defmodule Przetargowi.Tenders do
   defp normalize_to_list(""), do: []
   defp normalize_to_list(list) when is_list(list), do: Enum.filter(list, &(&1 != "" && &1 != nil))
   defp normalize_to_list(value) when is_binary(value), do: [value]
+
+  # Region / order type / CPV prefix filters shared by the search and the hub
+  # statistics, so a hub's figures always describe exactly the tenders it lists.
+  defp filter_hub_dimensions(query, regions, order_types, cpv_prefixes) do
+    query
+    |> filter_regions(regions)
+    |> filter_order_types(order_types)
+    |> filter_cpv_prefixes(cpv_prefixes)
+  end
+
+  defp filter_regions(query, []), do: query
+
+  defp filter_regions(query, regions) do
+    province_codes = regions |> Enum.map(&region_to_province_code/1) |> Enum.filter(& &1)
+    where(query, [tender_notice: tn], tn.organization_province in ^province_codes)
+  end
+
+  defp filter_order_types(query, []), do: query
+
+  defp filter_order_types(query, order_types),
+    do: where(query, [tender_notice: tn], tn.order_type in ^order_types)
+
+  defp filter_cpv_prefixes(query, []), do: query
+
+  defp filter_cpv_prefixes(query, cpv_prefixes) do
+    conditions =
+      Enum.reduce(cpv_prefixes, dynamic(false), fn prefix, acc ->
+        dynamic([tender_notice: tn], ^acc or ilike(tn.cpv_main, ^(prefix <> "%")))
+      end)
+
+    where(query, ^conditions)
+  end
+
+  @doc """
+  The most recently closed tenders matching the hub filters. Shown instead of
+  an empty list when a hub currently has no open tenders.
+  """
+  def list_recently_closed(opts \\ [], limit \\ 9) do
+    regions = normalize_to_list(Keyword.get(opts, :regions))
+    order_types = normalize_to_list(Keyword.get(opts, :order_types))
+    cpv_prefixes = normalize_to_list(Keyword.get(opts, :cpv_prefixes))
+
+    TenderNotice
+    |> from(as: :tender_notice)
+    |> filter_hub_dimensions(regions, order_types, cpv_prefixes)
+    |> where([tender_notice: tn], tn.submitting_offers_date < ^DateTime.utc_now())
+    |> where([tender_notice: tn], not is_nil(tn.slug))
+    |> order_by([tender_notice: tn], desc: tn.submitting_offers_date)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Live figures for a tender hub. Takes the same `:regions`, `:order_types` and
+  `:cpv_prefixes` options as `search_tender_notices/1` and returns:
+
+    * `:closing_soon` — open tenders whose deadline falls within 7 days
+    * `:published_last_year` — contract notices published in the last 12 months
+    * `:by_region` — `[{region_slug, count}]` of open tenders, largest first
+    * `:by_order_type` — `[{order_type, count}]` of open tenders
+    * `:top_authorities` — `[{organization_name, count}]`, the contracting
+      authorities with the most open tenders
+  """
+  def hub_stats(opts \\ []) do
+    regions = normalize_to_list(Keyword.get(opts, :regions))
+    order_types = normalize_to_list(Keyword.get(opts, :order_types))
+    cpv_prefixes = normalize_to_list(Keyword.get(opts, :cpv_prefixes))
+    now = DateTime.utc_now()
+
+    scope =
+      TenderNotice
+      |> from(as: :tender_notice)
+      |> filter_hub_dimensions(regions, order_types, cpv_prefixes)
+
+    open = where(scope, [tender_notice: tn], tn.submitting_offers_date >= ^now)
+
+    closing_soon =
+      open
+      |> where([tender_notice: tn], tn.submitting_offers_date <= ^DateTime.add(now, 7, :day))
+      |> Repo.aggregate(:count)
+
+    published_last_year =
+      scope
+      |> where([tender_notice: tn], tn.notice_type == "ContractNotice")
+      |> where([tender_notice: tn], tn.publication_date >= ^DateTime.add(now, -365, :day))
+      |> Repo.aggregate(:count)
+
+    by_region =
+      open
+      |> where([tender_notice: tn], not is_nil(tn.organization_province))
+      |> group_by([tender_notice: tn], tn.organization_province)
+      |> select([tender_notice: tn], {tn.organization_province, count()})
+      |> Repo.all()
+      |> Enum.map(fn {code, count} -> {province_code_to_region(code), count} end)
+      |> Enum.reject(fn {region, _count} -> is_nil(region) end)
+      |> Enum.sort_by(fn {region, count} -> {-count, region} end)
+
+    by_order_type =
+      open
+      |> where([tender_notice: tn], not is_nil(tn.order_type))
+      |> group_by([tender_notice: tn], tn.order_type)
+      |> select([tender_notice: tn], {tn.order_type, count()})
+      |> order_by([tender_notice: tn], desc: count())
+      |> Repo.all()
+
+    top_authorities =
+      open
+      |> where([tender_notice: tn], not is_nil(tn.organization_name))
+      |> group_by([tender_notice: tn], tn.organization_name)
+      |> select([tender_notice: tn], {tn.organization_name, count()})
+      |> order_by([tender_notice: tn], desc: count(), asc: tn.organization_name)
+      |> limit(5)
+      |> Repo.all()
+
+    %{
+      closing_soon: closing_soon,
+      published_last_year: published_last_year,
+      by_region: by_region,
+      by_order_type: by_order_type,
+      top_authorities: top_authorities
+    }
+  end
+
+  @province_regions %{
+    "PL02" => "dolnoslaskie",
+    "PL04" => "kujawsko-pomorskie",
+    "PL06" => "lubelskie",
+    "PL08" => "lubuskie",
+    "PL10" => "lodzkie",
+    "PL12" => "malopolskie",
+    "PL14" => "mazowieckie",
+    "PL16" => "opolskie",
+    "PL18" => "podkarpackie",
+    "PL20" => "podlaskie",
+    "PL22" => "pomorskie",
+    "PL24" => "slaskie",
+    "PL26" => "swietokrzyskie",
+    "PL28" => "warminsko-mazurskie",
+    "PL30" => "wielkopolskie",
+    "PL32" => "zachodniopomorskie"
+  }
+
+  defp province_code_to_region(code), do: Map.get(@province_regions, code)
 
   defp region_to_province_code(region) do
     case region do

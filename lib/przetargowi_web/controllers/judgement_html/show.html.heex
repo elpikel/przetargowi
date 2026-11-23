@@ -1,27 +1,34 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <script type="application/ld+json">
-    <%= raw(Jason.encode!(%{
-      "@context" => "https://schema.org",
-      "@type" => "LegalCase",
-      "name" => @judgement.signature || "Orzeczenie",
-      "datePublished" => if(@judgement.decision_date, do: Calendar.strftime(@judgement.decision_date, "%Y-%m-%d"), else: nil),
-      "court" => %{
-        "@type" => "Organization",
-        "name" => @judgement.issuing_authority || "KIO"
-      },
-      "description" => @judgement.meritum || @judgement.deliberation,
-      "url" => "https://przetargowi.pl/orzeczenie/#{Map.get(@judgement, :slug) || @judgement.id}"
-    })) %>
+    <%= raw(Jason.encode!(PrzetargowiWeb.JudgementHTML.json_ld(@judgement, @heading, @topics))) %>
   </script>
   <div class="bg-base-200 min-h-screen">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 class="text-2xl md:text-3xl font-bold text-base-content mb-6">
-        <%= if @judgement.signature do %>
-          Wyrok KIO {@judgement.signature}
-        <% else %>
-          Orzeczenie KIO
-        <% end %>
-      </h1>
+      <nav
+        aria-label="Okruszki"
+        class="text-sm text-base-content/50 mb-4"
+        id="judgement-breadcrumbs"
+      >
+        <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <li class="flex items-center gap-2">
+            <a href="/orzecznictwo-kio" class="hover:text-primary transition-colors">
+              Orzecznictwo KIO
+            </a>
+            <.icon name="hero-chevron-right-mini" class="size-4 text-base-content/30" />
+          </li>
+          <li :for={topic <- Enum.take(@topics, 1)} class="flex items-center gap-2">
+            <a
+              href={Przetargowi.Judgements.Topics.path(topic)}
+              class="hover:text-primary transition-colors"
+            >
+              {topic.name}
+            </a>
+            <.icon name="hero-chevron-right-mini" class="size-4 text-base-content/30" />
+          </li>
+          <li class="text-base-content/70" aria-current="page">{@judgement.signature}</li>
+        </ol>
+      </nav>
+      <h1 class="text-2xl md:text-3xl font-bold text-base-content mb-6">{@heading}</h1>
       <div class="grid lg:grid-cols-3 gap-8 items-start">
         <!-- Sidebar with metadata -->
         <div class="lg:col-span-1 space-y-6" id="sidebar">
@@ -43,7 +50,7 @@
                   <dt class="text-sm text-base-content/50 mb-1">Organ wydający</dt>
                   <dd class="text-base-content font-medium">
                     <a
-                      href={"/szukaj?issuing_authority=#{URI.encode(@judgement.issuing_authority)}"}
+                      href={"/orzecznictwo-kio/szukaj?issuing_authority=#{URI.encode(@judgement.issuing_authority)}"}
                       rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
@@ -57,7 +64,7 @@
                   <dt class="text-sm text-base-content/50 mb-1">Rodzaj dokumentu</dt>
                   <dd class="text-base-content font-medium">
                     <a
-                      href={"/szukaj?document_type=#{URI.encode(@judgement.document_type)}"}
+                      href={"/orzecznictwo-kio/szukaj?document_type=#{URI.encode(@judgement.document_type)}"}
                       rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
@@ -71,7 +78,7 @@
                   <dt class="text-sm text-base-content/50 mb-1">Data wydania</dt>
                   <dd class="text-base-content font-medium">
                     <a
-                      href={"/szukaj?date_from=#{@judgement.decision_date}&date_to=#{@judgement.decision_date}"}
+                      href={"/orzecznictwo-kio/szukaj?date_from=#{@judgement.decision_date}&date_to=#{@judgement.decision_date}"}
                       rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
@@ -85,7 +92,7 @@
                   <dt class="text-sm text-base-content/50 mb-1">Przewodniczący</dt>
                   <dd class="text-base-content font-medium">
                     <a
-                      href={"/szukaj?chairman=#{URI.encode(@judgement.chairman)}"}
+                      href={"/orzecznictwo-kio/szukaj?chairman=#{URI.encode(@judgement.chairman)}"}
                       rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
@@ -99,7 +106,7 @@
                   <dt class="text-sm text-base-content/50 mb-1">Sposób rozstrzygnięcia</dt>
                   <dd class="text-base-content font-medium">
                     <a
-                      href={"/szukaj?resolution_method=#{URI.encode(@judgement.resolution_method)}"}
+                      href={"/orzecznictwo-kio/szukaj?resolution_method=#{URI.encode(@judgement.resolution_method)}"}
                       rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
@@ -123,7 +130,7 @@
                     <dt class="text-sm text-base-content/50 mb-1">Nazwa</dt>
                     <dd class="text-base-content font-medium">
                       <a
-                        href={"/szukaj?contracting_authority=#{URI.encode(@judgement.contracting_authority)}"}
+                        href={"/orzecznictwo-kio/szukaj?contracting_authority=#{URI.encode(@judgement.contracting_authority)}"}
                         rel="nofollow"
                         class="hover:text-primary hover:underline transition-colors"
                       >
@@ -137,7 +144,7 @@
                     <dt class="text-sm text-base-content/50 mb-1">Miejscowość</dt>
                     <dd class="text-base-content font-medium">
                       <a
-                        href={"/szukaj?location=#{URI.encode(@judgement.location)}"}
+                        href={"/orzecznictwo-kio/szukaj?location=#{URI.encode(@judgement.location)}"}
                         rel="nofollow"
                         class="hover:text-primary hover:underline transition-colors"
                       >
@@ -162,7 +169,7 @@
                   <dt class="text-sm text-base-content/50 mb-1">Tryb postępowania</dt>
                   <dd class="text-base-content font-medium">
                     <a
-                      href={"/szukaj?procedure_type=#{URI.encode(@judgement.procedure_type)}"}
+                      href={"/orzecznictwo-kio/szukaj?procedure_type=#{URI.encode(@judgement.procedure_type)}"}
                       rel="nofollow"
                       class="hover:text-primary hover:underline transition-colors"
                     >
@@ -204,13 +211,25 @@
               </h2>
               <div class="flex flex-wrap gap-2">
                 <%= for issue <- @judgement.thematic_issues do %>
-                  <a
-                    href={"/szukaj?zagadnienie=#{URI.encode(issue)}"}
-                    rel="nofollow"
-                    class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium hover:bg-secondary/20 transition-colors"
-                  >
-                    {issue}
-                  </a>
+                  <%!-- Curated issues link (followable) to their indexable topic hub;
+                       everything else falls back to a nofollow search filter. --%>
+                  <%= case Przetargowi.Judgements.Topics.for_issue(issue) do %>
+                    <% nil -> %>
+                      <a
+                        href={"/orzecznictwo-kio/szukaj?zagadnienie=#{URI.encode(issue)}"}
+                        rel="nofollow"
+                        class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium hover:bg-secondary/20 transition-colors"
+                      >
+                        {issue}
+                      </a>
+                    <% topic -> %>
+                      <a
+                        href={Przetargowi.Judgements.Topics.path(topic)}
+                        class="px-3 py-1.5 text-sm bg-secondary/10 text-secondary rounded-lg font-medium hover:bg-secondary/20 transition-colors"
+                      >
+                        {issue}
+                      </a>
+                  <% end %>
                 <% end %>
               </div>
             </div>
@@ -226,11 +245,11 @@
                 <%= for related <- @related_judgements do %>
                   <li>
                     <a
-                      href={"/orzeczenie/#{related.slug}"}
+                      href={"/orzecznictwo-kio/#{related.slug}"}
                       class="block hover:text-primary transition-colors"
                     >
                       <span class="font-medium text-base-content">
-                        Wyrok KIO {related.signature}
+                        {related.signature}
                       </span>
                       <%= if related.decision_date do %>
                         <span class="block text-xs text-base-content/50">

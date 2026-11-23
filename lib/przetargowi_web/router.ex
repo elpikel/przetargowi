@@ -26,9 +26,16 @@ defmodule PrzetargowiWeb.Router do
       live "/analiza-rynku", MarketDashboardLive
     end
 
-    get "/szukaj", SearchController, :index
+    # Legacy search URL — permanently redirected, see SearchController.legacy/2
+    get "/szukaj", SearchController, :legacy
     get "/orzecznictwo-kio", LandingController, :orzecznictwo_kio
-    get "/orzeczenie/:slug", JudgementController, :show
+    # Must stay above the `:slug` route so "szukaj" is not read as a topic.
+    get "/orzecznictwo-kio/szukaj", SearchController, :index
+    get "/orzecznictwo-kio/statystyki", LandingController, :statistics
+    # Topic hub (curated slugs) or a single ruling (signature slug, e.g. kio-1499-26)
+    get "/orzecznictwo-kio/:slug", LandingController, :topic
+    # Legacy ruling URL — permanently redirected to /orzecznictwo-kio/:slug
+    get "/orzeczenie/:slug", JudgementController, :legacy
     get "/o-nas", StaticPageController, :about
     get "/kontakt", StaticPageController, :contact
     get "/regulamin", StaticPageController, :terms
@@ -54,6 +61,7 @@ defmodule PrzetargowiWeb.Router do
   end
 
   scope "/", PrzetargowiWeb do
+    get "/llms.txt", LlmsController, :index
     get "/sitemap.xml", SitemapController, :index
     get "/sitemap-static.xml", SitemapController, :static
     get "/sitemap/judgements/:page", SitemapController, :judgements

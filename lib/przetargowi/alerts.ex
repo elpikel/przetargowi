@@ -8,8 +8,6 @@ defmodule Przetargowi.Alerts do
   alias Przetargowi.Alerts.Alert
   alias Przetargowi.Repo
 
-  require Logger
-
   @doc """
   Gets all alerts for a user.
   """

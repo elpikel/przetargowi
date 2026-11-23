@@ -12,3 +12,5 @@ Disallow: /obserwowane
 Disallow: /profil-firmy
 
 Sitemap: https://przetargowi.pl/sitemap.xml
+
+# Site map for AI assistants: https://przetargowi.pl/llms.txt

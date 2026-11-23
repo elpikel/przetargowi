@@ -1,0 +1,209 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <script type="application/ld+json">
+    <%= raw(Jason.encode!(%{
+      "@context" => "https://schema.org",
+      "@type" => "Dataset",
+      "name" => "Statystyki rozstrzygnięć Krajowej Izby Odwoławczej",
+      "description" => "Sposób rozstrzygnięcia odwołań w sprawach zamówień publicznych: udział odwołań uwzględnionych, oddalonych, umorzonych, odrzuconych i zwróconych, w podziale na lata i zagadnienia prawne. Opracowanie na podstawie #{@stats.outcomes.total} orzeczeń.",
+      "url" => "https://przetargowi.pl/orzecznictwo-kio/statystyki",
+      "inLanguage" => "pl-PL",
+      "dateModified" => Date.to_iso8601(@stats.generated_on),
+      "creator" => %{"@type" => "Organization", "name" => "Przetargowi.pl", "url" => "https://przetargowi.pl"},
+      "isBasedOn" => "https://orzeczenia.uzp.gov.pl",
+      "variableMeasured" => ["sposób rozstrzygnięcia", "rok wydania orzeczenia", "zagadnienie merytoryczne"]
+    })) %>
+  </script>
+
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <.breadcrumb_nav crumbs={[
+        {"Strona główna", "/"},
+        {"Orzecznictwo KIO", "/orzecznictwo-kio"},
+        {"Statystyki", nil}
+      ]} />
+
+      <header class="mb-10 max-w-3xl">
+        <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-4">
+          Statystyki KIO — jak Izba rozstrzyga odwołania
+        </h1>
+        <p class="text-lg text-base-content/70 leading-relaxed" id="stats-answer">
+          Spośród odwołań, które Krajowa Izba Odwoławcza rozpoznała merytorycznie,
+          <strong class="text-base-content">{@stats.outcomes.upheld_rate}%</strong>
+          zostało uwzględnionych, a {100 - (@stats.outcomes.upheld_rate || 0)}% oddalonych. Dane pochodzą z {format_count(
+            @stats.outcomes.total
+          )} orzeczeń ze znanym sposobem rozstrzygnięcia.
+        </p>
+        <p class="mt-3 text-sm text-base-content/60">
+          Stan na {format_date(@stats.generated_on)} · źródło: orzeczenia publikowane przez Urząd Zamówień Publicznych, opracowanie Przetargowi.pl
+        </p>
+      </header>
+
+      <section class="grid sm:grid-cols-3 gap-4 mb-10" id="stats-tiles">
+        <div class="card-base p-6">
+          <div class="text-sm text-base-content/60 mb-1">Orzeczeń w bazie</div>
+          <div class="text-3xl font-bold text-base-content tabular-nums">
+            {format_count(@stats.total_count)}
+          </div>
+        </div>
+        <div class="card-base p-6">
+          <div class="text-sm text-base-content/60 mb-1">
+            Odwołania uwzględnione (z rozpoznanych merytorycznie)
+          </div>
+          <div class="text-3xl font-bold text-base-content tabular-nums">
+            {@stats.outcomes.upheld_rate}%
+          </div>
+        </div>
+        <div class="card-base p-6">
+          <div class="text-sm text-base-content/60 mb-1">Zagadnień z własną statystyką</div>
+          <div class="text-3xl font-bold text-base-content tabular-nums">
+            {length(@stats.topics)}
+          </div>
+        </div>
+      </section>
+
+      <div class="grid lg:grid-cols-3 gap-8 items-start">
+        <div class="lg:col-span-2 space-y-10">
+          <section class="card-base p-6 sm:p-8">
+            <h2 class="text-xl font-bold text-base-content mb-1">
+              Skuteczność odwołań do KIO według lat
+            </h2>
+            <p class="text-sm text-base-content/60 mb-5">
+              Udział odwołań uwzględnionych wśród rozpoznanych merytorycznie (uwzględnione + oddalone) w danym roku.
+            </p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm" id="stats-years">
+                <thead>
+                  <tr class="text-left text-base-content/60 border-b border-base-300">
+                    <th class="py-2 pr-4 font-medium">Rok</th>
+                    <th class="py-2 pr-4 font-medium text-right">Orzeczenia</th>
+                    <th class="py-2 pr-4 font-medium text-right">Uwzględnione</th>
+                    <th class="py-2 pr-4 font-medium text-right">Oddalone</th>
+                    <th class="py-2 font-medium text-right">Skuteczność</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr :for={row <- @stats.years} class="border-b border-base-300/60 last:border-0">
+                    <th scope="row" class="py-2.5 pr-4 font-semibold text-base-content text-left">
+                      {row.year}
+                    </th>
+                    <td class="py-2.5 pr-4 text-right tabular-nums">{format_count(row.total)}</td>
+                    <td class="py-2.5 pr-4 text-right tabular-nums">
+                      {format_count(row.upheld)}
+                    </td>
+                    <td class="py-2.5 pr-4 text-right tabular-nums">
+                      {format_count(row.dismissed)}
+                    </td>
+                    <td class="py-2.5 text-right tabular-nums font-semibold text-base-content">
+                      {if row.upheld_rate, do: "#{row.upheld_rate}%", else: "—"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card-base p-6 sm:p-8">
+            <h2 class="text-xl font-bold text-base-content mb-1">
+              Skuteczność odwołań według zagadnień
+            </h2>
+            <p class="text-sm text-base-content/60 mb-5">
+              Wynik dotyczy całej sprawy oznaczonej danym zagadnieniem, a nie pojedynczego zarzutu. Jedno orzeczenie może należeć do kilku zagadnień.
+            </p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm" id="stats-topics">
+                <thead>
+                  <tr class="text-left text-base-content/60 border-b border-base-300">
+                    <th class="py-2 pr-4 font-medium">Zagadnienie</th>
+                    <th class="py-2 pr-4 font-medium text-right">Orzeczenia</th>
+                    <th class="py-2 pr-4 font-medium text-right">Rozpoznane merytorycznie</th>
+                    <th class="py-2 font-medium text-right">Uwzględnione</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    :for={row <- @stats.topics}
+                    class="border-b border-base-300/60 last:border-0"
+                  >
+                    <th scope="row" class="py-2.5 pr-4 font-medium text-left">
+                      <a href={topic_path(row.topic)} class="text-primary hover:underline">
+                        {row.topic.name}
+                      </a>
+                    </th>
+                    <td class="py-2.5 pr-4 text-right tabular-nums">{format_count(row.count)}</td>
+                    <td class="py-2.5 pr-4 text-right tabular-nums">
+                      {format_count(row.decided)}
+                    </td>
+                    <td class="py-2.5 text-right tabular-nums font-semibold text-base-content">
+                      {if row.upheld_rate, do: "#{row.upheld_rate}%", else: "—"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card-base p-6 sm:p-8" id="stats-method">
+            <h2 class="text-xl font-bold text-base-content mb-4">
+              Skąd pochodzą dane i jak je liczymy
+            </h2>
+            <div class="space-y-4 text-base-content/80 leading-relaxed">
+              <p>
+                Statystyki powstają na podstawie orzeczeń Krajowej Izby Odwoławczej publikowanych w oficjalnej bazie Urzędu Zamówień Publicznych, które gromadzimy w naszej <a
+                  href="/orzecznictwo-kio"
+                  class="text-primary hover:underline"
+                >wyszukiwarce orzeczeń KIO</a>. Liczby są przeliczane automatycznie wraz z aktualizacją bazy.
+              </p>
+              <p>
+                <strong class="text-base-content">Skuteczność</strong>
+                to udział odwołań uwzględnionych (w całości lub w części) w sumie odwołań uwzględnionych i oddalonych. Pomijamy postępowania umorzone, odwołania odrzucone i zwrócone, ponieważ w tych sprawach Izba nie oceniała zasadności zarzutów.
+              </p>
+              <p>
+                Baza nie obejmuje wszystkich orzeczeń wydanych przez Izbę — zawiera te, które zostały opublikowane i opisane w bazie UZP. Dlatego liczby bezwzględne są niższe niż w rocznych sprawozdaniach Prezesa UZP, a starsze lata są reprezentowane słabiej. Statystyki pokazują strukturę rozstrzygnięć w opublikowanym orzecznictwie, a nie pełną sprawozdawczość Izby.
+              </p>
+              <p>
+                Dane można cytować z podaniem źródła: Przetargowi.pl, Statystyki KIO, stan na {format_date(
+                  @stats.generated_on
+                )}.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <aside class="space-y-6">
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-1">
+              Wszystkie rozstrzygnięcia
+            </h2>
+            <p class="text-sm text-base-content/60 mb-5">
+              Struktura {format_count(@stats.outcomes.total)} orzeczeń ze znanym wynikiem.
+            </p>
+            <.outcome_stats outcomes={@stats.outcomes} id="stats-outcomes" />
+          </div>
+          <div class="card-base p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-3">Zobacz też</h2>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a href="/orzecznictwo-kio" class="text-primary hover:underline">
+                  Orzecznictwo KIO — wyszukiwarka
+                </a>
+              </li>
+              <li>
+                <a href="/blog/jak-odwolac-sie-do-kio" class="text-primary hover:underline">
+                  Jak odwołać się do KIO
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/blog/ile-kosztuje-odwolanie-do-kio-2026"
+                  class="text-primary hover:underline"
+                >
+                  Ile kosztuje odwołanie do KIO
+                </a>
+              </li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

@@ -15,11 +15,11 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
     judgement
   end
 
-  describe "GET /orzeczenie/:slug indexability" do
+  describe "GET /orzecznictwo-kio/:slug indexability" do
     test "thin page with no content is marked noindex", %{conn: conn} do
       judgement = create_judgement(%{})
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
       assert response =~ ~s(<meta name="robots" content="noindex, follow">)
     end
@@ -27,13 +27,13 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
     test "page with real content stays indexable", %{conn: conn} do
       judgement = create_judgement(%{content_html: "<p>#{String.duplicate("treść ", 200)}</p>"})
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
       assert response =~ ~s(<meta name="robots" content="index, follow">)
     end
   end
 
-  describe "GET /orzeczenie/:slug unique content" do
+  describe "GET /orzecznictwo-kio/:slug unique content" do
     test "renders an original narrative summary", %{conn: conn} do
       judgement =
         create_judgement(%{
@@ -42,7 +42,7 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
           procedure_type: "przetarg nieograniczony"
         })
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
       assert response =~ "Streszczenie orzeczenia"
       assert response =~ "oddaliła odwołanie"
@@ -63,39 +63,151 @@ defmodule PrzetargowiWeb.JudgementControllerTest do
           thematic_issues: ["rażąco niska cena"]
         })
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
       assert response =~ "Podobne orzeczenia KIO"
-      assert response =~ "/orzeczenie/#{related.slug}"
+      assert response =~ "/orzecznictwo-kio/#{related.slug}"
     end
   end
 
-  describe "GET /orzeczenie/:slug metadata links" do
+  describe "GET /orzecznictwo-kio/:slug metadata links" do
     test "links chairman to an exact chairman filter, not a full-text query", %{conn: conn} do
       judgement = create_judgement(%{chairman: "Maria Kacprzyk"})
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
-      assert response =~ "/szukaj?chairman=#{URI.encode("Maria Kacprzyk")}"
-      refute response =~ "/szukaj?q=#{URI.encode("Maria Kacprzyk")}"
+      assert response =~ "/orzecznictwo-kio/szukaj?chairman=#{URI.encode("Maria Kacprzyk")}"
+      refute response =~ "/orzecznictwo-kio/szukaj?q=#{URI.encode("Maria Kacprzyk")}"
     end
 
     test "links contracting authority to an exact contracting_authority filter", %{conn: conn} do
       judgement = create_judgement(%{contracting_authority: "Politechnika Poznańska"})
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
-      assert response =~ "/szukaj?contracting_authority=#{URI.encode("Politechnika Poznańska")}"
-      refute response =~ "/szukaj?q=#{URI.encode("Politechnika Poznańska")}"
+      assert response =~
+               "/orzecznictwo-kio/szukaj?contracting_authority=#{URI.encode("Politechnika Poznańska")}"
+
+      refute response =~ "/orzecznictwo-kio/szukaj?q=#{URI.encode("Politechnika Poznańska")}"
     end
 
     test "links location to an exact location filter", %{conn: conn} do
       judgement = create_judgement(%{location: "Poznań"})
 
-      response = conn |> get(~p"/orzeczenie/#{judgement.slug}") |> html_response(200)
+      response = conn |> get(~p"/orzecznictwo-kio/#{judgement.slug}") |> html_response(200)
 
-      assert response =~ "/szukaj?location=#{URI.encode("Poznań")}"
-      refute response =~ "/szukaj?q=#{URI.encode("Poznań")}"
+      assert response =~ "/orzecznictwo-kio/szukaj?location=#{URI.encode("Poznań")}"
+      refute response =~ "/orzecznictwo-kio/szukaj?q=#{URI.encode("Poznań")}"
+    end
+  end
+
+  describe "GET /orzecznictwo-kio/:slug titles and navigation" do
+    test "labels an order as postanowienie, not wyrok", %{conn: conn} do
+      judgement = create_judgement(%{})
+      {:ok, judgement} = Judgements.update_judgement(judgement, %{document_type: "postanowienie"})
+
+      conn = get(conn, ~p"/orzecznictwo-kio/#{judgement.slug}")
+      html_response(conn, 200)
+
+      assert conn.assigns.heading == "Postanowienie #{judgement.signature}"
+      assert conn.assigns.page_title =~ "Postanowienie #{judgement.signature}"
+      refute conn.assigns.page_title =~ "Wyrok"
+    end
+
+    test "puts the decision date and main topic in the title", %{conn: conn} do
+      judgement = create_judgement(%{thematic_issues: ["zamawiający", "rażąco niska cena"]})
+
+      {:ok, judgement} =
+        Judgements.update_judgement(judgement, %{
+          document_type: "wyrok",
+          decision_date: ~D[2025-03-12]
+        })
+
+      conn = get(conn, ~p"/orzecznictwo-kio/#{judgement.slug}")
+      html_response(conn, 200)
+
+      assert conn.assigns.page_title ==
+               "Wyrok #{judgement.signature} z 12.03.2025 — rażąco niska cena"
+    end
+
+    test "links curated issues to their topic hub with a followable link", %{conn: conn} do
+      judgement = create_judgement(%{thematic_issues: ["rażąco niska cena", "egzotyczne"]})
+
+      document =
+        conn
+        |> get(~p"/orzecznictwo-kio/#{judgement.slug}")
+        |> html_response(200)
+        |> LazyHTML.from_document()
+
+      hub_link =
+        LazyHTML.query(document, ~s(#sidebar a[href="/orzecznictwo-kio/razaco-niska-cena"]))
+
+      assert Enum.count(hub_link) == 1
+      assert LazyHTML.attribute(hub_link, "rel") == []
+
+      search_link =
+        LazyHTML.query(document, ~s(#sidebar a[href^="/orzecznictwo-kio/szukaj?zagadnienie="]))
+
+      assert LazyHTML.attribute(search_link, "rel") == ["nofollow"]
+    end
+
+    test "shows breadcrumbs through the pillar page and topic hub", %{conn: conn} do
+      judgement = create_judgement(%{thematic_issues: ["wadium"]})
+
+      document =
+        conn
+        |> get(~p"/orzecznictwo-kio/#{judgement.slug}")
+        |> html_response(200)
+        |> LazyHTML.from_document()
+
+      crumbs = LazyHTML.query(document, "#judgement-breadcrumbs a")
+
+      assert LazyHTML.attribute(crumbs, "href") == [
+               "/orzecznictwo-kio",
+               "/orzecznictwo-kio/wadium"
+             ]
+    end
+  end
+
+  describe "GET /orzecznictwo-kio/:slug for an unknown ruling" do
+    test "returns a real 404 instead of redirecting to search", %{conn: conn} do
+      conn = get(conn, ~p"/orzecznictwo-kio/kio-does-not-exist-99")
+
+      assert html_response(conn, 404)
+    end
+  end
+
+  describe "legacy /orzeczenie/:slug URLs" do
+    test "permanently redirect to the ruling under /orzecznictwo-kio", %{conn: conn} do
+      judgement = create_judgement(%{})
+
+      conn = get(conn, "/orzeczenie/#{judgement.slug}")
+
+      assert redirected_to(conn, 301) == "/orzecznictwo-kio/#{judgement.slug}"
+    end
+
+    test "resolve a numeric id to the slug URL", %{conn: conn} do
+      judgement = create_judgement(%{})
+
+      conn = get(conn, "/orzeczenie/#{judgement.id}")
+
+      assert redirected_to(conn, 301) == "/orzecznictwo-kio/#{judgement.slug}"
+    end
+
+    test "return 404 for an unknown ruling", %{conn: conn} do
+      assert conn |> get("/orzeczenie/kio-does-not-exist-99") |> html_response(404)
+    end
+  end
+
+  describe "canonical URL" do
+    test "points at the ruling under /orzecznictwo-kio", %{conn: conn} do
+      judgement = create_judgement(%{})
+
+      conn = get(conn, ~p"/orzecznictwo-kio/#{judgement.slug}")
+      html_response(conn, 200)
+
+      assert conn.assigns.canonical_url ==
+               "https://przetargowi.pl/orzecznictwo-kio/#{judgement.slug}"
     end
   end
 end

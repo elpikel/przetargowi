@@ -30,7 +30,8 @@ config :przetargowi, PrzetargowiWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: PrzetargowiWeb.ErrorHTML, json: PrzetargowiWeb.ErrorJSON],
-    layout: false
+    layout: false,
+    root_layout: {PrzetargowiWeb.Layouts, :root}
   ],
   pubsub_server: Przetargowi.PubSub,
   live_view: [signing_salt: "TmJe4NfN"]

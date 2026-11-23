@@ -1,144 +1,123 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <!-- FAQ Schema for rich snippets -->
-  <script type="application/ld+json">
-    <%= raw(Jason.encode!(%{
-      "@context" => "https://schema.org",
-      "@type" => "FAQPage",
-      "mainEntity" => Enum.map(@faqs, fn faq ->
-        %{
-          "@type" => "Question",
-          "name" => faq.question,
-          "acceptedAnswer" => %{
-            "@type" => "Answer",
-            "text" => faq.answer
-          }
-        }
-      end)
-    })) %>
-  </script>
-
-  <div class="bg-base-200 min-h-screen">
+  <div class="hero-backdrop bg-base-200 min-h-screen">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <!-- Hero Section -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold text-base-content mb-4">
-          Orzecznictwo KIO
-        </h1>
-        <p class="text-xl text-base-content/70 max-w-3xl mx-auto mb-8">
-          Przeglądaj {@total_count} wyroków i orzeczeń Krajowej Izby Odwoławczej.
-          Wyszukiwanie po słowach kluczowych i semantyczne z AI.
-        </p>
-        <a
-          href="/szukaj"
-          class="btn-gold px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center gap-3"
+      <.page_hero title="Orzecznictwo KIO">
+        Wyszukiwarka orzeczeń Krajowej Izby Odwoławczej — {format_count(@total_count)} wyroków i postanowień w sprawach zamówień publicznych, z pełną treścią i streszczeniem.
+      </.page_hero>
+
+      <.search_bar
+        id="kio-search"
+        action="/orzecznictwo-kio/szukaj"
+        label="Szukaj orzeczeń KIO"
+        placeholder="Sygnatura (np. KIO 1234/25), przepis lub słowa kluczowe…"
+        advanced="/orzecznictwo-kio/szukaj"
+        advanced_label="Wyszukiwanie zaawansowane i semantyczne AI"
+        centered
+      />
+
+      <.stat_tiles
+        id="kio-figures"
+        items={[
+          {"Orzeczeń w bazie", format_count(@total_count)},
+          {"Odwołania uwzględnione (z rozpoznanych merytorycznie)",
+           "#{@outcomes.upheld_rate || 0}%"},
+          {"Zagadnień z omówieniem i statystyką", length(@topics)}
+        ]}
+      />
+
+      <.hub_grid
+        id="kio-topics"
+        title="Orzeczenia KIO według zagadnień"
+        lead="Przegląd linii orzeczniczej dla najczęstszych problemów w zamówieniach publicznych — z omówieniem, podstawą prawną i statystyką rozstrzygnięć."
+        items={Enum.map(@topics, &%{path: topic_path(&1), name: &1.name, lead: &1.lead})}
+      />
+
+      <section class="mb-14 grid lg:grid-cols-2 gap-6" id="kio-stats">
+        <.side_card
+          title="Jak KIO rozstrzyga odwołania?"
+          lead={"Rozstrzygnięcia w #{format_count(@outcomes.total)} orzeczeniach z naszej bazy."}
         >
-          <.icon name="hero-magnifying-glass" class="size-6" /> Przeszukaj orzecznictwo KIO
-        </a>
-      </div>
-      
-<!-- Features -->
-      <div class="grid md:grid-cols-3 gap-6 mb-16">
-        <div class="pricing-card p-6 text-center">
-          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <.icon name="hero-magnifying-glass" class="size-7 text-primary" />
-          </div>
-          <h2 class="text-lg font-semibold text-base-content mb-2">Wyszukiwarka orzeczeń</h2>
-          <p class="text-base-content/60">
-            Szukaj po słowach kluczowych, sygnaturze, dacie wydania lub rodzaju rozstrzygnięcia.
-          </p>
-        </div>
-
-        <div class="pricing-card p-6 text-center">
-          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-secondary/10 flex items-center justify-center">
-            <.icon name="hero-sparkles" class="size-7 text-secondary" />
-          </div>
-          <h2 class="text-lg font-semibold text-base-content mb-2">Wyszukiwanie semantyczne</h2>
-          <p class="text-base-content/60">
-            Opisz problem własnymi słowami, a AI znajdzie podobne orzeczenia KIO.
-          </p>
-        </div>
-
-        <div class="pricing-card p-6 text-center">
-          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-accent/10 flex items-center justify-center">
-            <.icon name="hero-document-text" class="size-7 text-accent" />
-          </div>
-          <h2 class="text-lg font-semibold text-base-content mb-2">Pełne treści wyroków</h2>
-          <p class="text-base-content/60">
-            Dostęp do pełnej treści orzeczeń KIO wraz z uzasadnieniami i meritum.
-          </p>
-        </div>
-      </div>
-      
-<!-- Recent Judgements -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold text-base-content mb-6">Ostatnie orzeczenia KIO</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <%= for judgement <- @recent_judgements do %>
-            <a
-              href={"/orzeczenie/#{judgement.slug}"}
-              class="pricing-card p-5 hover:border-primary/30 transition-colors block"
-            >
-              <div class="font-semibold text-base-content mb-2">{judgement.signature}</div>
-              <%= if judgement.decision_date do %>
-                <div class="text-sm text-base-content/50 mb-2">
-                  {Calendar.strftime(judgement.decision_date, "%d.%m.%Y")}
-                </div>
-              <% end %>
-              <%= if judgement.meritum do %>
-                <p class="text-sm text-base-content/70 line-clamp-2">
-                  {String.slice(judgement.meritum, 0, 100)}{if String.length(
-                                                                 judgement.meritum || ""
-                                                               ) > 100,
-                                                               do: "..."}
-                </p>
-              <% end %>
-            </a>
-          <% end %>
-        </div>
-        <div class="text-center mt-6">
-          <a href="/szukaj" class="text-primary font-medium hover:underline">
-            Zobacz wszystkie orzeczenia &rarr;
+          <.outcome_stats outcomes={@outcomes} id="kio-outcomes" />
+          <a
+            href="/orzecznictwo-kio/statystyki"
+            class="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            Statystyki KIO według lat i zagadnień
+            <.icon name="hero-arrow-right-mini" class="size-4" />
           </a>
-        </div>
-      </div>
-      
-<!-- FAQ Section -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold text-base-content mb-6">Najczęściej zadawane pytania</h2>
-        <div class="space-y-4">
-          <%= for faq <- @faqs do %>
-            <details class="pricing-card p-5 group">
-              <summary class="font-semibold text-base-content cursor-pointer list-none flex items-center justify-between">
-                {faq.question}
-                <.icon
-                  name="hero-chevron-down"
-                  class="size-5 text-base-content/50 group-open:rotate-180 transition-transform"
-                />
-              </summary>
-              <p class="mt-4 text-base-content/70 leading-relaxed">
-                {faq.answer}
-              </p>
-            </details>
-          <% end %>
-        </div>
-      </div>
-      
-<!-- CTA -->
-      <div class="text-center pricing-card p-8">
-        <h2 class="text-2xl font-bold text-base-content mb-4">
-          Rozpocznij wyszukiwanie
-        </h2>
-        <p class="text-base-content/70 mb-6 max-w-xl mx-auto">
-          Skorzystaj z naszej wyszukiwarki orzecznictwa KIO, aby znaleźć wyroki i postanowienia
-          dotyczące zamówień publicznych.
-        </p>
-        <a
-          href="/szukaj"
-          class="btn-gold px-8 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
+        </.side_card>
+        <.side_card
+          title="Orzeczenia w bazie według lat"
+          lead="Baza jest aktualizowana na bieżąco na podstawie orzeczeń publikowanych przez Urząd Zamówień Publicznych."
         >
-          <.icon name="hero-magnifying-glass" class="size-5" /> Przeszukaj bazę orzeczeń
-        </a>
-      </div>
+          <.count_list rows={Enum.map(@year_counts, fn {year, count} -> {year, nil, count} end)} />
+        </.side_card>
+      </section>
+
+      <section class="mb-14" id="kio-recent">
+        <h2 class="text-2xl font-bold text-base-content mb-6">Najnowsze orzeczenia KIO</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <.ruling_card :for={judgement <- @recent_judgements} judgement={judgement} compact />
+        </div>
+        <p class="mt-6 text-center">
+          <a
+            href="/orzecznictwo-kio/szukaj"
+            rel="nofollow"
+            class="text-primary font-medium hover:underline"
+          >
+            Zobacz wszystkie orzeczenia →
+          </a>
+        </p>
+      </section>
+
+      <section class="mb-14 prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/70 prose-a:text-primary prose-li:text-base-content/70">
+        <h2>Czym jest orzecznictwo KIO?</h2>
+        <p>
+          Krajowa Izba Odwoławcza (KIO) to organ rozpatrujący odwołania w postępowaniach o udzielenie zamówienia publicznego na gruncie <a href="/ustawa-pzp">ustawy Prawo zamówień publicznych</a>.
+          Orzeczenia KIO kształtują praktykę stosowania prawa zamówień publicznych w Polsce — od interpretacji <a href="/orzecznictwo-kio/warunki-udzialu-w-postepowaniu">warunków udziału w postępowaniu</a>, przez <a href="/orzecznictwo-kio/odrzucenie-oferty">odrzucenie oferty</a>, po zasady <a href="/orzecznictwo-kio/uniewaznienie-postepowania">unieważniania postępowań</a>.
+        </p>
+        <p>
+          Nasza baza obejmuje wyroki i postanowienia KIO oraz orzeczenia sądów okręgowych rozpoznających skargi na orzeczenia Izby. Każde orzeczenie ma pełną treść, streszczenie, listę powołanych przepisów ustawy Pzp i zagadnień merytorycznych.
+        </p>
+
+        <h2>Jak działa wyszukiwarka orzeczeń KIO?</h2>
+        <p>Wyszukiwarka oferuje dwa tryby:</p>
+        <ul>
+          <li>
+            <strong>Wyszukiwanie słów kluczowych</strong>
+            — klasyczne przeszukiwanie tekstu orzeczeń. Idealne, gdy znasz sygnaturę sprawy, nazwę zamawiającego lub konkretny przepis (np. „art. 226 ust. 1 pkt 5”).
+          </li>
+          <li>
+            <strong>Wyszukiwanie semantyczne (AI)</strong>
+            — opisz swoją sytuację własnymi słowami, a algorytm znajdzie orzeczenia o podobnym znaczeniu. Nie musisz znać dokładnej terminologii prawnej.
+          </li>
+        </ul>
+
+        <h2>Kiedy warto sprawdzić orzecznictwo KIO?</h2>
+        <ul>
+          <li>
+            Przed złożeniem <a href="/blog/jak-odwolac-sie-do-kio">odwołania do KIO</a>
+            — aby ocenić szanse powodzenia na podstawie podobnych spraw.
+          </li>
+          <li>
+            Przy przygotowaniu oferty — aby uniknąć <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstszych błędów</a>, które prowadzą do odrzucenia.
+          </li>
+          <li>
+            Gdy zamawiający wzywa do wyjaśnienia
+            <a href="/orzecznictwo-kio/razaco-niska-cena">rażąco niskiej ceny</a>
+            albo kwestionuje zastrzeżenie <a href="/orzecznictwo-kio/tajemnica-przedsiebiorstwa">tajemnicy przedsiębiorstwa</a>.
+          </li>
+          <li>
+            Przy szacowaniu
+            <a href="/blog/ile-kosztuje-odwolanie-do-kio-2026">kosztów odwołania do KIO</a>
+            i sprawdzaniu, <a href="/blog/ile-czasu-ma-kio-na-rozpatrzenie-odwolania">ile czasu ma KIO na rozpatrzenie odwołania</a>.
+          </li>
+        </ul>
+      </section>
+
+      <.guides articles={@recent_articles} />
+
+      <.faq_section id="kio-faq" faqs={@faqs} title="Najczęściej zadawane pytania" />
     </div>
   </div>
 </Layouts.app>

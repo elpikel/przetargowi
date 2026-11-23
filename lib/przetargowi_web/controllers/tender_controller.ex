@@ -2,11 +2,16 @@ defmodule PrzetargowiWeb.TenderController do
   use PrzetargowiWeb, :controller
 
   alias Przetargowi.SearchLogs
+  alias Przetargowi.SitemapCache
   alias Przetargowi.Tenders
   alias Przetargowi.Tenders.Hubs
   alias Przetargowi.Watchlist
 
   @valid_regions ~w(dolnoslaskie kujawsko-pomorskie lubelskie lubuskie lodzkie malopolskie mazowieckie opolskie podkarpackie podlaskie pomorskie slaskie swietokrzyskie warminsko-mazurskie wielkopolskie zachodniopomorskie)
+
+  # Bare /przetargi is the section's landing page; any query string (even an
+  # empty `q`) switches to the search results with the full filter form.
+  def index(%{query_string: ""} = conn, _params), do: landing(conn)
 
   def index(conn, params) do
     page = parse_page(params["page"])
@@ -110,13 +115,7 @@ defmodule PrzetargowiWeb.TenderController do
         render_404(conn)
 
       hub ->
-        render_hub(
-          conn,
-          params,
-          [order_types: [hub.order_type]],
-          hub,
-          "/przetargi/rodzaj/#{slug}"
-        )
+        render_hub(conn, params, [order_types: [hub.order_type]], hub, :order_type)
     end
   end
 
@@ -127,18 +126,13 @@ defmodule PrzetargowiWeb.TenderController do
         render_404(conn)
 
       hub ->
-        render_hub(
-          conn,
-          params,
-          [cpv_prefixes: hub.cpv_prefixes],
-          hub,
-          "/przetargi/branza/#{slug}"
-        )
+        render_hub(conn, params, [cpv_prefixes: hub.cpv_prefixes], hub, :category)
     end
   end
 
-  defp render_hub(conn, params, filter_opts, hub, path) do
+  defp render_hub(conn, params, filter_opts, hub, kind) do
     page = parse_page(params["page"])
+    path = Hubs.path(kind, hub.slug)
 
     search_opts =
       Keyword.merge(
@@ -148,8 +142,7 @@ defmodule PrzetargowiWeb.TenderController do
 
     result = Tenders.search_tender_notices(search_opts)
 
-    {can_create_alert, is_premium} = get_alert_permissions(conn)
-    {watched_ids, can_add_to_watchlist} = get_watchlist_data(conn)
+    {watched_ids, _can_add_to_watchlist} = get_watchlist_data(conn)
 
     canonical =
       if page > 1,
@@ -163,24 +156,119 @@ defmodule PrzetargowiWeb.TenderController do
     |> then(fn conn ->
       if page > 1, do: assign(conn, :meta_robots, "noindex, follow"), else: conn
     end)
-    |> assign(:hub_title, hub.h1)
-    |> assign(:hub_intro, hub.intro)
-    |> render(:index,
-      notices: result.notices,
+    |> assign_breadcrumbs(hub.h1, path)
+    |> render_hub_page(result, filter_opts, watched_ids, %{
+      kind: kind,
+      slug: hub.slug,
+      path: path,
+      name: hub.h1,
+      intro: hub.intro,
+      search_scope: search_scope(kind, hub),
+      content: Hubs.content(kind, hub.slug),
+      stats: cached_hub_stats(path, filter_opts)
+    })
+  end
+
+  # Hidden params that keep the hub's own filter when its search box is used.
+  # Industry hubs are defined by CPV prefixes, which the search form has no
+  # field for, so they search all tenders.
+  defp search_scope(:order_type, hub), do: [{"order_types[]", hub.order_type}]
+  defp search_scope(:region, %{slug: slug}), do: [{"regions[]", slug}]
+  defp search_scope(_kind, _hub), do: []
+
+  # Renders the shared hub template. When a hub has no open tenders it lists
+  # the most recently closed ones instead of an empty box.
+  defp render_hub_page(conn, result, filter_opts, watched_ids, hub) do
+    {notices, open?} =
+      case result.notices do
+        [] when result.page == 1 -> {Tenders.list_recently_closed(filter_opts, 9), false}
+        notices -> {notices, true}
+      end
+
+    render(conn, :hub,
+      hub: hub,
+      notices: notices,
+      open?: open?,
       total_count: result.total_count,
       page: result.page,
       total_pages: result.total_pages,
-      query: "",
-      regions: [],
-      order_types: Keyword.get(search_opts, :order_types, []),
-      deadline_from: "",
-      deadline_to: "",
-      with_winner_analysis: false,
-      can_create_alert: can_create_alert,
-      is_premium: is_premium,
-      watched_ids: watched_ids,
-      can_add_to_watchlist: can_add_to_watchlist
+      watched_ids: watched_ids
     )
+  end
+
+  defp landing(conn) do
+    result = Tenders.search_tender_notices(page: 1, per_page: 9)
+
+    {notices, open?} =
+      case result.notices do
+        [] -> {Tenders.list_recently_closed([], 9), false}
+        notices -> {notices, true}
+      end
+
+    conn
+    |> assign(:page_title, "Aktualne przetargi publiczne — wyszukiwarka przetargów")
+    |> assign(
+      :meta_description,
+      "Wyszukiwarka przetargów publicznych — #{result.total_count} aktualnych ogłoszeń o przetargach z BZP. Przeglądaj według branży i województwa, sprawdzaj terminy składania ofert."
+    )
+    |> assign(:canonical_url, "https://przetargowi.pl/przetargi")
+    |> assign(:breadcrumbs, [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Przetargi", url: "https://przetargowi.pl/przetargi"}
+    ])
+    |> render(:landing,
+      notices: notices,
+      open?: open?,
+      total_count: result.total_count,
+      stats: cached_hub_stats("/przetargi", []),
+      categories: Hubs.category_hubs(),
+      order_types: Hubs.order_type_hubs(),
+      regions: Hubs.regions(),
+      recent_articles: Przetargowi.Blog.list_recent_articles(3)
+    )
+  end
+
+  # Five aggregate queries per hub; open-tender figures move slowly.
+  defp cached_hub_stats(key, filter_opts) do
+    cache_key = "hub-stats:#{key}"
+
+    case SitemapCache.get(cache_key) do
+      {:ok, stats} ->
+        stats
+
+      :miss ->
+        stats = Tenders.hub_stats(filter_opts)
+        SitemapCache.put(cache_key, stats, 900)
+        stats
+    end
+  end
+
+  # Regions have no hand-written copy: one honest paragraph built from the
+  # region's own data, and no FAQ — sixteen copies of the same questions with a
+  # swapped name would only be duplicate content.
+  defp region_content(slug) do
+    region = Hubs.region(slug)
+
+    %{
+      body: [
+        "Zestawienie obejmuje postępowania ogłoszone w Biuletynie Zamówień Publicznych przez zamawiających z siedzibą w województwie #{region.locative} — urzędy gmin i powiatów, szpitale, szkoły, uczelnie, zarządy dróg i spółki komunalne, m.in. z miast: #{region.cities}. Lista jest uporządkowana według terminu składania ofert, od najbliższego."
+      ],
+      faqs: [],
+      kio_topics: [],
+      blog: nil
+    }
+  end
+
+  # Sets both the BreadcrumbList structured data (emitted by the root layout)
+  # and the visible trail rendered by the index template.
+  defp assign_breadcrumbs(conn, name, path) do
+    conn
+    |> assign(:breadcrumbs, [
+      %{name: "Strona główna", url: "https://przetargowi.pl"},
+      %{name: "Przetargi", url: "https://przetargowi.pl/przetargi"},
+      %{name: name, url: "https://przetargowi.pl#{path}"}
+    ])
+    |> assign(:crumbs, [{"Strona główna", "/"}, {"Przetargi", "/przetargi"}, {name, nil}])
   end
 
   defp render_404(conn) do
@@ -250,46 +338,67 @@ defmodule PrzetargowiWeb.TenderController do
     # Get watchlist data for logged-in users
     {watched_ids, can_add_to_watchlist} = get_watchlist_data(conn)
 
-    conn
-    |> assign(:page_title, "Przetargi #{region_name}")
-    |> assign(
-      :meta_description,
-      "Przetargi publiczne w województwie #{region_name}. #{result.total_count} aktywnych ogłoszeń z BZP."
-    )
-    |> then(fn conn ->
-      has_filters =
-        (params["q"] || "") != "" or (params["order_types"] || []) != [] or
-          deadline_from != nil or deadline_to != nil or with_winner_analysis
+    has_filters =
+      (params["q"] || "") != "" or (params["order_types"] || []) != [] or
+        deadline_from != nil or deadline_to != nil or with_winner_analysis
 
-      cond do
-        has_filters ->
-          assign(conn, :meta_robots, "noindex, follow")
+    path = "/przetargi/#{region}"
 
-        page > 1 ->
-          conn
-          |> assign(:canonical_url, "https://przetargowi.pl/przetargi/#{region}?page=#{page}")
-          |> assign(:meta_robots, "noindex, follow")
+    conn =
+      conn
+      |> assign(:page_title, "Przetargi #{region_name} — aktualne ogłoszenia z BZP")
+      |> assign(
+        :meta_description,
+        "Przetargi publiczne w województwie #{region_name}: #{result.total_count} aktualnych ogłoszeń z Biuletynu Zamówień Publicznych z terminami składania ofert. Roboty budowlane, dostawy i usługi."
+      )
+      |> assign_breadcrumbs("Województwo #{region_name}", path)
 
-        true ->
-          assign(conn, :canonical_url, "https://przetargowi.pl/przetargi/#{region}")
-      end
-    end)
-    |> render(:index,
-      notices: result.notices,
-      total_count: result.total_count,
-      page: result.page,
-      total_pages: result.total_pages,
-      query: params["q"] || "",
-      regions: [region],
-      order_types: params["order_types"] || [],
-      deadline_from: params["deadline_from"] || "",
-      deadline_to: params["deadline_to"] || "",
-      with_winner_analysis: with_winner_analysis,
-      can_create_alert: can_create_alert,
-      is_premium: is_premium,
-      watched_ids: watched_ids,
-      can_add_to_watchlist: can_add_to_watchlist
-    )
+    cond do
+      # A filtered region is a search: same template as /przetargi?…
+      has_filters ->
+        conn
+        |> assign(:meta_robots, "noindex, follow")
+        |> assign(:hub_title, "Przetargi — województwo #{region_name}")
+        |> render(:index,
+          notices: result.notices,
+          total_count: result.total_count,
+          page: result.page,
+          total_pages: result.total_pages,
+          query: params["q"] || "",
+          regions: [region],
+          order_types: params["order_types"] || [],
+          deadline_from: params["deadline_from"] || "",
+          deadline_to: params["deadline_to"] || "",
+          with_winner_analysis: with_winner_analysis,
+          can_create_alert: can_create_alert,
+          is_premium: is_premium,
+          watched_ids: watched_ids,
+          can_add_to_watchlist: can_add_to_watchlist
+        )
+
+      true ->
+        conn
+        |> then(fn conn ->
+          if page > 1 do
+            conn
+            |> assign(:canonical_url, "https://przetargowi.pl#{path}?page=#{page}")
+            |> assign(:meta_robots, "noindex, follow")
+          else
+            assign(conn, :canonical_url, "https://przetargowi.pl#{path}")
+          end
+        end)
+        |> render_hub_page(result, [regions: [region]], watched_ids, %{
+          kind: :region,
+          slug: region,
+          path: path,
+          name: "Przetargi — województwo #{region_name}",
+          intro:
+            "Aktualne przetargi publiczne w województwie #{region_name} z Biuletynu Zamówień Publicznych, z terminami składania ofert.",
+          search_scope: search_scope(:region, %{slug: region}),
+          content: region_content(region),
+          stats: cached_hub_stats(path, regions: [region])
+        })
+    end
   end
 
   defp show_tender(conn, slug) do

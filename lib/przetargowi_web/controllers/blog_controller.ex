@@ -45,8 +45,9 @@ defmodule PrzetargowiWeb.BlogController do
     case Blog.get_article_by_slug(slug) do
       nil ->
         conn
-        |> put_flash(:error, "Artykuł nie został znaleziony")
-        |> redirect(to: "/blog")
+        |> put_status(:not_found)
+        |> put_view(html: PrzetargowiWeb.ErrorHTML)
+        |> render(:"404")
 
       article ->
         canonical_url = "https://przetargowi.pl/blog/#{article.slug}"
@@ -59,9 +60,10 @@ defmodule PrzetargowiWeb.BlogController do
 
         # Get related articles
         related_articles = Blog.list_recent_articles(3)
+        prepared = PrzetargowiWeb.BlogHTML.prepare_content(article.content)
 
         conn
-        |> assign(:page_title, "#{article.title} — Blog Przetargowi.pl")
+        |> assign(:page_title, article.title)
         |> assign(
           :meta_description,
           article.meta_description || article.excerpt || String.slice(article.content, 0, 155)
@@ -71,6 +73,9 @@ defmodule PrzetargowiWeb.BlogController do
         |> assign(:og_type, "article")
         |> assign(:breadcrumbs, breadcrumbs)
         |> assign(:article, article)
+        |> assign(:content_html, prepared.html)
+        |> assign(:toc, prepared.toc)
+        |> assign(:faqs, prepared.faqs)
         |> assign(:related_articles, related_articles)
         |> assign(:article_json_ld, build_article_json_ld(article, canonical_url))
         |> render(:show)
@@ -91,9 +96,11 @@ defmodule PrzetargowiWeb.BlogController do
       "headline" => article.title,
       "description" => article.meta_description || article.excerpt,
       "author" => %{
-        "@type" => "Person",
-        "name" => article.author
+        "@type" => "Organization",
+        "name" => article.author,
+        "url" => "https://przetargowi.pl/o-nas"
       },
+      "inLanguage" => "pl-PL",
       "publisher" => %{
         "@type" => "Organization",
         "name" => "Przetargowi.pl",

@@ -1,0 +1,131 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <.page_hero title="Przetargi publiczne">
+        Wyszukiwarka aktualnych przetargów z Biuletynu Zamówień Publicznych — {format_count(
+          @total_count
+        )} otwartych postępowań z terminami składania ofert, według branż i województw.
+      </.page_hero>
+
+      <.search_bar
+        id="tender-search"
+        action="/przetargi"
+        label="Szukaj przetargów"
+        placeholder="Przedmiot zamówienia, zamawiający lub słowa kluczowe…"
+        advanced="/przetargi?q="
+        advanced_label="Wyszukiwanie zaawansowane z filtrami"
+        centered
+      />
+
+      <.stat_tiles
+        id="tender-figures"
+        items={[
+          {"Otwarte postępowania", format_count(@total_count)},
+          {"Termin składania ofert w ciągu 7 dni", format_count(@stats.closing_soon)},
+          {"Ogłoszenia z ostatnich 12 miesięcy", format_count(@stats.published_last_year)}
+        ]}
+      />
+
+      <.hub_grid
+        id="tender-categories"
+        title="Przetargi według branży"
+        lead="Aktualne postępowania w najczęściej wyszukiwanych branżach — z omówieniem wymagań, liczbą otwartych przetargów i powiązanym orzecznictwem KIO."
+        items={
+          Enum.map(
+            @categories,
+            &%{path: "/przetargi/branza/#{&1.slug}", name: &1.h1, lead: &1.intro}
+          )
+        }
+      />
+
+      <section class="mb-14 grid lg:grid-cols-2 gap-6" id="tender-stats">
+        <.side_card
+          title="Otwarte przetargi według województw"
+          lead="Według siedziby zamawiającego."
+        >
+          <%= if @stats.by_region == [] do %>
+            <.count_list rows={Enum.map(@regions, &{&1.name, "/przetargi/#{&1.slug}", 0})} />
+          <% else %>
+            <.count_list id="tender-by-region" rows={region_rows(@stats)} />
+          <% end %>
+        </.side_card>
+        <.side_card title="Otwarte przetargi według rodzaju zamówienia">
+          <%= if @stats.by_order_type == [] do %>
+            <.count_list rows={
+              Enum.map(@order_types, &{&1.h1, "/przetargi/rodzaj/#{&1.slug}", 0})
+            } />
+          <% else %>
+            <.count_list id="tender-by-order-type" rows={order_type_rows(@stats)} />
+          <% end %>
+          <a
+            href="/analiza-rynku"
+            class="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            Analiza rynku — kto wygrywa przetargi
+            <.icon name="hero-arrow-right-mini" class="size-4" />
+          </a>
+        </.side_card>
+      </section>
+
+      <section class="mb-14" id="tender-latest">
+        <h2 class="text-2xl font-bold text-base-content mb-6">
+          {if @open?,
+            do: "Najbliższe terminy składania ofert",
+            else: "Ostatnio zakończone postępowania"}
+        </h2>
+        <%= if @notices == [] do %>
+          <.empty_results
+            title="Brak ogłoszeń w bazie"
+            hint="Baza jest aktualizowana codziennie."
+          />
+        <% else %>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <.tender_card :for={notice <- @notices} notice={notice} compact />
+          </div>
+        <% end %>
+        <p class="mt-6 text-center">
+          <a href="/przetargi?q=" rel="nofollow" class="text-primary font-medium hover:underline">
+            Zobacz wszystkie przetargi →
+          </a>
+        </p>
+      </section>
+
+      <section class="mb-14 prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/70 prose-a:text-primary prose-li:text-base-content/70">
+        <h2>Jak korzystać z wyszukiwarki przetargów?</h2>
+        <p>
+          Zbieramy ogłoszenia o zamówieniach publicznych z Biuletynu Zamówień Publicznych i porządkujemy je według terminu składania ofert. Możesz przeglądać je według <a href="/przetargi/branza/budowlane">branży</a>,
+          <a href="/przetargi/rodzaj/dostawy">rodzaju zamówienia</a>
+          lub <a href="/przetargi/mazowieckie">województwa</a>, albo wyszukać po słowach kluczowych, nazwie zamawiającego i terminie.
+        </p>
+        <p>
+          Przy każdym ogłoszeniu znajdziesz przedmiot zamówienia, zamawiającego, szacunkową wartość, kryteria oceny ofert, warunki udziału i dokumenty postępowania. Dla wielu branż pokazujemy też,
+          <a href="/analiza-rynku">kto wygrywał podobne przetargi</a>
+          i za ile.
+        </p>
+        <h2>Zanim złożysz ofertę</h2>
+        <ul>
+          <li>
+            Sprawdź <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstsze błędy w ofertach</a>, które prowadzą do odrzucenia.
+          </li>
+          <li>
+            Zobacz, jak <a href="/orzecznictwo-kio">Krajowa Izba Odwoławcza</a>
+            rozstrzyga spory w Twojej branży — np. o
+            <a href="/orzecznictwo-kio/razaco-niska-cena">rażąco niską cenę</a>
+            czy <a href="/orzecznictwo-kio/warunki-udzialu-w-postepowaniu">warunki udziału w postępowaniu</a>.
+          </li>
+        </ul>
+      </section>
+
+      <.guides articles={@recent_articles} />
+
+      <.faq_section id="tender-faq" faqs={landing_faqs()} title="Najczęściej zadawane pytania" />
+
+      <.link_columns
+        id="tender-browse"
+        title="Przeglądaj przetargi"
+        columns={browse_columns()}
+        current="/przetargi"
+      />
+    </div>
+  </div>
+</Layouts.app>

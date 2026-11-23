@@ -1,20 +1,20 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <!-- Hero -->
-  <section class="py-24 lg:py-32 hero-gradient relative overflow-hidden">
+  <section class="py-20 lg:py-28 hero-gradient relative overflow-hidden">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="max-w-3xl mx-auto text-center">
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-gradient">
-          Wygrywaj przetargi<br />dzięki danym i automatyzacji
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] mb-6 text-base-content">
+          Wygrywaj przetargi dzięki danym i&nbsp;automatyzacji
         </h1>
         <p class="text-lg sm:text-xl text-base-content/70 mb-12 leading-relaxed max-w-2xl mx-auto">
           Wyszukiwarka AI orzeczeń KIO, monitoring przetargów, analiza rynku i automatyczne wypełnianie dokumentacji ofertowej — w jednym narzędziu.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href={~p"/przetargi"} class="btn-gold px-8 py-4 rounded-xl font-semibold">
+          <a href={~p"/przetargi"} class="btn-gold px-6 py-3 rounded-lg font-semibold">
             Przeglądaj przetargi
           </a>
-          <a href={~p"/szukaj"} class="btn-outline px-8 py-4 rounded-xl font-semibold">
+          <a href={~p"/orzecznictwo-kio"} class="btn-outline px-6 py-3 rounded-lg font-semibold">
             Szukaj orzeczeń
           </a>
         </div>
@@ -25,11 +25,8 @@
 <!-- Features -->
   <section class="py-20 lg:py-24">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <div class="flex justify-center mb-4">
-          <div class="decorative-line"></div>
-        </div>
-        <h2 class="text-3xl lg:text-4xl font-bold text-base-content mb-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-base-content mb-3">
           Co oferujemy?
         </h2>
         <p class="text-base-content/60 max-w-xl mx-auto">
@@ -37,14 +34,14 @@
         </p>
       </div>
 
-      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         <!-- Feature 1: Przetargi -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <.icon name="hero-document-magnifying-glass" class="size-8 text-primary" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-document-magnifying-glass" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Wyszukiwarka przetargów</h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <h3 class="text-base font-semibold text-base-content mb-2">Wyszukiwarka przetargów</h3>
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Przeszukuj aktualne ogłoszenia z Biuletynu Zamówień Publicznych.
             Filtruj po regionie, rodzaju zamówienia i słowach kluczowych.
           </p>
@@ -57,17 +54,17 @@
         </div>
         
 <!-- Feature 2: Orzecznictwo -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent/10 flex items-center justify-center">
-            <.icon name="hero-scale" class="size-8 text-accent" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-scale" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Orzecznictwo KIO</h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <h3 class="text-base font-semibold text-base-content mb-2">Orzecznictwo KIO</h3>
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Przeszukuj orzeczenia Krajowej Izby Odwoławczej, Sądów Okręgowych, Apelacyjnych i Sądu Najwyższego.
             Znajdź precedensy do swojej sprawy.
           </p>
           <a
-            href={~p"/szukaj"}
+            href={~p"/orzecznictwo-kio"}
             class="inline-flex items-center gap-1 text-primary hover:underline mt-4 text-sm font-medium"
           >
             Szukaj orzeczeń <.icon name="hero-arrow-right" class="size-4" />
@@ -75,12 +72,12 @@
         </div>
         
 <!-- Feature 3: Alerty -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-secondary/10 flex items-center justify-center">
-            <.icon name="hero-bell-alert" class="size-8 text-secondary" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-bell-alert" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Alerty przetargowe</h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <h3 class="text-base font-semibold text-base-content mb-2">Alerty przetargowe</h3>
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Otrzymuj codzienne powiadomienia o nowych przetargach pasujących do Twoich kryteriów.
             Nigdy nie przegap interesującego zamówienia.
           </p>
@@ -102,12 +99,12 @@
         </div>
         
 <!-- Feature 4: Lista obserwowanych -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/10 flex items-center justify-center">
-            <.icon name="hero-star" class="size-8 text-warning" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-star" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Lista obserwowanych</h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <h3 class="text-base font-semibold text-base-content mb-2">Lista obserwowanych</h3>
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Zapisuj interesujące przetargi i otrzymuj przypomnienia o zbliżających się terminach składania ofert.
           </p>
           <%= if @current_scope do %>
@@ -128,12 +125,12 @@
         </div>
         
 <!-- Feature 4: Raporty -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-info/10 flex items-center justify-center">
-            <.icon name="hero-chart-bar" class="size-8 text-info" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-chart-bar" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Raporty rynkowe</h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <h3 class="text-base font-semibold text-base-content mb-2">Raporty rynkowe</h3>
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Comiesięczne analizy rynku zamówień publicznych z podziałem na regiony i kategorie.
             Śledź trendy i planuj strategię.
           </p>
@@ -146,14 +143,14 @@
         </div>
         
 <!-- Feature 5: Automatyczne wypełnianie dokumentów -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-success/10 flex items-center justify-center">
-            <.icon name="hero-document-check" class="size-8 text-success" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-document-check" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">
+          <h3 class="text-base font-semibold text-base-content mb-2">
             Automatyczne wypełnianie dokumentów
           </h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Wypełniaj dokumentację ofertową automatycznie na podstawie danych z profilu firmy.
             Oszczędź godziny pracy przy każdym przetargu.
           </p>
@@ -166,12 +163,12 @@
         </div>
         
 <!-- Feature 6: Analiza konkurencji -->
-        <div class="card-base p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-warning/10 flex items-center justify-center">
-            <.icon name="hero-user-group" class="size-8 text-warning" />
+        <div class="pricing-card p-6">
+          <div class="w-10 h-10 mb-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <.icon name="hero-user-group" class="size-5 text-primary" />
           </div>
-          <h3 class="text-xl font-semibold text-base-content mb-3">Analiza konkurencji</h3>
-          <p class="text-base-content/60 leading-relaxed">
+          <h3 class="text-base font-semibold text-base-content mb-2">Analiza konkurencji</h3>
+          <p class="text-sm text-base-content/60 leading-relaxed">
             Sprawdź kto wygrywał podobne przetargi, za ile i w jakim regionie.
             Podejmuj decyzje o starcie na podstawie danych, nie intuicji.
           </p>

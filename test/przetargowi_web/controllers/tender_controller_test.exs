@@ -71,7 +71,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
         submitting_offers_date: future_deadline()
       )
 
-      conn = get(conn, ~p"/przetargi")
+      conn = get(conn, "/przetargi?q=")
 
       response = html_response(conn, 200)
       assert response =~ "Dodaj do obserwowanych"
@@ -83,7 +83,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
         submitting_offers_date: future_deadline()
       )
 
-      conn = get(conn, ~p"/przetargi")
+      conn = get(conn, "/przetargi?q=")
 
       response = html_response(conn, 200)
       refute response =~ "Dodaj do obserwowanych"
@@ -105,7 +105,7 @@ defmodule PrzetargowiWeb.TenderControllerTest do
         )
       end
 
-      conn = get(conn, ~p"/przetargi")
+      conn = get(conn, "/przetargi?q=")
 
       response = html_response(conn, 200)
       # Check pagination is present
@@ -379,6 +379,208 @@ defmodule PrzetargowiWeb.TenderControllerTest do
         conn = get(conn, ~p"/przetargi/#{region}")
         assert html_response(conn, 200) =~ "Przetargi"
       end
+    end
+  end
+
+  describe "breadcrumbs on hub and region pages" do
+    test "region page has its own heading and a breadcrumb trail", %{conn: conn} do
+      conn = get(conn, "/przetargi/mazowieckie")
+      document = conn |> html_response(200) |> LazyHTML.from_document()
+
+      assert document
+             |> LazyHTML.query("nav[aria-label=Okruszki] a")
+             |> LazyHTML.attribute("href") ==
+               ["/", "/przetargi"]
+
+      assert conn.assigns.hub.name == "Przetargi — województwo mazowieckie"
+
+      assert List.last(conn.assigns.breadcrumbs).url ==
+               "https://przetargowi.pl/przetargi/mazowieckie"
+    end
+
+    test "category hub exposes breadcrumb structured data", %{conn: conn} do
+      conn = get(conn, "/przetargi/branza/budowlane")
+      response = html_response(conn, 200)
+
+      assert response =~ ~s("@type":"BreadcrumbList")
+
+      assert List.last(conn.assigns.breadcrumbs).url ==
+               "https://przetargowi.pl/przetargi/branza/budowlane"
+    end
+  end
+
+  describe "hub navigation and content" do
+    setup do
+      Przetargowi.SitemapCache.clear()
+      on_exit(&Przetargowi.SitemapCache.clear/0)
+    end
+
+    defp page(conn, path), do: conn |> get(path) |> html_response(200) |> LazyHTML.from_document()
+
+    defp hrefs(document, selector),
+      do: document |> LazyHTML.query(selector) |> LazyHTML.attribute("href")
+
+    test "the tender index links to every industry, order-type and region hub", %{conn: conn} do
+      document = page(conn, "/przetargi")
+
+      assert hrefs(document, "#browse-categories a") ==
+               Enum.map(Przetargowi.Tenders.Hubs.category_hubs(), &"/przetargi/branza/#{&1.slug}")
+
+      assert document
+             |> hrefs("#browse-order-types a")
+             |> Enum.filter(&String.starts_with?(&1, "/przetargi/rodzaj/")) ==
+               Enum.map(
+                 Przetargowi.Tenders.Hubs.order_type_hubs(),
+                 &"/przetargi/rodzaj/#{&1.slug}"
+               )
+
+      assert length(hrefs(document, "#browse-regions a")) == 16
+    end
+
+    test "a hub marks itself as the current page in the navigation", %{conn: conn} do
+      document = page(conn, "/przetargi/branza/budowlane")
+
+      refute "/przetargi/branza/budowlane" in hrefs(document, "#browse-categories a")
+      assert Enum.count(LazyHTML.query(document, "#browse-categories [aria-current=page]")) == 1
+    end
+
+    test "every hub has copy, FAQ and related KIO topics", %{conn: conn} do
+      for path <- Przetargowi.Tenders.Hubs.all_paths() do
+        document = page(conn, path)
+
+        assert Enum.count(LazyHTML.query(document, "#hub-overview p")) >= 2, path
+        assert Enum.count(LazyHTML.query(document, "#hub-faq details")) >= 3, path
+
+        kio_links = hrefs(document, "#hub-kio-topics a")
+        assert kio_links != [], path
+        assert Enum.all?(kio_links, &String.starts_with?(&1, "/orzecznictwo-kio/")), path
+      end
+    end
+
+    test "hub figures count the open tenders it lists, by region and order type", %{conn: conn} do
+      for {province, deadline_days} <- [{"PL14", 3}, {"PL14", 30}, {"PL12", 30}] do
+        tender_notice_fixture(
+          order_type: "Works",
+          cpv_main: "45000000-7",
+          organization_province: province,
+          organization_name: "Gmina Testowa",
+          notice_type: "ContractNotice",
+          publication_date: DateTime.utc_now(),
+          submitting_offers_date: DateTime.add(DateTime.utc_now(), deadline_days, :day)
+        )
+      end
+
+      # Different industry: must not be counted
+      tender_notice_fixture(
+        order_type: "Delivery",
+        cpv_main: "33000000-0",
+        organization_province: "PL14",
+        submitting_offers_date: future_deadline()
+      )
+
+      conn = get(conn, "/przetargi/branza/budowlane")
+      document = conn |> html_response(200) |> LazyHTML.from_document()
+      stats = conn.assigns.hub.stats
+
+      assert conn.assigns.total_count == 3
+      assert stats.closing_soon == 1
+      assert stats.published_last_year == 3
+      assert stats.by_region == [{"mazowieckie", 2}, {"malopolskie", 1}]
+      assert stats.by_order_type == [{"Works", 3}]
+      assert stats.top_authorities == [{"Gmina Testowa", 3}]
+
+      assert hrefs(document, "#hub-by-region a") == [
+               "/przetargi/mazowieckie",
+               "/przetargi/malopolskie"
+             ]
+
+      assert hrefs(document, "#hub-by-order-type a") == ["/przetargi/rodzaj/roboty-budowlane"]
+    end
+
+    test "region page shows figures and a description but no templated FAQ", %{conn: conn} do
+      document = page(conn, "/przetargi/mazowieckie")
+
+      assert Enum.count(LazyHTML.query(document, "#hub-figures")) == 1
+      assert Enum.count(LazyHTML.query(document, "#hub-overview p")) == 1
+      assert Enum.count(LazyHTML.query(document, "#hub-faq")) == 0
+    end
+
+    test "filtered and deeper pages stay plain result lists", %{conn: conn} do
+      document = page(conn, "/przetargi/branza/budowlane?page=2")
+
+      assert Enum.count(LazyHTML.query(document, "#hub-editorial")) == 0
+      assert Enum.count(LazyHTML.query(document, "#tender-browse")) == 1
+    end
+
+    test "footer links to tender hubs on every page", %{conn: conn} do
+      document = page(conn, "/o-nas")
+
+      assert "/przetargi/branza/budowlane" in hrefs(document, "#footer-tender-hubs a")
+    end
+  end
+
+  describe "landing, hub and search share one layout" do
+    setup do
+      Przetargowi.SitemapCache.clear()
+      on_exit(&Przetargowi.SitemapCache.clear/0)
+    end
+
+    test "bare /przetargi is a landing page with search, industry grid and newest tenders", %{
+      conn: conn
+    } do
+      tender = tender_notice_fixture(submitting_offers_date: future_deadline())
+
+      document = page(conn, "/przetargi")
+
+      assert LazyHTML.attribute(LazyHTML.query(document, "#tender-search"), "action") ==
+               ["/przetargi"]
+
+      assert length(hrefs(document, "#tender-categories a")) == 12
+      assert "/przetargi/#{tender.slug}" in hrefs(document, "#tender-latest a")
+      assert Enum.count(LazyHTML.query(document, "#tender-faq details")) > 0
+    end
+
+    test "any query string switches /przetargi to the filter form and result list", %{conn: conn} do
+      tender = tender_notice_fixture(submitting_offers_date: future_deadline())
+
+      document = page(conn, "/przetargi?q=")
+
+      assert Enum.count(LazyHTML.query(document, "#tender-categories")) == 0
+      assert "/przetargi/#{tender.slug}" in hrefs(document, "#tender-results h3 a")
+    end
+
+    test "a hub with no open tenders lists recently closed ones instead of an empty box", %{
+      conn: conn
+    } do
+      closed =
+        tender_notice_fixture(
+          cpv_main: "45000000-7",
+          submitting_offers_date: DateTime.add(DateTime.utc_now(), -5, :day)
+        )
+
+      conn = get(conn, "/przetargi/branza/budowlane")
+      document = conn |> html_response(200) |> LazyHTML.from_document()
+
+      refute conn.assigns.open?
+      assert conn.assigns.total_count == 0
+      assert hrefs(document, "#hub-tenders h3 a") == ["/przetargi/#{closed.slug}"]
+    end
+
+    test "a hub's search box keeps the hub's own filter where the search supports it", %{
+      conn: conn
+    } do
+      region = page(conn, "/przetargi/mazowieckie")
+
+      assert region
+             |> LazyHTML.query(~s(#hub-search input[type=hidden]))
+             |> LazyHTML.attribute("value") == ["mazowieckie"]
+    end
+
+    test "a filtered region is rendered as a search, not as a hub", %{conn: conn} do
+      document = page(conn, "/przetargi/mazowieckie?q=droga")
+
+      assert Enum.count(LazyHTML.query(document, "#hub-figures")) == 0
+      assert Enum.count(LazyHTML.query(document, "#tender-browse")) == 1
     end
   end
 end

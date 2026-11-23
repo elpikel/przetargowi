@@ -6,6 +6,10 @@ defmodule PrzetargowiWeb.ErrorHTML do
   """
   use PrzetargowiWeb, :html
 
+  # Only the 404 has its own page; other statuses fall back to the plain
+  # status message below.
+  embed_templates "error_html/*"
+
   # If you want to customize your error pages,
   # uncomment the embed_templates/1 call below
   # and add pages to the error directory:

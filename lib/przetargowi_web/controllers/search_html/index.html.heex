@@ -1,487 +1,281 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-8 text-center">
-      <h1 class="text-3xl font-bold text-base-content mb-2">
-        Wyszukiwarka orzeczeń KIO — wyroki i orzeczenia zamówień publicznych
-      </h1>
-      <p class="text-base-content/60 max-w-3xl mx-auto">
-        Przeszukuj tysiące orzeczeń Krajowej Izby Odwoławczej, sądów okręgowych, apelacyjnych i Sądu Najwyższego. Wyszukiwarka AI znajduje podobne wyroki po znaczeniu — nie tylko po słowach kluczowych.
-      </p>
-    </div>
-    
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <.hub_header
+        crumbs={[
+          {"Strona główna", "/"},
+          {"Orzecznictwo KIO", "/orzecznictwo-kio"},
+          {"Wyszukiwarka", nil}
+        ]}
+        title="Wyszukiwarka orzeczeń KIO"
+        lead="Przeszukuj orzeczenia Krajowej Izby Odwoławczej po słowach kluczowych, sygnaturze i filtrach albo opisz problem własnymi słowami w trybie semantycznym AI."
+      />
+      
 <!-- Search Form -->
-    <form action="/szukaj" method="get" class="card-base p-6 mb-8" id="search-form">
-      <!-- Search mode toggle -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-base-content/70 mb-2">
-          Tryb wyszukiwania
-        </label>
-        <div class="inline-flex rounded-lg bg-base-200 p-1">
-          <a
-            href={"/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
-            rel="nofollow"
-            class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
-          >
-            <span class="flex items-center gap-2">
-              <.icon name="hero-magnifying-glass" class="size-4" /> Słowa kluczowe
-            </span>
-          </a>
-          <a
-            href={"/szukaj?mode=semantic" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
-            rel="nofollow"
-            class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
-          >
-            <span class="flex items-center gap-2">
-              <.icon name="hero-sparkles" class="size-4" /> Semantyczne (AI)
-            </span>
-          </a>
+      <form
+        action="/orzecznictwo-kio/szukaj"
+        method="get"
+        class="card-base p-6 mb-8"
+        id="search-form"
+      >
+        <!-- Search mode toggle -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-base-content/70 mb-2">
+            Tryb wyszukiwania
+          </label>
+          <div class="inline-flex rounded-lg bg-base-200 p-1">
+            <a
+              href={"/orzecznictwo-kio/szukaj?mode=keyword" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+              rel="nofollow"
+              class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "keyword", do: "bg-primary text-primary-content", else: "text-base-content/70 hover:text-base-content")}
+            >
+              <span class="flex items-center gap-2">
+                <.icon name="hero-magnifying-glass" class="size-4" /> Słowa kluczowe
+              </span>
+            </a>
+            <a
+              href={"/orzecznictwo-kio/szukaj?mode=semantic" <> if(@query != "", do: "&q=#{URI.encode(@query)}", else: "")}
+              rel="nofollow"
+              class={"px-4 py-2 rounded-md text-sm font-medium transition-colors " <> if(@search_mode == "semantic", do: "bg-secondary text-secondary-content", else: "text-base-content/70 hover:text-base-content")}
+            >
+              <span class="flex items-center gap-2">
+                <.icon name="hero-sparkles" class="size-4" /> Semantyczne (AI)
+              </span>
+            </a>
+          </div>
+          <%= if @search_mode == "semantic" do %>
+            <p class="text-xs text-base-content/50 mt-2">
+              Wyszukuje podobne znaczeniowo orzeczenia (pierwsze wyszukiwanie może potrwać kilka sekund)
+            </p>
+          <% end %>
         </div>
-        <%= if @search_mode == "semantic" do %>
-          <p class="text-xs text-base-content/50 mt-2">
-            Wyszukuje podobne znaczeniowo orzeczenia (pierwsze wyszukiwanie może potrwać kilka sekund)
-          </p>
-        <% end %>
-      </div>
 
-      <input type="hidden" name="mode" value={@search_mode} />
+        <input type="hidden" name="mode" value={@search_mode} />
 
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <!-- Search Input -->
-        <div class="lg:col-span-2">
-          <label class="block text-sm font-medium text-base-content/70 mb-2">Szukaj</label>
-          <input
-            type="text"
-            name="q"
-            value={@query}
-            placeholder={
-              if(@search_mode == "semantic",
-                do: "Opisz czego szukasz własnymi słowami...",
-                else: "Słowa kluczowe..."
-              )
-            }
-            class="search-input w-full px-4 py-3 rounded-lg"
-          />
-        </div>
-        
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <label class="block text-sm font-medium text-base-content/70 mb-2">Szukaj</label>
+            <input
+              type="text"
+              name="q"
+              value={@query}
+              placeholder={
+                if(@search_mode == "semantic",
+                  do: "Opisz czego szukasz własnymi słowami...",
+                  else: "Słowa kluczowe..."
+                )
+              }
+              class="search-input w-full px-4 py-3 rounded-lg"
+            />
+          </div>
+          
 <!-- Document Type -->
-        <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">
-            Rodzaj dokumentu
-          </label>
-          <select
-            name="document_type"
-            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
-          >
-            <option value="">Wszystkie</option>
-            <%= for type <- @filter_options.document_types do %>
-              <option value={type} selected={@filters[:document_type] == type}>{type}</option>
-            <% end %>
-          </select>
-        </div>
-        
+          <div>
+            <label class="block text-sm font-medium text-base-content/70 mb-2">
+              Rodzaj dokumentu
+            </label>
+            <select
+              name="document_type"
+              class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+            >
+              <option value="">Wszystkie</option>
+              <%= for type <- @filter_options.document_types do %>
+                <option value={type} selected={@filters[:document_type] == type}>{type}</option>
+              <% end %>
+            </select>
+          </div>
+          
 <!-- Issuing Authority -->
-        <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">
-            Organ wydający
-          </label>
-          <select
-            name="issuing_authority"
-            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
-          >
-            <option value="">Wszystkie</option>
-            <%= for authority <- @filter_options.issuing_authorities do %>
-              <option value={authority} selected={@filters[:issuing_authority] == authority}>
-                {authority}
-              </option>
-            <% end %>
-          </select>
+          <div>
+            <label class="block text-sm font-medium text-base-content/70 mb-2">
+              Organ wydający
+            </label>
+            <select
+              name="issuing_authority"
+              class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+            >
+              <option value="">Wszystkie</option>
+              <%= for authority <- @filter_options.issuing_authorities do %>
+                <option value={authority} selected={@filters[:issuing_authority] == authority}>
+                  {authority}
+                </option>
+              <% end %>
+            </select>
+          </div>
         </div>
-      </div>
-      
+        
 <!-- Second Row of Filters -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
-        <!-- Resolution Method -->
-        <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">
-            Sposób rozstrzygnięcia
-          </label>
-          <select
-            name="resolution_method"
-            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
-          >
-            <option value="">Wszystkie</option>
-            <%= for method <- @filter_options.resolution_methods do %>
-              <option value={method} selected={@filters[:resolution_method] == method}>
-                {method}
-              </option>
-            <% end %>
-          </select>
-        </div>
-        
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+          <!-- Resolution Method -->
+          <div>
+            <label class="block text-sm font-medium text-base-content/70 mb-2">
+              Sposób rozstrzygnięcia
+            </label>
+            <select
+              name="resolution_method"
+              class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+            >
+              <option value="">Wszystkie</option>
+              <%= for method <- @filter_options.resolution_methods do %>
+                <option value={method} selected={@filters[:resolution_method] == method}>
+                  {method}
+                </option>
+              <% end %>
+            </select>
+          </div>
+          
 <!-- Procedure Type -->
-        <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">
-            Tryb postępowania
-          </label>
-          <select
-            name="procedure_type"
-            class="search-input w-full px-4 py-3 rounded-lg appearance-none"
-          >
-            <option value="">Wszystkie</option>
-            <%= for proc_type <- @filter_options.procedure_types do %>
-              <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>
-                {proc_type}
-              </option>
-            <% end %>
-          </select>
-        </div>
-        
+          <div>
+            <label class="block text-sm font-medium text-base-content/70 mb-2">
+              Tryb postępowania
+            </label>
+            <select
+              name="procedure_type"
+              class="search-input w-full px-4 py-3 rounded-lg appearance-none"
+            >
+              <option value="">Wszystkie</option>
+              <%= for proc_type <- @filter_options.procedure_types do %>
+                <option value={proc_type} selected={@filters[:procedure_type] == proc_type}>
+                  {proc_type}
+                </option>
+              <% end %>
+            </select>
+          </div>
+          
 <!-- Date From -->
-        <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">Data od</label>
-          <input
-            type="date"
-            name="date_from"
-            value={@filters[:date_from]}
-            class="search-input w-full px-4 py-3 rounded-lg"
-          />
-        </div>
-        
+          <div>
+            <label class="block text-sm font-medium text-base-content/70 mb-2">Data od</label>
+            <input
+              type="date"
+              name="date_from"
+              value={@filters[:date_from]}
+              class="search-input w-full px-4 py-3 rounded-lg"
+            />
+          </div>
+          
 <!-- Date To -->
-        <div>
-          <label class="block text-sm font-medium text-base-content/70 mb-2">Data do</label>
-          <input
-            type="date"
-            name="date_to"
-            value={@filters[:date_to]}
-            class="search-input w-full px-4 py-3 rounded-lg"
+          <div>
+            <label class="block text-sm font-medium text-base-content/70 mb-2">Data do</label>
+            <input
+              type="date"
+              name="date_to"
+              value={@filters[:date_to]}
+              class="search-input w-full px-4 py-3 rounded-lg"
+            />
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <div class="flex gap-3">
+            <%= if has_active_filters?(@filters) do %>
+              <a
+                href="/orzecznictwo-kio/szukaj"
+                class="btn-outline px-4 py-2 rounded-lg text-sm"
+                rel="nofollow"
+              >
+                Wyczyść filtry
+              </a>
+            <% end %>
+            <button
+              type="submit"
+              id="search-btn"
+              class="btn-gold px-6 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+            >
+              <span id="search-btn-text">Szukaj</span>
+              <svg
+                id="search-spinner"
+                class="hidden animate-spin size-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                >
+                </circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                >
+                </path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <script>
+        document.getElementById('search-form').addEventListener('submit', function() {
+          const mode = document.querySelector('input[name="mode"]').value;
+          if (mode === 'semantic') {
+            document.getElementById('search-btn-text').textContent = 'Szukam...';
+            document.getElementById('search-spinner').classList.remove('hidden');
+            document.getElementById('search-btn').disabled = true;
+          }
+        });
+      </script>
+      
+<!-- Results Count -->
+      <div class="mb-6">
+        <p class="text-base-content/60">
+          <%= if @query != "" do %>
+            Znaleziono <span class="font-semibold text-base-content">{@total_count}</span>
+            orzeczeń dla „<span class="font-medium">{@query}</span>"
+          <% else %>
+            <span class="font-semibold text-base-content">{@total_count}</span> orzeczeń w bazie
+          <% end %>
+        </p>
+      </div>
+      
+<!-- Error States -->
+      <%= if @semantic_error do %>
+        <div class="card-base p-12 text-center">
+          <.icon name="hero-exclamation-triangle" class="size-12 text-error mx-auto mb-4" />
+          <p class="text-base-content mb-2">{@semantic_error}</p>
+          <p class="text-sm text-base-content/60">Spróbuj wyszukiwania słów kluczowych.</p>
+        </div>
+      <% end %>
+      
+<!-- Results -->
+      <%= if @results == [] do %>
+        <.empty_results
+          title="Brak orzeczeń dla podanych kryteriów"
+          hint="Spróbuj zmienić filtry lub słowa kluczowe"
+        />
+      <% else %>
+        <div class="space-y-4" id="search-results">
+          <PrzetargowiWeb.LandingHTML.ruling_card
+            :for={result <- @results}
+            judgement={result}
+            highlight={if(@search_mode == "semantic", do: Map.get(result, :matched_chunk))}
           />
         </div>
-      </div>
+      <% end %>
 
-      <div class="mt-4 flex justify-end">
-        <div class="flex gap-3">
-          <%= if has_active_filters?(@filters) do %>
-            <a href="/szukaj" class="btn-outline px-4 py-2 rounded-lg text-sm" rel="nofollow">
-              Wyczyść filtry
-            </a>
-          <% end %>
-          <button
-            type="submit"
-            id="search-btn"
-            class="btn-gold px-6 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
-          >
-            <span id="search-btn-text">Szukaj</span>
-            <svg
-              id="search-spinner"
-              class="hidden animate-spin size-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              >
-              </circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              >
-              </path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </form>
-
-    <script>
-      document.getElementById('search-form').addEventListener('submit', function() {
-        const mode = document.querySelector('input[name="mode"]').value;
-        if (mode === 'semantic') {
-          document.getElementById('search-btn-text').textContent = 'Szukam...';
-          document.getElementById('search-spinner').classList.remove('hidden');
-          document.getElementById('search-btn').disabled = true;
+      <.pager
+        id="search-pagination"
+        page={@current_page}
+        total_pages={@total_pages}
+        nofollow
+        path={
+          fn page ->
+            "/orzecznictwo-kio/szukaj?#{pagination_params(@query, @filters, @search_mode, page)}"
+          end
         }
-      });
-    </script>
-    
-<!-- Results Count -->
-    <div class="mb-6">
-      <p class="text-base-content/60">
-        <%= if @query != "" do %>
-          Znaleziono <span class="font-semibold text-base-content">{@total_count}</span>
-          orzeczeń dla „<span class="font-medium">{@query}</span>"
-        <% else %>
-          <span class="font-semibold text-base-content">{@total_count}</span> orzeczeń w bazie
-        <% end %>
-      </p>
+      />
+
+      <.link_columns
+        id="kio-browse"
+        title="Przeglądaj orzecznictwo KIO"
+        columns={PrzetargowiWeb.LandingHTML.browse_columns()}
+      />
     </div>
-    
-<!-- Error States -->
-    <%= if @semantic_error do %>
-      <div class="card-base p-12 text-center">
-        <.icon name="hero-exclamation-triangle" class="size-12 text-error mx-auto mb-4" />
-        <p class="text-base-content mb-2">{@semantic_error}</p>
-        <p class="text-sm text-base-content/60">Spróbuj wyszukiwania słów kluczowych.</p>
-      </div>
-    <% end %>
-    
-<!-- Results -->
-    <%= if @results == [] do %>
-      <div class="text-center py-20">
-        <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-base-200 flex items-center justify-center">
-          <.icon name="hero-magnifying-glass" class="size-8 text-base-content/30" />
-        </div>
-        <p class="text-lg text-base-content/60 mb-2">Brak orzeczeń w bazie.</p>
-        <p class="text-sm text-base-content/40">Synchronizacja w toku...</p>
-      </div>
-    <% else %>
-      <div class="space-y-5">
-        <%= for result <- @results do %>
-          <article class="result-card p-6">
-            <div class="flex items-start justify-between gap-4 mb-3">
-              <div class="flex items-center gap-3">
-                <h2 class="text-lg font-semibold text-base-content">{result.signature}</h2>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-base-content/50">
-                <%= if result.decision_date do %>
-                  <span>{Calendar.strftime(result.decision_date, "%d.%m.%Y")}</span>
-                <% end %>
-                <%= if result.document_type do %>
-                  <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-medium">
-                    {result.document_type}
-                  </span>
-                <% end %>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-base-content/60 mb-4">
-              <%= if result.resolution_method do %>
-                <div class="flex items-center gap-1.5">
-                  <.icon name="hero-scale" class="size-4 text-secondary/70" />
-                  <span>{result.resolution_method}</span>
-                </div>
-              <% end %>
-              <%= if result.contracting_authority do %>
-                <div class="flex items-center gap-1.5">
-                  <.icon name="hero-building-office-2" class="size-4 text-secondary/70" />
-                  <span>{result.contracting_authority}</span>
-                </div>
-              <% end %>
-            </div>
-
-            <%= if Map.get(result, :matched_chunk) && @search_mode == "semantic" do %>
-              <div class="rounded-xl p-5 mb-5 bg-secondary/10 border border-secondary/20">
-                <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                  <.icon name="hero-sparkles-solid" class="size-5" />
-                  <span>Dopasowany fragment</span>
-                </div>
-                <p class="text-base-content/80 leading-relaxed text-sm">
-                  {String.slice(result.matched_chunk, 0, 300)}{if String.length(
-                                                                    result.matched_chunk
-                                                                  ) > 300,
-                                                                  do: "..."}
-                </p>
-              </div>
-            <% else %>
-              <%= if result.meritum do %>
-                <div class="meritum-box rounded-xl p-5 mb-5">
-                  <div class="flex items-center gap-2 font-semibold text-secondary mb-2">
-                    <.icon name="hero-light-bulb-solid" class="size-5" />
-                    <span>Meritum</span>
-                  </div>
-                  <p class="text-base-content/80 leading-relaxed">
-                    {result.meritum}
-                  </p>
-                </div>
-              <% end %>
-            <% end %>
-
-            <div class="flex items-center justify-end">
-              <a
-                href={"/orzeczenie/#{Map.get(result, :slug) || result.id}"}
-                class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-              >
-                Zobacz pełne orzeczenie <.icon name="hero-arrow-right" class="size-4" />
-              </a>
-            </div>
-          </article>
-        <% end %>
-      </div>
-    <% end %>
-    
-<!-- Pagination -->
-    <%= if @total_pages > 1 do %>
-      <div class="mt-8 flex justify-center">
-        <nav class="flex items-center space-x-2">
-          <%= if @current_page > 1 do %>
-            <a
-              href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page - 1)}"}
-              class="btn-outline px-4 py-2 rounded-lg text-sm"
-              rel="nofollow"
-            >
-              Poprzednia
-            </a>
-          <% end %>
-
-          <span class="px-3 py-2 text-base-content/60 text-sm">
-            Strona {@current_page} z {@total_pages}
-          </span>
-
-          <%= if @current_page < @total_pages do %>
-            <a
-              href={"/szukaj?#{pagination_params(@query, @filters, @search_mode, @current_page + 1)}"}
-              class="btn-outline px-4 py-2 rounded-lg text-sm"
-              rel="nofollow"
-            >
-              Następna
-            </a>
-          <% end %>
-        </nav>
-      </div>
-    <% end %>
-
-    <%= if @show_seo_content do %>
-      <!-- Recent Judgements -->
-      <%= if @recent_judgements != [] do %>
-        <div class="mt-16">
-          <h2 class="text-2xl font-bold text-base-content mb-6">Najnowsze orzeczenia</h2>
-          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <%= for judgement <- @recent_judgements do %>
-              <a
-                href={"/orzeczenie/#{judgement.slug}"}
-                class="card-base p-5 hover:border-primary/30 transition-colors block"
-              >
-                <div class="font-semibold text-base-content mb-2">{judgement.signature}</div>
-                <%= if judgement.decision_date do %>
-                  <div class="text-sm text-base-content/50 mb-3">
-                    {Calendar.strftime(judgement.decision_date, "%d.%m.%Y")}
-                  </div>
-                <% end %>
-                <%= if judgement.document_type do %>
-                  <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium">
-                    {judgement.document_type}
-                  </span>
-                <% end %>
-                <%= if judgement.meritum do %>
-                  <p class="text-sm text-base-content/60 mt-3 line-clamp-3">
-                    {judgement.meritum}
-                  </p>
-                <% end %>
-              </a>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-      
-<!-- SEO Content -->
-      <div class="mt-16 prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/70 prose-a:text-primary prose-li:text-base-content/70">
-        <h2>Czym jest orzecznictwo KIO?</h2>
-        <p>
-          Krajowa Izba Odwoławcza (KIO) to organ rozpatrujący odwołania w postępowaniach o udzielenie zamówienia publicznego na gruncie <a href="/ustawa-pzp">ustawy Prawo zamówień publicznych</a>. Orzeczenia KIO kształtują praktykę stosowania prawa zamówień publicznych w Polsce — od interpretacji warunków udziału w postępowaniu, przez ocenę ofert, po zasady unieważniania przetargów.
-        </p>
-        <p>
-          Nasza baza obejmuje wyroki i postanowienia KIO, orzeczenia sądów okręgowych (jako instancji odwoławczej od wyroków KIO), sądów apelacyjnych oraz Sądu Najwyższego w sprawach zamówień publicznych.
-        </p>
-
-        <h2>Jak działa wyszukiwarka orzeczeń KIO?</h2>
-        <p>Wyszukiwarka oferuje dwa tryby:</p>
-        <ul>
-          <li>
-            <strong>Wyszukiwanie słów kluczowych</strong>
-            — klasyczne przeszukiwanie tekstu orzeczeń. Idealne, gdy znasz sygnaturę sprawy, nazwę zamawiającego lub konkretny przepis (np. &quot;art. 226 ust. 1 pkt 5&quot;).
-          </li>
-          <li>
-            <strong>Wyszukiwanie semantyczne (AI)</strong>
-            — opisz swoją sytuację własnymi słowami, a algorytm AI znajdzie orzeczenia o podobnym znaczeniu. Nie musisz znać dokładnej terminologii prawnej — wystarczy opis problemu.
-          </li>
-        </ul>
-        <p>
-          Dodatkowo możesz filtrować wyniki po rodzaju dokumentu, organie wydającym, sposobie rozstrzygnięcia, trybie postępowania i dacie wydania.
-        </p>
-
-        <h2>Kiedy warto sprawdzić orzecznictwo KIO?</h2>
-        <ul>
-          <li>
-            Przed złożeniem <a href="/blog/jak-odwolac-sie-do-kio">odwołania do KIO</a>
-            — aby ocenić szanse powodzenia na podstawie podobnych spraw
-          </li>
-          <li>
-            Przy przygotowaniu oferty przetargowej — aby uniknąć <a href="/blog/najczestsze-bledy-oferty-przetargowe">najczęstszych błędów</a>, które prowadzą do odrzucenia
-          </li>
-          <li>
-            Gdy zamawiający
-            <a href="/blog/uniewaznienie-przetargu-jak-sie-bronic">unieważnia postępowanie</a>
-            — aby sprawdzić, czy przesłanki unieważnienia są zasadne
-          </li>
-          <li>
-            Przy sporządzaniu argumentacji prawnej — aby powołać się na dotychczasową linię orzeczniczą
-          </li>
-          <li>
-            Przy szacowaniu
-            <a href="/blog/ile-kosztuje-odwolanie-do-kio-2026">kosztów odwołania do KIO</a>
-            — aby podjąć racjonalną decyzję biznesową
-          </li>
-          <li>
-            Gdy chcesz wiedzieć,
-            <a href="/blog/ile-czasu-ma-kio-na-rozpatrzenie-odwolania">
-              ile czasu ma KIO na rozpatrzenie odwołania
-            </a>
-            — aby zaplanować harmonogram
-          </li>
-        </ul>
-
-        <h2>Jakie orzeczenia znajdziesz w bazie?</h2>
-        <p>Baza zawiera orzeczenia dotyczące wszystkich aspektów zamówień publicznych, m.in.:</p>
-        <ul>
-          <li>
-            <strong>Odrzucenie oferty</strong>
-            — rażąco niska cena, niezgodność z SWZ, błędy formalne
-          </li>
-          <li>
-            <strong>Wykluczenie wykonawcy</strong>
-            — niespełnienie warunków udziału, JEDZ, podmiotowe środki dowodowe
-          </li>
-          <li>
-            <strong>Wybór najkorzystniejszej oferty</strong>
-            — kryteria oceny, waga ceny vs. jakości
-          </li>
-          <li>
-            <strong>Unieważnienie postępowania</strong> — przesłanki z art. 255 i 256 ustawy Pzp
-          </li>
-          <li>
-            <strong>Opis przedmiotu zamówienia</strong>
-            — ograniczenie konkurencji, równoważność produktów
-          </li>
-          <li><strong>Warunki umowy</strong> — klauzule abuzywne, waloryzacja wynagrodzenia</li>
-        </ul>
-      </div>
-      
-<!-- Related Blog Posts -->
-      <%= if @recent_articles != [] do %>
-        <div class="mt-12">
-          <h2 class="text-2xl font-bold text-base-content mb-6">
-            Poradniki dotyczące zamówień publicznych
-          </h2>
-          <div class="grid gap-6 md:grid-cols-3">
-            <%= for article <- @recent_articles do %>
-              <a
-                href={"/blog/#{article.slug}"}
-                class="card-base p-6 hover:border-primary/30 transition-colors block"
-              >
-                <h3 class="font-semibold text-base-content mb-2 line-clamp-2">{article.title}</h3>
-                <p class="text-sm text-base-content/60 line-clamp-3">{article.excerpt}</p>
-              </a>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-    <% end %>
   </div>
 </Layouts.app>

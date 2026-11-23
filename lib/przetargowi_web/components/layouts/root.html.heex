@@ -11,10 +11,6 @@
           "Przetargowi.pl — wyszukiwarka przetargów publicznych i orzeczeń KIO. Aktualne ogłoszenia o przetargach, wyroki KIO, orzecznictwo zamówień publicznych."
       }
     />
-    <meta
-      name="keywords"
-      content="przetargi, wyszukiwarka przetargów, orzecznictwo kio, aktualne przetargi, ogłoszenia o przetargach, oferty przetargowe, wyroki kio, uzp wyszukiwarka orzeczeń, orzecznictwo zamówienia publiczne, przetargi publiczne"
-    />
     <meta name="robots" content={assigns[:meta_robots] || "index, follow"} />
     <meta property="og:title" content={assigns[:page_title] || "Przetargowi"} />
     <meta
@@ -22,8 +18,13 @@
       content={assigns[:meta_description] || "Wyszukiwarka orzeczeń zamówień publicznych."}
     />
     <meta property="og:type" content={assigns[:og_type] || "website"} />
-    <%= if assigns[:og_image] do %>
-      <meta property="og:image" content={@og_image} />
+    <meta
+      property="og:image"
+      content={assigns[:og_image] || "https://przetargowi.pl/images/og-default.png"}
+    />
+    <%= if !assigns[:og_image] do %>
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
     <% end %>
     <meta property="og:locale" content="pl_PL" />
     <meta
@@ -31,7 +32,11 @@
       content={assigns[:og_url] || assigns[:canonical_url] || "https://przetargowi.pl"}
     />
     <meta property="og:site_name" content="Przetargowi" />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:image"
+      content={assigns[:og_image] || "https://przetargowi.pl/images/og-default.png"}
+    />
     <meta name="twitter:title" content={assigns[:page_title] || "Przetargowi"} />
     <meta
       name="twitter:description"
@@ -42,12 +47,22 @@
     <% end %>
     <link rel="icon" href={~p"/favicon.svg?v=2"} type="image/svg+xml" />
     <link rel="icon" href={~p"/favicon.ico?v=2"} type="image/x-icon" sizes="any" />
-    <title>{assigns[:page_title] || "Orzeczenia KIO i Przetargi Publiczne"} — Przetargowi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>{PrzetargowiWeb.Layouts.document_title(assigns[:page_title])}</title>
+    <%!-- Inter is served from our own origin; preloading the two subsets a
+         Polish page needs avoids a flash of fallback text. --%>
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@500;600;700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href={~p"/fonts/inter-latin.woff2"}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href={~p"/fonts/inter-latin-ext.woff2"}
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
@@ -58,9 +73,16 @@
         "@type": "WebSite",
         "name": "Przetargowi",
         "url": "https://przetargowi.pl",
+        "inLanguage": "pl-PL",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Przetargowi.pl",
+          "url": "https://przetargowi.pl",
+          "logo": "https://przetargowi.pl/favicon.svg"
+        },
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://przetargowi.pl/szukaj?q={search_term_string}",
+          "target": "https://przetargowi.pl/orzecznictwo-kio/szukaj?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       }

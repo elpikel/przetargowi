@@ -57,13 +57,14 @@ defmodule Przetargowi.Judgements.Summary do
   end
 
   defp opening_sentence(%{signature: signature} = judgement) when is_binary(signature) do
-    date_clause =
-      case format_date(judgement.decision_date) do
-        nil -> ""
-        date -> " w dniu #{date}"
-      end
+    # The formatted date already ends with "r.", so it closes the sentence itself.
+    case format_date(judgement.decision_date) do
+      nil ->
+        "Orzeczenie o sygnaturze #{signature} zostało wydane przez Krajową Izbę Odwoławczą."
 
-    "Orzeczenie o sygnaturze #{signature} zostało wydane przez Krajową Izbę Odwoławczą#{date_clause}."
+      date ->
+        "Orzeczenie o sygnaturze #{signature} zostało wydane przez Krajową Izbę Odwoławczą w dniu #{date}"
+    end
   end
 
   defp opening_sentence(_), do: nil

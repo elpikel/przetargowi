@@ -1,0 +1,119 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="hero-backdrop bg-base-200 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <.hub_header crumbs={@crumbs} title={@hub.name} lead={@hub.intro} />
+
+      <.stat_tiles
+        id="hub-figures"
+        items={[
+          {"Otwarte postępowania", format_count(@total_count)},
+          {"Termin składania ofert w ciągu 7 dni", format_count(@hub.stats.closing_soon)},
+          {"Ogłoszenia z ostatnich 12 miesięcy", format_count(@hub.stats.published_last_year)}
+        ]}
+      />
+
+      <.search_bar
+        id="hub-search"
+        action="/przetargi"
+        label="Szukaj przetargów"
+        placeholder="Szukaj w przetargach…"
+        hidden={@hub.search_scope}
+        advanced="/przetargi?q="
+      />
+
+      <div class="grid lg:grid-cols-3 gap-8 items-start">
+        <section class="lg:col-span-2" id="hub-tenders">
+          <h2 class="text-xl font-bold text-base-content mb-5">
+            <%= cond do %>
+              <% !@open? -> %>
+                Ostatnio zakończone postępowania
+              <% @page == 1 -> %>
+                Aktualne przetargi — najbliższe terminy
+              <% true -> %>
+                Aktualne przetargi — strona {@page} z {@total_pages}
+            <% end %>
+          </h2>
+          <p :if={!@open? and @notices != []} class="mb-5 text-sm text-base-content/60">
+            W tej kategorii nie ma teraz otwartych postępowań. Poniżej ostatnie ogłoszenia, których termin składania ofert już minął.
+          </p>
+          <%= if @notices == [] do %>
+            <.empty_results
+              title="Brak ogłoszeń w tej kategorii"
+              hint="Baza jest aktualizowana codziennie."
+            />
+          <% else %>
+            <div class="space-y-4">
+              <.tender_card
+                :for={notice <- @notices}
+                notice={notice}
+                current_scope={@current_scope}
+                watched_ids={@watched_ids}
+              />
+            </div>
+          <% end %>
+          <.pager
+            id="hub-pagination"
+            page={@page}
+            total_pages={@total_pages}
+            path={fn page -> if page == 1, do: @hub.path, else: "#{@hub.path}?page=#{page}" end}
+          />
+        </section>
+
+        <aside class="space-y-6">
+          <.side_card
+            :if={@hub.kind != :region and @hub.stats.by_region != []}
+            title="Otwarte przetargi według województw"
+          >
+            <.count_list id="hub-by-region" rows={region_rows(@hub.stats)} />
+          </.side_card>
+
+          <.side_card
+            :if={@hub.kind != :order_type and @hub.stats.by_order_type != []}
+            title="Według rodzaju zamówienia"
+          >
+            <.count_list id="hub-by-order-type" rows={order_type_rows(@hub.stats)} />
+          </.side_card>
+
+          <.side_card :if={@hub.stats.top_authorities != []} title="Najaktywniejsi zamawiający">
+            <.count_list id="hub-authorities" rows={authority_rows(@hub.stats)} />
+          </.side_card>
+
+          <.side_card
+            :if={kio_topics(@hub) != []}
+            title="Orzecznictwo KIO w tej branży"
+            lead="Zagadnienia, o które najczęściej toczą się spory w takich postępowaniach."
+          >
+            <ul class="space-y-2 text-sm" id="hub-kio-topics">
+              <li :for={topic <- kio_topics(@hub)}>
+                <a
+                  href={Przetargowi.Judgements.Topics.path(topic)}
+                  class="text-primary hover:underline"
+                >
+                  {topic.name} — orzecznictwo KIO
+                </a>
+              </li>
+            </ul>
+          </.side_card>
+        </aside>
+      </div>
+
+      <%!-- Editorial part: first page only, deeper pages are plain lists --%>
+      <div :if={@page == 1} class="mt-14 space-y-10" id="hub-editorial">
+        <.prose_card
+          id="hub-overview"
+          title={"#{@hub.name} — co warto wiedzieć"}
+          paragraphs={@hub.content.body}
+          guide={@hub.content.blog}
+        />
+        <.faq_section id="hub-faq" faqs={@hub.content.faqs} />
+      </div>
+
+      <.link_columns
+        id="tender-browse"
+        title="Przeglądaj przetargi"
+        columns={browse_columns()}
+        current={@hub.path}
+      />
+    </div>
+  </div>
+</Layouts.app>
